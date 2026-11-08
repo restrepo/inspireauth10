@@ -1,0 +1,101 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/restrepo/inspireauth10/blob/main/docs/inspire10.schema.json",
+  "title": "inspireauth10 tables",
+  "description": "One line of papers.jsonl.gz, authors.jsonl.gz or institutions.jsonl.gz (JSON Lines). Documented in docs/data-schema.md.",
+  "$defs": {
+    "nullableString": { "type": ["string", "null"] },
+    "paper": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["recid", "year", "citation_count", "journal_id", "arxiv_categories", "document_type", "n_authors",
+                   "countries", "authors", "references"],
+      "properties": {
+        "recid": { "type": "integer" },
+        "year": { "type": "string" },
+        "citation_count": { "type": ["integer", "null"] },
+        "journal_id": { "$ref": "#/$defs/nullableString" },
+        "arxiv_categories": { "type": "array", "items": { "type": "string" } },
+        "document_type": { "type": "array", "items": { "type": "string" } },
+        "n_authors": { "type": "integer", "minimum": 1, "maximum": 10 },
+        "countries": { "type": "array", "items": { "type": "string" } },
+        "authors": {
+          "type": "array",
+          "maxItems": 10,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["full_name", "author_id", "profile_id", "affiliations"],
+            "properties": {
+              "full_name": { "$ref": "#/$defs/nullableString" },
+              "author_id": { "$ref": "#/$defs/nullableString" },
+              "profile_id": { "$ref": "#/$defs/nullableString" },
+              "affiliations": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["institution_id", "institution"],
+                  "properties": {
+                    "institution_id": { "$ref": "#/$defs/nullableString" },
+                    "institution": { "$ref": "#/$defs/nullableString" }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "references": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["recid", "in_corpus"],
+            "properties": {
+              "recid": { "type": "integer", "description": "INSPIRE literature record number of the cited paper." },
+              "in_corpus": { "type": "boolean", "description": "Whether the cited paper is a line of papers.jsonl.gz." }
+            }
+          }
+        }
+      }
+    },
+    "author": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["profile_id", "author_id", "name", "ids", "positions", "advisors", "country", "first_names", "gender",
+                   "gender_probability"],
+      "properties": {
+        "profile_id": { "type": "string" },
+        "author_id": { "$ref": "#/$defs/nullableString" },
+        "name": { "type": ["object", "null"] },
+        "ids": {
+          "type": "array",
+          "items": { "type": "object", "required": ["schema", "value"],
+                     "properties": { "schema": { "type": "string" }, "value": { "type": "string" } } }
+        },
+        "positions": {
+          "type": "array",
+          "items": { "type": "object", "required": ["institution_id", "country"],
+                     "properties": { "institution_id": { "$ref": "#/$defs/nullableString" },
+                                     "country": { "$ref": "#/$defs/nullableString" } } }
+        },
+        "advisors": { "type": "array", "items": { "type": "object" } },
+        "country": { "$ref": "#/$defs/nullableString" },
+        "first_names": { "type": "string" },
+        "gender": { "enum": ["male", "female", "unknown"] },
+        "gender_probability": { "type": "number", "minimum": 0, "maximum": 1 }
+      }
+    },
+    "institution": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["institution_id", "institution", "country", "country_code"],
+      "properties": {
+        "institution_id": { "type": "string" },
+        "institution": { "$ref": "#/$defs/nullableString" },
+        "country": { "$ref": "#/$defs/nullableString" },
+        "country_code": { "$ref": "#/$defs/nullableString" }
+      }
+    }
+  }
+}

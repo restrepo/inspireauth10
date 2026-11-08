@@ -1,0 +1,381 @@
+<style>
+#dash-root { --dash-gutter: var(--cds-pad-lg); }
+.rp { font-family: var(--font-anthropic-sans); display: flex; flex-direction: column; gap: var(--cds-gap-lg); max-width: 84rem; margin-inline: auto; }
+.rp h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.rp .lede { margin: 0; color: var(--color-fg-muted); max-width: 72ch; line-height: 1.5; }
+.rp .lede b, .rp .note b, .rp .r2line b { color: var(--color-fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rp .tabs { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); border-bottom: 1px solid var(--color-border-line); }
+.rp .tab { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: var(--cds-pad-sm) var(--cds-pad-md); font: inherit; color: var(--color-fg-muted); cursor: pointer; }
+.rp .tab:hover { color: var(--color-fg); }
+.rp .tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-fg); }
+.rp .tab:focus-visible, .rp select:focus-visible, .rp input:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.rp section { display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+.rp .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+.rp .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+.rp .card h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; text-wrap: balance; }
+.rp .card h3 { font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.rp .note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; line-height: 1.45; }
+.rp .r2line { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; }
+.rp .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--cds-gap-md); }
+.rp .tile { gap: var(--cds-gap-xs); }
+.rp .tile .lbl { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rp .tile .big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; }
+.rp .scroll { overflow: auto; max-height: 30rem; }
+.rp table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.rp th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); position: sticky; top: 0; background: var(--color-panel); }
+.rp td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.rp th.n, .rp td.n { text-align: right; }
+.rp .chip { display: inline-block; padding: 0 var(--cds-pad-xs); border-radius: var(--cds-radius); border: 1px solid currentColor; white-space: nowrap; }
+.rp .chip.ok { color: var(--color-ok); }
+.rp .chip.warn { color: var(--color-warn); }
+.rp .chip.bad { color: var(--color-bad); }
+.rp .controls { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; font-size: var(--cds-font-size-caption); }
+.rp select, .rp input[type="search"] { font: inherit; color: var(--color-fg); background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); max-width: 100%; }
+.rp .chart { position: relative; min-height: 16rem; }
+.rp .chart.tall { min-height: 22rem; }
+.rp .legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rp .sw { display: inline-block; width: 0.75rem; height: 0.2rem; border-radius: 1px; vertical-align: middle; margin-right: var(--cds-pad-xs); background: var(--cds-chart-muted); }
+.rp svg text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption); font-family: var(--font-anthropic-sans); }
+.rp svg .tick line { stroke: var(--cds-chart-grid); }
+.rp svg .domain { stroke: var(--cds-chart-axis); }
+.rp .rp-tip { position: absolute; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); pointer-events: none; white-space: nowrap; z-index: 2; }
+.rp .rp-tip .h { color: var(--cds-text-secondary); }
+.rp .rp-fail { display: flex; align-items: center; justify-content: center; gap: var(--cds-gap-xs); min-height: inherit; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.rp .rp-fail::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--color-bad); }
+.rp [data-dash-source-state="empty"] { color: transparent; }
+.rp [data-dash-source-state="refreshing"] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+.rp code, .rp pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--cds-font-size-caption); }
+.rp pre { margin: 0; padding: var(--cds-pad-sm); background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow-x: auto; }
+.rp .dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; vertical-align: middle; margin-right: var(--cds-pad-xs); }
+.rp .dot.ring { border: 1.5px solid var(--color-fg-muted); }
+.rp .dot.fill { background: var(--cds-chart-series-0, #3266ad); }
+.rp .sq { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 2px; vertical-align: middle; margin-right: var(--cds-pad-xs); background: var(--cds-chart-muted); }
+.rp .sq.empty { background: none; border: 1px dashed var(--color-fg-muted); }
+.rp .new { font-size: var(--cds-font-size-caption); font-weight: 400; color: var(--color-fg-muted); border: 1px solid var(--color-border-line); border-radius: 99px; padding: 0 var(--cds-pad-sm); margin-left: var(--cds-pad-xs); vertical-align: middle; white-space: nowrap; }
+.rp .finding { margin: 0; line-height: 1.5; max-width: 72ch; }
+.rp .finding b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.rp ul { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: var(--cds-gap-xs); line-height: 1.5; }
+</style>
+
+<div class="rp">
+  <header class="card" style="background: none; border: 0; padding: 0;">
+    <h1 id="title">HECAP worldwide, papers with up to 10 authors</h1>
+    <p class="lede">Every INSPIRE-HEP paper with 1 to 10 authors (<code>data/</code> of restrepo/inspireauth10, INSPIRE-HEP downloaded on @@DATE@@), with its authors, affiliations and the INSPIRE ids of its references. Countries are those of the authors' institutions.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" data-tab="countries" aria-selected="false">Countries</button>
+    <button class="tab" role="tab" data-tab="trends" aria-selected="false">Papers per year</button>
+    <button class="tab" role="tab" data-tab="citations" aria-selected="false">Citations</button>
+    <button class="tab" role="tab" data-tab="advisors" aria-selected="false">PhD advisors</button>
+    <button class="tab" role="tab" data-tab="method" aria-selected="false">Method</button>
+  </nav>
+
+  <section id="overview" role="tabpanel">
+    <div class="tiles">
+      <div class="card tile"><span class="lbl">Papers with 1 to 10 authors</span><span class="big" data-draw="value" data-source="scalars" data-id="papers">—</span></div>
+      <div class="card tile"><span class="lbl">Distinct authors</span><span class="big" data-draw="value" data-source="scalars" data-id="authors">—</span></div>
+      <div class="card tile"><span class="lbl">Countries with papers</span><span class="big" data-draw="value" data-source="scalars" data-id="countries">—</span></div>
+      <div class="card tile"><span class="lbl">References to papers of the corpus</span><span class="big" data-draw="value" data-source="scalars" data-id="references_in">—</span><span class="note">of <b data-draw="value" data-source="scalars" data-id="references">—</b> references linked to an INSPIRE record</span></div>
+    </div>
+    <div class="card">
+      <h2>Leading countries</h2>
+      <p class="note">The 30 countries with the most papers, by the chosen indicator.</p>
+      <div class="controls"><label for="rp-metric">Indicator</label>
+        <select id="rp-metric" data-draw="metric-select" data-source="countries">
+          <option value="papers">Papers</option><option value="authors">Authors</option><option value="citations">Citations (all of INSPIRE)</option>
+          <option value="corpus_citations">Citations from the corpus</option><option value="citations_per_paper">Citations per paper</option>
+          <option value="h_index">h-index</option><option value="self_citation_pct">Citations from the same country (%)</option><option value="female_pct">Female authors (%)</option>
+        </select></div>
+      <div class="chart tall" data-draw="top-chart" data-source="countries"></div>
+    </div>
+  </section>
+
+  <section id="countries" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Indicators by country</h2>
+      <p class="note">Click a column to sort. Citations: INSPIRE's count from all of INSPIRE; from the corpus: citing papers with 1 to 10 authors. Same country: share of the citations a country's papers receive from papers of the corpus with an author of the same country. Female: authors with a profile and gender probability ≥ 0.9.</p>
+      <div class="controls"><input type="search" id="rp-search" placeholder="Filter countries" aria-label="Filter countries"></div>
+      <div class="scroll"><table>
+        <thead data-draw="country-head" data-source="countries"></thead>
+        <tbody data-draw="country-body" data-source="countries"></tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <section id="trends" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Papers per year</h2>
+      <div class="controls"><label for="rp-country">Country</label><select id="rp-country" data-draw="country-select" data-source="papers_per_year"></select></div>
+      <div class="chart" data-draw="year-chart" data-source="papers_per_year"></div>
+    </div>
+  </section>
+
+  <section id="citations" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Who cites whom</h2>
+      <p class="note">For the 20 countries with the most papers: the share of the citations each column country receives from papers of the corpus that come from each row country. A citation between two papers counts once for every pair of their countries; the diagonal is the same country.</p>
+      <p class="finding" data-draw="flow-finding" data-source="citation_flows">—</p>
+      <div class="chart tall" data-draw="flow-heatmap" data-source="citation_flows"></div>
+    </div>
+  </section>
+
+  <section id="advisors" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Generations of PhD advisors</h2>
+      <p class="note">PhD advisors registered in the INSPIRE-HEP profiles, by the number of generations of students below them (1: students only, 2: grand-students, …). A parent advisor has no registered PhD advisor. An advisor counts in every country where their profile has a position.</p>
+      <div class="controls"><label for="rp-gen-country">Country</label><select id="rp-gen-country" data-draw="gen-select" data-source="advisor_generations"></select></div>
+      <div class="legend"><span><i class="sq" data-i="0"></i>Parent advisors</span><span><i class="sq"></i>All advisors</span></div>
+      <div class="chart" data-draw="gen-chart" data-source="advisor_generations"></div>
+    </div>
+  </section>
+
+  <section id="method" role="tabpanel" hidden>
+    <div class="grid">
+      <div class="card">
+        <h2>Counting rules</h2>
+        <ul class="note">
+          <li>The corpus: every INSPIRE-HEP literature record with 1 to 10 authors (<code>ac 1-&gt;10</code>).</li>
+          <li>A country's papers have an author affiliated to one of its institutions (the country of the institution's first address in INSPIRE); each paper counts once per country.</li>
+          <li>A country's authors are the distinct authors (profile, else INSPIRE BAI, else name) with such an affiliation.</li>
+          <li>Citations are INSPIRE's citation count, from all of INSPIRE; citations from the corpus come from the references of the corpus. The h-index uses INSPIRE's count.</li>
+          <li>References: only those INSPIRE links to a record. Each is flagged <code>in_corpus</code> when it points to a paper of the corpus.</li>
+          <li>Gender: inferred from the first names with genderize-offline (World Gender Name Dictionary 2.0), with the country of the author's first affiliation; counted at probability 0.9 or more. These are estimates, not self-reported gender.</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>Run it yourself</h2>
+        <p class="note">The scripts are in restrepo/inspireauth10. The download takes several hours.</p>
+<pre>pip install -r reproduce/requirements.txt
+python build/build_inspire10.py --out data/
+python reproduce/indicators.py data/ out/dash/
+python reproduce/standalone.py out/dash/ out/board.html --set DATE=YYYY-MM-DD</pre>
+      </div>
+    </div>
+  </section>
+</div>
+
+<script>
+const rp = window.rp = {
+  int: d3.format(','),
+  num: (v) => v == null || v === '' ? '—' : Number.isInteger(+v) ? d3.format(',')(+v) : d3.format(',.1f')(+v),
+  ui: { metric: 'papers', sort: 'papers', desc: true, q: '', country: 'World', genCountry: 'World' },
+};
+rp.ready = (el, ids) => {
+  const st = ids.map((id) => dash.data(id).status);
+  if (st.every((s) => s === 'ok')) { el.classList.remove('dash-skeleton'); return true; }
+  el.replaceChildren();
+  if (st.some((s) => s === 'error' || s === 'connect' || s === 'missing' || s === 'declined')) {
+    el.classList.remove('dash-skeleton');
+    const f = document.createElement('div'); f.className = 'rp-fail'; f.textContent = 'Failed to load'; el.appendChild(f);
+  } else el.classList.add('dash-skeleton');
+  return false;
+};
+rp.tip = (el) => {
+  const t = document.createElement('div'); t.className = 'rp-tip'; t.hidden = true; el.appendChild(t);
+  return {
+    show(lines, x, y) {
+      t.replaceChildren(...lines.map((l, i) => { const d = document.createElement('div'); d.textContent = l; if (i === 0) d.className = 'h'; return d; }));
+      t.hidden = false;
+      t.style.left = Math.max(0, Math.min(x + 12, el.clientWidth - t.offsetWidth)) + 'px';
+      t.style.top = Math.max(0, y - t.offsetHeight - 8) + 'px';
+    },
+    hide() { t.hidden = true; },
+  };
+};
+rp.textW = (svg, strs) => {
+  const g = svg.append('g');
+  const w = d3.max(strs, (s) => g.append('text').text(s).node().getComputedTextLength()) || 0;
+  g.remove();
+  return w;
+};
+rp.metricName = {
+  papers: 'Papers', authors: 'Authors', citations: 'Citations', citations_per_paper: 'Citations per paper', h_index: 'h-index',
+  corpus_citations: 'Citations from the corpus', self_citation_pct: 'Same country %', female_pct: 'Female %', gender_n: 'With gender',
+};
+
+// tabs
+const showTab = (name) => {
+  document.querySelectorAll('.rp [role="tabpanel"]').forEach((s) => { s.hidden = s.id !== name; });
+  document.querySelectorAll('.rp .tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+};
+document.querySelectorAll('.rp .tab').forEach((b) => b.addEventListener('click', () => { showTab(b.dataset.tab); dash.setLink(b.dataset.tab); }));
+const startTab = location.hash.slice(1);
+if (startTab && document.querySelector(`.rp .tab[data-tab="${CSS.escape(startTab)}"]`)) showTab(startTab);
+document.querySelectorAll('.rp .sq[data-i]').forEach((s) => { s.style.background = dash.colors[+s.dataset.i]; });
+document.querySelectorAll('#rp-search').forEach((i) => i.addEventListener('input', () => { rp.ui.q = i.value.trim().toLowerCase(); dash.draw('country-body'); }));
+
+dash.draw('value', (el) => {
+  const d = dash.data(el.dataset.source);
+  const r = d.status === 'ok' ? d.data.find((q) => q.id === el.dataset.id) : null;
+  el.textContent = r ? rp.int(r.value) : '—';
+});
+
+dash.draw('metric-select', (sel) => {
+  sel.value = rp.ui.metric;
+  sel.onchange = () => { rp.ui.metric = sel.value; dash.draw('top-chart'); };
+});
+
+dash.draw('top-chart', (el) => {
+  if (!rp.ready(el, ['countries'])) return;
+  const m = rp.ui.metric;
+  const all = dash.data('countries').data.filter((r) => r.country !== 'World');
+  const rows = all.slice().sort((a, b) => b.papers - a.papers).slice(0, 30).filter((r) => r[m] != null).sort((a, b) => b[m] - a[m]);
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), rh = 22, mt = 4, mb = 24, H = mt + rows.length * rh + mb;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const ml = rp.textW(svg, rows.map((r) => r.country)) + 12;
+  const x = d3.scaleLinear([0, d3.max(rows, (r) => +r[m]) || 1], [ml, W - 60]).nice();
+  const y = d3.scaleBand(rows.map((r) => r.country), [mt, H - mb]).padding(0.2);
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(5, '~s'))
+    .attr('font-size', null).attr('font-family', null);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', ml - 8).attr('y', (r) => y(r.country) + y.bandwidth() / 2)
+    .attr('dy', '0.32em').attr('text-anchor', 'end').text((r) => r.country);
+  svg.append('g').selectAll('rect').data(rows).join('rect').attr('x', ml).attr('y', (r) => y(r.country))
+    .attr('width', (r) => Math.max(0, x(+r[m]) - ml)).attr('height', y.bandwidth()).attr('rx', 2).attr('fill', dash.colors[0]);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', (r) => x(+r[m]) + 4).attr('y', (r) => y(r.country) + y.bandwidth() / 2)
+    .attr('dy', '0.32em').text((r) => rp.num(r[m]));
+});
+
+rp.cols = ['country', 'papers', 'authors', 'citations', 'citations_per_paper', 'h_index', 'corpus_citations', 'self_citation_pct', 'female_pct', 'gender_n'];
+dash.draw('country-head', (th) => {
+  const tr = document.createElement('tr');
+  for (const c of rp.cols) {
+    const h = document.createElement('th');
+    h.textContent = (c === 'country' ? 'Country' : rp.metricName[c]) + (rp.ui.sort === c ? (rp.ui.desc ? ' ↓' : ' ↑') : '');
+    if (c !== 'country') h.className = 'n';
+    h.style.cursor = 'pointer';
+    h.onclick = () => { rp.ui.desc = rp.ui.sort === c ? !rp.ui.desc : c !== 'country'; rp.ui.sort = c; dash.draw('country-head'); dash.draw('country-body'); };
+    tr.appendChild(h);
+  }
+  th.replaceChildren(tr);
+});
+dash.draw('country-body', (tb) => {
+  const d = dash.data('countries'); tb.replaceChildren(); if (d.status !== 'ok') return;
+  const k = rp.ui.sort, s = rp.ui.desc ? -1 : 1;
+  const rows = d.data.filter((r) => !rp.ui.q || r.country.toLowerCase().includes(rp.ui.q))
+    .sort((a, b) => (a.country === 'World') - (b.country === 'World') || (k === 'country' ? s * a.country.localeCompare(b.country) : s * ((a[k] ?? -1) - (b[k] ?? -1))));
+  for (const r of rows) {
+    const tr = tb.insertRow();
+    for (const c of rp.cols) {
+      const td = tr.insertCell();
+      td.textContent = c === 'country' ? r.country : rp.num(r[c]);
+      if (c !== 'country') td.className = 'n';
+      if (r.country === 'World') td.style.fontWeight = 600;
+    }
+  }
+});
+
+dash.draw('country-select', (sel) => {
+  const d = dash.data('papers_per_year');
+  const cs = d.status === 'ok' ? [...new Set(d.data.map((r) => r.country))] : [];
+  sel.replaceChildren(...cs.map((c) => new Option(c, c)));
+  sel.value = rp.ui.country;
+  sel.onchange = () => { rp.ui.country = sel.value; dash.draw('year-chart'); };
+});
+dash.draw('year-chart', (el) => {
+  if (!rp.ready(el, ['papers_per_year'])) return;
+  const rows = dash.data('papers_per_year').data.filter((r) => r.country === rp.ui.country).map((r) => ({ year: +r.year, papers: +r.papers }));
+  el.replaceChildren();
+  if (!rows.length) return;
+  const years = d3.range(d3.min(rows, (r) => r.year), d3.max(rows, (r) => r.year) + 1);
+  const by = new Map(rows.map((r) => [r.year, r.papers]));
+  const W = Math.max(300, el.clientWidth), H = 256, mb = 24;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const y = d3.scaleLinear([0, d3.max(rows, (r) => r.papers)], [H - mb, 10]).nice();
+  const ml = rp.textW(svg, y.ticks(5).map(d3.format(','))) + 10;
+  const x = d3.scaleBand(years, [ml + 4, W - 6]).padding(0.15);
+  svg.append('g').attr('transform', `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(d3.format(',')))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  const step = Math.max(1, Math.ceil(years.length / Math.max(2, Math.floor((W - ml) / 48))));
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).tickValues(years.filter((yy, i) => i % step === 0)).tickFormat(d3.format('d')))
+    .attr('font-size', null).attr('font-family', null);
+  svg.append('g').selectAll('rect').data(years).join('rect')
+    .attr('x', (yy) => x(yy)).attr('width', x.bandwidth()).attr('y', (yy) => y(by.get(yy) || 0))
+    .attr('height', (yy) => y(0) - y(by.get(yy) || 0)).attr('fill', dash.colors[0]);
+  const tip = rp.tip(el);
+  svg.on('pointermove', (ev) => {
+    const [px] = d3.pointer(ev, el);
+    const yy = d3.least(years, (q) => Math.abs(x(q) + x.bandwidth() / 2 - px)); if (yy == null) return;
+    tip.show([`${rp.ui.country} · ${yy}`, `${rp.int(by.get(yy) || 0)} papers`], x(yy), y(by.get(yy) || 0));
+  }).on('pointerleave', () => tip.hide());
+});
+
+dash.calc('flow_diag', {
+  inputs: ['citation_flows'],
+  fn: (rows) => rows.filter((r) => r.citing === r.cited).map((r) => ({ country: r.cited, pct: +r.pct })),
+});
+dash.draw('flow-finding', (el) => {
+  const d = dash.data('flow_diag'); if (d.status !== 'ok' || !d.data.length) { el.textContent = '—'; return; }
+  const s = d.data.slice().sort((a, b) => b.pct - a.pct);
+  const b = (t) => { const e = document.createElement('b'); e.textContent = t; return e; };
+  const hi = s[0], lo = s.at(-1), med = d3.median(s, (r) => r.pct);
+  el.replaceChildren('Among these countries, ', b(`${d3.format('.0f')(hi.pct)}%`), ` of the citations to ${hi.country}'s papers come from ${hi.country} itself, against `,
+    b(`${d3.format('.0f')(lo.pct)}%`), ` for ${lo.country}; the median is `, b(`${d3.format('.0f')(med)}%`), '.');
+});
+dash.draw('flow-heatmap', (el) => {
+  if (!rp.ready(el, ['citation_flows'])) return;
+  const rows = dash.data('citation_flows').data;
+  const names = [...new Set(rows.map((r) => r.cited))];
+  const short = { 'United States': 'USA', 'United Kingdom': 'UK', 'Russian Federation': 'Russia', 'Korea, Republic of': 'Korea', 'Iran, Islamic Republic of': 'Iran', 'Czech Republic': 'Czechia' };
+  const lab = (c) => short[c] || c;
+  const W = Math.max(300, el.clientWidth);
+  el.replaceChildren();
+  const svg = d3.select(el).append('svg').attr('width', '100%');
+  const ml = rp.textW(svg, names.map(lab)) + 8;
+  const top = rp.textW(svg, names.map(lab)) * 0.75 + 12;
+  const cw = Math.min(40, (W - ml - 4) / names.length), ch = Math.max(14, Math.min(26, cw * 0.8));
+  const H = top + ch * names.length + 4;
+  svg.attr('viewBox', `0 0 ${W} ${H}`);
+  const op = d3.scaleSqrt([0, d3.max(rows, (r) => +r.pct) || 1], [0.04, 1]);
+  svg.append('g').selectAll('rect').data(rows).join('rect')
+    .attr('x', (r) => ml + names.indexOf(r.cited) * cw).attr('y', (r) => top + names.indexOf(r.citing) * ch)
+    .attr('width', cw - 1).attr('height', ch - 1).attr('rx', 2)
+    .attr('fill', (r) => r.citing === r.cited ? dash.colors[1] : dash.colors[0]).attr('fill-opacity', (r) => op(+r.pct));
+  svg.append('g').selectAll('text').data(names).join('text').attr('x', ml - 6).attr('y', (c, i) => top + i * ch + ch / 2)
+    .attr('dy', '0.32em').attr('text-anchor', 'end').text(lab);
+  svg.append('g').selectAll('text').data(names).join('text')
+    .attr('transform', (c, i) => `translate(${ml + i * cw + cw / 2},${top - 6}) rotate(-45)`).text(lab);
+  const tip = rp.tip(el);
+  svg.on('pointermove', (ev) => {
+    const [px, py] = d3.pointer(ev, el);
+    const i = Math.floor((px - ml) / cw), j = Math.floor((py - top) / ch);
+    if (i < 0 || j < 0 || i >= names.length || j >= names.length) { tip.hide(); return; }
+    const r = rows.find((q) => q.cited === names[i] && q.citing === names[j]); if (!r) return;
+    tip.show([`${r.citing} → ${r.cited}`, `${d3.format('.1f')(r.pct)}% of ${r.cited}'s citations`, `${rp.int(r.n)} citations`], px, py);
+  }).on('pointerleave', () => tip.hide());
+});
+
+dash.draw('gen-select', (sel) => {
+  const d = dash.data('advisor_generations');
+  const cs = d.status === 'ok' ? [...new Set(d.data.map((r) => r.country))] : [];
+  sel.replaceChildren(...cs.map((c) => new Option(c, c)));
+  if (!cs.includes(rp.ui.genCountry)) rp.ui.genCountry = cs[0] || null;
+  sel.value = rp.ui.genCountry || '';
+  sel.onchange = () => { rp.ui.genCountry = sel.value; dash.draw('gen-chart'); };
+});
+dash.draw('gen-chart', (el) => {
+  if (!rp.ready(el, ['advisor_generations'])) return;
+  const data = dash.data('advisor_generations').data.filter((r) => r.country === rp.ui.genCountry);
+  const gs = d3.range(1, (d3.max(data, (r) => +r.generations) || 1) + 1);
+  const val = (g, f) => { const r = data.find((q) => +q.generations === g); return r ? +r[f] : 0; };
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = 280, mb = 24;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const y = d3.scaleLinear([0, d3.max(gs, (g) => val(g, 'advisors')) || 1], [H - mb, 16]).nice();
+  const ml = rp.textW(svg, y.ticks(5).map(d3.format(','))) + 10;
+  const x = d3.scaleBand(gs, [ml + 4, W - 6]).padding(0.3);
+  const x2 = d3.scaleBand(['parents', 'advisors'], [0, x.bandwidth()]).padding(0.08);
+  svg.append('g').attr('transform', `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(d3.format(',')))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).tickFormat((g) => g === 1 ? '1 generation' : `${g} generations`))
+    .attr('font-size', null).attr('font-family', null);
+  const bars = gs.flatMap((g) => ['parents', 'advisors'].map((f) => ({ g, f, v: val(g, f) })));
+  svg.append('g').selectAll('rect').data(bars).join('rect')
+    .attr('x', (b) => x(b.g) + x2(b.f)).attr('width', x2.bandwidth()).attr('y', (b) => y(b.v)).attr('height', (b) => Math.max(0, y(0) - y(b.v)))
+    .attr('fill', (b) => b.f === 'parents' ? dash.colors[0] : 'var(--cds-chart-muted)');
+  svg.append('g').selectAll('text').data(bars).join('text').attr('x', (b) => x(b.g) + x2(b.f) + x2.bandwidth() / 2).attr('y', (b) => y(b.v) - 4)
+    .attr('text-anchor', 'middle').text((b) => rp.int(b.v));
+});
+</script>

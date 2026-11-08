@@ -1,0 +1,143 @@
+# Builds the worldwide tables (data/*.jsonl.gz) from INSPIRE-HEP when a release is published, makes
+# the board of the new data (self-contained HTML), and publishes it on GitHub Pages (branch gh-pages,
+# boards/<date>/ plus an index of every board).
+#
+# The download takes longer than one job may run (6 h), so four jobs share it (build_inspire10.py
+# --shard I/4), and a last job merges their caches and writes the tables.
+#
+# On a release (tag v*): the tables and the board are attached to the release (the tables are too
+#                large for git), and the board is added to GitHub Pages.
+# Manual run:    the same without a release; publish: false only builds and uploads an artifact.
+# Pull request:  a test on two windows of record numbers, with nothing published.
+name: Update data and boards
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      publish:
+        description: "Add the board to GitHub Pages"
+        type: boolean
+        default: false
+  pull_request:
+    paths:
+      - "build/**"
+      - "reproduce/**"
+      - "docs/**"
+      - ".github/workflows/update-data.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: update-data-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  download:
+    # releases: only tags starting with v (the release event has no tag filter of its own)
+    if: github.event_name != 'pull_request' && (github.event_name != 'release' || startsWith(github.event.release.tag_name, 'v'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - name: Download one share from INSPIRE-HEP
+        run: python build/build_inspire10.py --cache build/cache --shard ${{ matrix.shard }}/4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cache-${{ matrix.shard }}
+          path: build/cache
+          retention-days: 3
+          compression-level: 0     # the files are gzipped already
+
+  build:
+    needs: download
+    # a pull request skips the download and builds a small test instead
+    if: always() && (needs.download.result == 'success' || github.event_name == 'pull_request')
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: write          # release assets, gh-pages
+    env:
+      PUBLISH: ${{ github.event_name == 'release' || (github.event_name == 'workflow_dispatch' && inputs.publish) }}
+      TAG: ${{ github.event.release.tag_name }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: python -m pip install -r reproduce/requirements.txt
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/genderize-offline
+          key: genderize-offline-wgnd-2.0-r1
+      - name: Dates
+        run: |
+          DATE=$(date -u +%F)
+          { echo "DATE=$DATE"; echo "YEAR=${DATE:0:4}"; } >> "$GITHUB_ENV"
+
+      - name: Merge the downloaded shares
+        if: github.event_name != 'pull_request'
+        uses: actions/download-artifact@v4
+        with:
+          pattern: cache-*
+          path: build/cache
+          merge-multiple: true
+
+      - name: Write the tables
+        run: |
+          python build/build_inspire10.py --cache build/cache --out out/data \
+            ${{ github.event_name == 'pull_request' && '--recids 2000001 2019000' || '' }}
+          python docs/validate_schema.py out/data --sample ${{ github.event_name == 'pull_request' && '1' || '50' }}
+
+      - name: Compute the indicators and make the board
+        run: |
+          python reproduce/indicators.py out/data out/dash/ --year "$YEAR"
+          python reproduce/standalone.py out/dash/ "out/board_$DATE.html" --set "DATE=$DATE"
+          python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          s = {r['id']: r['value'] for r in json.load(open('out/dash/scalars.json'))}
+          print(f"**{s['papers']:,} papers, {s['authors']:,} authors, {s['countries']} countries**\n")
+          print(f"{s['references']:,} references, {s['references_in']:,} to papers of the corpus")
+          EOF
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: inspire10-${{ env.DATE }}
+          path: |
+            out/board_*.html
+            out/dash/
+          retention-days: 30
+
+      - name: Attach the tables and the board to the release
+        if: github.event_name == 'release'
+        run: |
+          gh release upload "$TAG" out/data/papers.jsonl.gz out/data/authors.jsonl.gz out/data/institutions.jsonl.gz \
+            "out/board_$DATE.html" --clobber --repo "$GITHUB_REPOSITORY"
+
+      - name: Add the board to GitHub Pages
+        if: env.PUBLISH == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages || true
+          if git rev-parse --verify -q origin/gh-pages; then
+            git worktree add site origin/gh-pages && git -C site switch -c gh-pages
+          else
+            git worktree add --orphan -b gh-pages site
+          fi
+          python reproduce/pages_index.py add site --id "$DATE" --board "out/board_$DATE.html" \
+            --scalars out/dash/scalars.json --title "Data of $DATE" --release "$TAG" \
+            --note "INSPIRE-HEP download of $DATE"
+          git -C site add -A
+          git -C site commit -m "Board of the data of $DATE${TAG:+ (release $TAG)}"
+          git -C site push origin gh-pages

@@ -1,0 +1,2 @@
+genderize-offline==0.1.0
+jsonschema>=4.18
