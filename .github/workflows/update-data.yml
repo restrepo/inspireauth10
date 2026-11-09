@@ -122,6 +122,7 @@ jobs:
         if: github.event_name == 'release'
         run: |
           gh release upload "$TAG" out/data/papers.jsonl.gz out/data/authors.jsonl.gz out/data/institutions.jsonl.gz \
+            out/data/experiments.jsonl.gz \
             "out/board_$DATE.html" --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Add the board to GitHub Pages

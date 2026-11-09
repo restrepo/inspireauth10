@@ -1,4 +1,4 @@
-"""Check the three tables of data/ against docs/inspire10.schema.json, line by line.
+"""Check the four tables of data/ against docs/inspire10.schema.json, line by line.
 
 Usage: python docs/validate_schema.py [data/] [--sample N]
 --sample N: check only every N-th line (the full papers table takes a while).
@@ -12,7 +12,8 @@ from pathlib import Path
 from jsonschema import Draft202012Validator
 
 HERE = Path(__file__).resolve().parent
-TABLES = {'papers.jsonl.gz': 'paper', 'authors.jsonl.gz': 'author', 'institutions.jsonl.gz': 'institution'}
+TABLES = {'papers.jsonl.gz': 'paper', 'authors.jsonl.gz': 'author', 'institutions.jsonl.gz': 'institution',
+          'experiments.jsonl.gz': 'experiment'}
 
 
 def main(folder='data', sample=1):

@@ -69,6 +69,7 @@
     <button class="tab" role="tab" data-tab="trends" aria-selected="false">Papers per year</button>
     <button class="tab" role="tab" data-tab="citations" aria-selected="false">Citations</button>
     <button class="tab" role="tab" data-tab="advisors" aria-selected="false">PhD advisors</button>
+    <button class="tab" role="tab" data-tab="collaborations" aria-selected="false">Collaborations</button>
     <button class="tab" role="tab" data-tab="method" aria-selected="false">Method</button>
   </nav>
 
@@ -128,6 +129,17 @@
       <div class="controls"><label for="rp-gen-country">Country</label><select id="rp-gen-country" data-draw="gen-select" data-source="advisor_generations"></select></div>
       <div class="legend"><span><i class="sq" data-i="0"></i>Parent advisors</span><span><i class="sq"></i>All advisors</span></div>
       <div class="chart" data-draw="gen-chart" data-source="advisor_generations"></div>
+    </div>
+  </section>
+
+  <section id="collaborations" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Papers with more than 10 authors</h2>
+      <p class="note"><b data-draw="value" data-source="scalars" data-id="big_papers">—</b> papers with more than 10 authors are in the tables outside the corpus, with their collaborations instead of their authors, and are not counted in the other tabs. These are the 40 collaborations with the most papers; "Not Collaboration" gathers the papers with no collaboration. Countries: those of the authors' institutions on any of the collaboration's papers.</p>
+      <div class="scroll"><table>
+        <thead><tr><th>Collaboration</th><th>Experiment id</th><th class="n">Papers</th><th class="n">Citations</th><th class="n">Countries</th></tr></thead>
+        <tbody data-draw="collab-body" data-source="collaborations"></tbody>
+      </table></div>
     </div>
   </section>
 
@@ -267,6 +279,19 @@ dash.draw('country-body', (tb) => {
   }
 });
 
+dash.draw('collab-body', (tb) => {
+  const d = dash.data('collaborations'); tb.replaceChildren(); if (d.status !== 'ok') return;
+  for (const r of d.data) {
+    const tr = tb.insertRow();
+    tr.insertCell().textContent = r.collaboration;
+    const id = tr.insertCell();
+    if (r.experiment_id && r.experiment_id !== '0000000') {
+      const a = document.createElement('a');
+      a.href = `https://inspirehep.net/experiments/${r.experiment_id}`; a.textContent = r.experiment_id; id.appendChild(a);
+    } else id.textContent = r.experiment_id ?? '—';
+    for (const c of ['papers', 'citations', 'countries']) { const td = tr.insertCell(); td.textContent = rp.num(r[c]); td.className = 'n'; }
+  }
+});
 dash.draw('country-select', (sel) => {
   const d = dash.data('papers_per_year');
   const cs = d.status === 'ok' ? [...new Set(d.data.map((r) => r.country))] : [];

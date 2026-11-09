@@ -10,4 +10,6 @@ DATASETS = {
                        "country's citations."),
     'advisor_generations': ('Generations of PhD advisors', 'Advisors and parent advisors (no registered PhD advisor) '
                             'of each country by the number of generations of PhD students below them.'),
+    'collaborations': ('Collaborations', 'The 40 collaborations with the most papers among the papers with more than '
+                       '10 authors (outside the corpus): experiment id, papers, citations and countries.'),
 }

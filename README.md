@@ -6,17 +6,21 @@ worldwide counterpart of [restrepo/inspireauth](https://github.com/restrepo/insp
 America, the data of *Statistical Analysis of Scientific Metrics in High Energy, Cosmology, and
 Astroparticle Physics in Latin America*, M. Morales-Alvarado, F. Quevedo, M. Ramos-Hamud,
 D. Restrepo) and of [restrepo/inspireauth_CfA](https://github.com/restrepo/inspireauth_CfA) (Africa).
-It uses the same limit of 10 authors, which leaves out large collaborations.
+It uses the same limit of 10 authors for its corpus. The papers with more than 10 authors are in
+the tables too, outside the corpus: instead of their authors they have their collaborations, with
+the INSPIRE id of each experiment (CMS: [1108642](https://inspirehep.net/api/experiments/1108642)),
+and they keep the countries of their authors' institutions.
 
 ## The data
 
-Three gzipped JSON Lines tables, described in [`docs/data-schema.md`](docs/data-schema.md):
+Four gzipped JSON Lines tables, described in [`docs/data-schema.md`](docs/data-schema.md):
 
 | File | One line per |
 |---|---|
-| `papers.jsonl.gz` | paper: year, citations, journal, arXiv categories, document type, countries, authors with affiliations, references |
+| `papers.jsonl.gz` | paper: year, citations, journal, arXiv categories, document type, countries, authors with affiliations (above 10 authors: collaborations), references |
 | `authors.jsonl.gz` | author profile: name, ids, positions, PhD advisors, inferred gender |
 | `institutions.jsonl.gz` | INSPIRE institution: name and country |
+| `experiments.jsonl.gz` | INSPIRE experiment: name, collaboration, accelerator |
 
 Each reference is an INSPIRE record id flagged `in_corpus`: `true` when the cited paper is in the
 corpus (1 to 10 authors), `false` when it is outside it. With the references you can count citations
