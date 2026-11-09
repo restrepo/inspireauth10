@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>HECAP Worldwide Boards</title>
+<style>
+:root { color-scheme: light dark; --fg: #1f1e1d; --muted: #6b6966; --bg: #faf9f5; --panel: #fff; --line: #e3e0d8;
+  --accent: #3266ad; }
+@media (prefers-color-scheme: dark) { :root { --fg: #ecebe7; --muted: #a6a39c; --bg: #1c1b19; --panel: #262523;
+  --line: #3a3936; --accent: #6f9be0; } }
+html { background: var(--bg); }
+body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; color: var(--fg); background: var(--bg); }
+main { max-width: 60rem; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-family: Georgia, "Times New Roman", serif; font-weight: 400; font-size: 30px; margin: 0 0 8px; }
+p { color: var(--muted); line-height: 1.5; max-width: 70ch; }
+a { color: var(--accent); }
+.list { display: grid; gap: 12px; margin-top: 24px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 16px; }
+.card h2 { font-size: 18px; font-weight: 550; margin: 0 0 4px; }
+.card .meta { color: var(--muted); font-size: 13px; }
+.stats { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 10px; font-variant-numeric: tabular-nums; }
+.stats div { font-size: 13px; color: var(--muted); }
+.stats b { display: block; font-size: 18px; color: var(--fg); font-weight: 500; }
+.tag { display: inline-block; font-size: 12px; border: 1px solid var(--line); border-radius: 99px; padding: 1px 8px;
+  margin-left: 6px; color: var(--muted); vertical-align: middle; }
+</style>
+</head>
+<body>
+<main>
+<h1>HECAP worldwide boards</h1>
+<p>Each board shows indicators of high-energy physics, cosmology and astroparticle physics for every country, from
+one download of all INSPIRE-HEP papers with up to 10 authors and their references (repository
+<a href="https://github.com/restrepo/inspireauth10">restrepo/inspireauth10</a>). It extends the study of Latin America
+by Morales-Alvarado, Quevedo, Ramos-Hamud and Restrepo (<a href="https://restrepo.github.io/inspireauth/">its
+boards</a>). A new board is built each time a release of the repository is published. Every board is a
+self-contained page that also works offline.</p>
+<div class="list">
+<div class="card">
+<h2><a href="boards/2026-11-09/">Data of 2026-11-09</a><span class="tag">latest</span></h2>
+<div class="meta">Local INSPIRE-HEP download of 2026-11-09 (no release)</div>
+<div class="stats"><div><b>1,731,145</b>papers</div><div><b>559,086</b>authors</div>
+<div><b>178</b>countries</div><div><b>40,816,714</b>references</div>
+<div><b>35,870,872</b>to the corpus</div></div>
+</div>
+</div>
+</main>
+</body>
+</html>
