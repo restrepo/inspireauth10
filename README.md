@@ -48,7 +48,8 @@ Publishing a GitHub release whose tag starts with `v` runs
 4. it adds the board to GitHub Pages (branch `gh-pages`, `reproduce/pages_index.py`).
 
 A pull request that touches the code runs a small test, with nothing published. No release has
-been made yet.
+been made yet: the board of a local build of 2026-11-09 was added to the
+[GitHub Pages site](https://restrepo.github.io/inspireauth10/) by hand, with `pages_index.py add`.
 
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.

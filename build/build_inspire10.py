@@ -125,8 +125,15 @@ def harvest(kind, query, fields, first, last, folder, shard=(0, 1)):
 
 
 def max_recid(kind):
-    d = get(f'{API}/{kind}?size=1&sort=mostrecent&fields=control_number')
-    return int(d['hits']['hits'][0]['metadata']['control_number'])
+    """The largest record number to harvest. Literature, authors and institutions share one
+    sequence of record numbers, and sort=mostrecent orders authors by creation date, not number
+    (the most recent author profile has number 1011247), so every kind is harvested up to the
+    largest number of the three."""
+    top = 0
+    for k in ('literature', 'authors', 'institutions'):
+        d = get(f'{API}/{k}?size=1&sort=mostrecent&fields=control_number')
+        top = max(top, int(d['hits']['hits'][0]['metadata']['control_number']))
+    return top
 
 
 def ref_id(obj):
