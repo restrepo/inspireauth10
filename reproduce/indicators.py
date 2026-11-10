@@ -1,6 +1,9 @@
 """Compute the board's datasets from the three tables of build/build_inspire10.py.
 
 Counting rules (docs/data-schema.md has the fields):
+- the corpus is the papers with 1 to 10 authors; the papers with more than 10 authors, which
+  papers.jsonl.gz also holds (with collaborations instead of authors), are counted only in
+  `collaborations` and the scalar `big_papers`;
 - a country's papers are the papers with an author affiliated to one of its institutions
   (`countries` of the paper), each counted once;
 - its authors are the distinct authors with such an affiliation (profile, else BAI, else full name);
@@ -25,12 +28,18 @@ from datetime import datetime
 from pathlib import Path
 
 TOP_FLOWS = 20
+TOP_COLLABS = 40
 
 
 def rows(path):
     with gzip.open(path, 'rt', encoding='utf-8') as f:
         for line in f:
             yield json.loads(line)
+
+
+def corpus_rows(data):
+    """The papers of the corpus: those with 1 to 10 authors."""
+    return (p for p in rows(data / 'papers.jsonl.gz') if not p.get('collaborations'))
 
 
 def h_index(cits):
@@ -50,7 +59,7 @@ def main(data, outdir, year=None):
     # pass 1: per-country papers, authors, citations, years; countries of every paper
     papers, authors, cits, years = Counter(), defaultdict(set), defaultdict(list), defaultdict(Counter)
     countries_of, n_refs, n_refs_in = {}, 0, 0
-    for p in rows(data / 'papers.jsonl.gz'):
+    for p in corpus_rows(data):
         cs = p['countries']
         if cs:
             countries_of[p['recid']] = tuple(cs)
@@ -66,7 +75,7 @@ def main(data, outdir, year=None):
             authors['World'].add(a['profile_id'] or a['author_id'] or a['full_name'])
     # authors of a country: those with an affiliation to one of its institutions
     inst_country = {r['institution_id']: r['country'] for r in rows(data / 'institutions.jsonl.gz')}
-    for p in rows(data / 'papers.jsonl.gz'):
+    for p in corpus_rows(data):
         for a in p['authors']:
             key = a['profile_id'] or a['author_id'] or a['full_name']
             for aff in a['affiliations']:
@@ -74,9 +83,21 @@ def main(data, outdir, year=None):
                 if c:
                     authors[c].add(key)
 
+    # papers with more than 10 authors, by collaboration
+    n_big, collab, collab_cits, collab_countries = 0, Counter(), Counter(), defaultdict(set)
+    for p in rows(data / 'papers.jsonl.gz'):
+        if not p.get('collaborations'):
+            continue
+        n_big += 1
+        for c in p['collaborations']:
+            k = c['collaboration'], c['experiment_id']
+            collab[k] += 1
+            collab_cits[k] += p['citation_count'] or 0
+            collab_countries[k].update(p['countries'])
+
     # pass 2: references between papers of the corpus
     corpus_cits, flows = Counter(), Counter()
-    for p in rows(data / 'papers.jsonl.gz'):
+    for p in corpus_rows(data):
         src = countries_of.get(p['recid'], ())
         for r in p['references']:
             if not r['in_corpus']:
@@ -158,8 +179,12 @@ def main(data, outdir, year=None):
         {'id': 'countries', 'label': 'Countries with papers', 'value': len(names)},
         {'id': 'references', 'label': 'References linked to an INSPIRE record', 'value': n_refs},
         {'id': 'references_in', 'label': 'References to papers of the corpus', 'value': n_refs_in},
+        {'id': 'big_papers', 'label': 'Papers with more than 10 authors (outside the corpus)', 'value': n_big},
         {'id': 'year', 'label': 'Last year counted', 'value': year},
     ])
+    dump('collaborations', [{'collaboration': k[0], 'experiment_id': k[1], 'papers': n, 'citations': collab_cits[k],
+                             'countries': len(collab_countries[k])}
+                            for k, n in sorted(collab.items(), key=lambda kv: (-kv[1], kv[0][0]))[:TOP_COLLABS]])
 
     def gpct(c):
         n = gender[c]['male'] + gender[c]['female']

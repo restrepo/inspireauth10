@@ -1,6 +1,6 @@
 ---
 name: inspire10-boards
-description: Work with this repository's worldwide INSPIRE-HEP corpus (every paper with 1 to 10 authors, with authors, affiliations and the INSPIRE ids of its references flagged in_corpus) and its board - build or test the tables (build/build_inspire10.py), validate them, compute indicators by country (papers, authors, citations from all of INSPIRE or from the corpus, h-index, citation flows between countries, PhD advisor generations, gender), build the self-contained HTML board, add new indicators or tabs, or answer a question from the data. Use whenever someone working in a clone of restrepo/inspireauth10 asks for any of these.
+description: Work with this repository's worldwide INSPIRE-HEP corpus (every paper with 1 to 10 authors, with authors, affiliations and the INSPIRE ids of its references flagged in_corpus; papers with more than 10 authors, outside the corpus, with their collaborations and experiment ids instead of authors) and its board - build or test the tables (build/build_inspire10.py), validate them, compute indicators by country (papers, authors, citations from all of INSPIRE or from the corpus, h-index, citation flows between countries, PhD advisor generations, gender), build the self-contained HTML board, add new indicators or tabs, or answer a question from the data. Use whenever someone working in a clone of restrepo/inspireauth10 asks for any of these.
 ---
 
 # Worldwide HEP corpus and board
@@ -22,6 +22,9 @@ python reproduce/standalone.py out/dash/ out/board.html --set DATE=YYYY-MM-DD
 - **The tables** (`docs/data-schema.md`) are JSON Lines: read them line by line or with DuckDB, never
   all at once with `json.load`. Papers join authors by `profile_id` and institutions by
   `institution_id`; `references[].recid` joins papers, and `in_corpus` says whether it can.
+  Papers with more than 10 authors are lines of the papers table too, with `collaborations`
+  (joining `experiments` by `experiment_id`) and empty `authors`: skip them when counting the
+  corpus (`'collaborations' not in p`), as `reproduce/indicators.py` does.
 - **Counting rules:** the docstring of `reproduce/indicators.py`.
 
 ## Add an indicator

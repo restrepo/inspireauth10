@@ -6,13 +6,21 @@ reference is flagged `in_corpus` when it points to a paper of the corpus; refere
 to papers with more than 10 authors, or with no authors, are kept with `in_corpus: false`.
 References that INSPIRE has not linked to a record are not included.
 
-It writes three gzipped JSON Lines tables to --out (see docs/data-schema.md):
+The papers with more than 10 authors (`ac 11->100000`) are also written to papers.jsonl.gz,
+outside the corpus: instead of their authors (`authors` is empty) they have their
+collaborations, each with the INSPIRE id of its experiment (`collaborations`; a paper with no
+collaboration has one entry "Not Collaboration" with id "0000000"), and they keep the
+countries of their authors' affiliations and their references.
+
+It writes four gzipped JSON Lines tables to --out (see docs/data-schema.md):
 
     papers.jsonl.gz        one line per paper: year, citations, journal, arXiv categories,
-                           authors with their affiliations, references
+                           authors with their affiliations (or, above 10 authors, the
+                           collaborations), countries, references
     authors.jsonl.gz       one line per author profile cited by a paper: name, ids,
                            positions (with institution_id and country), advisors, gender
     institutions.jsonl.gz  one line per INSPIRE institution: name and country
+    experiments.jsonl.gz   one line per INSPIRE experiment: name, collaboration, accelerator
 
 The rules follow restrepo/inspireauth (build/build_inspire_LA.py): the year of a paper is
 its journal year, else its preprint year, else its INSPIRE creation year; first_names drop
@@ -21,7 +29,8 @@ country of the author's first affiliation in the corpus (papers in record-number
 
 The download goes through record-number windows of 9,500 ids, so no query passes INSPIRE's
 limit of 10,000 results. Every window is cached (raw responses, gzipped), so a stopped run
-resumes where it was. The whole download is about 5,500 requests (several hours).
+resumes where it was. The whole download is about 5,500 requests (several hours), plus about
+2 GB for the papers with more than 10 authors.
 
 Usage: python build/build_inspire10.py [--cache build/cache] [--out data/] [--recids FIRST LAST] [--shard I/N]
 --recids: only literature records in that range, for a test run (profiles and institutions
@@ -47,11 +56,16 @@ API = 'https://inspirehep.net/api'
 ROOT = Path(__file__).resolve().parent.parent
 LIT_FIELDS = ('control_number,citation_count,arxiv_eprints,publication_info,preprint_date,legacy_creation_date,'
               'document_type,references.record,authors.ids,authors.full_name,authors.affiliations,authors.record')
+BIG_FIELDS = ('control_number,citation_count,arxiv_eprints,publication_info,preprint_date,legacy_creation_date,'
+              'document_type,references.record,collaborations,author_count,authors.affiliations.record')
+EXP_FIELDS = 'control_number,legacy_name,collaboration,name_variants,accelerator'
+NO_COLLABORATION = {'collaboration': 'Not Collaboration', 'experiment_id': '0000000'}
 AUTHOR_FIELDS = 'control_number,name,positions,ids,advisors'
 INST_FIELDS = 'control_number,legacy_ICN,addresses'
 SLEEP = 0.35  # INSPIRE allows 15 requests per 5 s
 WINDOW = 9500  # record numbers per window: never more than INSPIRE's 10,000 results per query
 SIZE = 500
+BIG_SIZE = 100  # papers with more than 10 authors: a page of 500 can pass 50 MB
 UA = 'inspireauth10 (https://github.com/restrepo/inspireauth10)'
 
 
@@ -74,9 +88,9 @@ def get(url, tries=8):
     raise RuntimeError(f'failed: {url}')
 
 
-def search(kind, q, fields):
+def search(kind, q, fields, size=SIZE):
     """All hits of an INSPIRE search, following `links.next`."""
-    url = f'{API}/{kind}?size={SIZE}&page=1&q={urllib.parse.quote(q)}&fields={fields}'
+    url = f'{API}/{kind}?size={size}&page=1&q={urllib.parse.quote(q)}&fields={fields}'
     hits = []
     while url:
         d = get(url)
@@ -103,7 +117,7 @@ def read_jsonl_gz(path):
             yield json.loads(line)
 
 
-def harvest(kind, query, fields, first, last, folder, shard=(0, 1)):
+def harvest(kind, query, fields, first, last, folder, shard=(0, 1), size=SIZE):
     """Cache every record of `kind` in the windows 1-9500, 9501-19000, ... that meet first..last,
     one file per window; returns the files of those windows. With shard (I, N), only the
     windows I, I+N, ... are downloaded."""
@@ -116,7 +130,7 @@ def harvest(kind, query, fields, first, last, folder, shard=(0, 1)):
         if i % shard[1] != shard[0]:
             continue
         if not path.exists():
-            hits = search(kind, query(lo, hi), fields)
+            hits = search(kind, query(lo, hi), fields, size)
             write_jsonl_gz(path, hits)
             if i % 20 == 0 or i == len(windows) - 1:
                 log(f'{kind}: window {i + 1}/{len(windows)} ({lo}-{hi}): {len(hits)} records')
@@ -207,6 +221,27 @@ def paper_row(w, corpus, inst_country):
             'n_authors': len(authors), 'countries': sorted(countries), 'authors': authors, 'references': refs}
 
 
+def big_row(w, corpus, inst_country, experiment_of):
+    """A paper with more than 10 authors: its collaborations instead of its authors."""
+    row = paper_row(w, corpus, inst_country)
+    n = len(row['authors'])
+    collabs, seen = [], set()
+    for c in w.get('collaborations') or []:
+        name = (c.get('value') or '').strip()
+        eid = ref_id(c) or experiment_of.get(name.lower())
+        if name and (name, eid) not in seen:
+            seen.add((name, eid))
+            collabs.append({'collaboration': name, 'experiment_id': eid})
+    row.update(n_authors=max(n, w.get('author_count') or 0), authors=[], collaborations=collabs or [NO_COLLABORATION])
+    return row
+
+
+def experiment_row(m):
+    return {'experiment_id': str(m['control_number']), 'name': m.get('legacy_name'),
+            'collaboration': (m.get('collaboration') or {}).get('value'),
+            'accelerator': (m.get('accelerator') or {}).get('value')}
+
+
 def main(argv=None):
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument('--cache', default=str(Path(__file__).resolve().parent / 'cache'))
@@ -219,6 +254,8 @@ def main(argv=None):
         shard = tuple(map(int, a.shard.split('/')))
         harvest('literature', lambda lo, hi: f'ac 1->10 and recid {lo}->{hi}', LIT_FIELDS, 1, max_recid('literature'),
                 cache / 'literature', shard)
+        harvest('literature', lambda lo, hi: f'ac 11->100000 and recid {lo}->{hi}', BIG_FIELDS, 1,
+                max_recid('literature'), cache / 'collaborations', shard, BIG_SIZE)
         harvest('authors', lambda lo, hi: f'control_number:[{lo} TO {hi}]', AUTHOR_FIELDS, 1, max_recid('authors'),
                 cache / 'authors', shard)
         log(f'shard {a.shard} done')
@@ -239,9 +276,32 @@ def main(argv=None):
             for au in w.get('authors') or []:
                 pids.add(ref_id(au))
                 iids.update(ref_id(x) for x in au.get('affiliations') or [])
+    # papers with more than 10 authors, outside the corpus
+    big = harvest('literature', lambda lo, hi: f'ac 11->100000 and recid {lo}->{hi}', BIG_FIELDS, first, last,
+                  cache / 'collaborations', size=BIG_SIZE)
+    for p in big:
+        for w in works(p):
+            for au in w.get('authors') or []:
+                iids.update(ref_id(x) for x in au.get('affiliations') or [])
     pids.discard(None)
     iids.discard(None)
     log(f'corpus: {len(corpus)} papers, {len(pids)} profiles, {len(iids)} institutions cited')
+
+    # experiments: the id of a collaboration that INSPIRE did not link, by its name
+    exp_path = cache / 'experiments.jsonl.gz'
+    if not exp_path.exists():
+        write_jsonl_gz(exp_path, search('experiments', 'control_number:[1 TO 99999999]', EXP_FIELDS))
+    exps = sorted(read_jsonl_gz(exp_path), key=lambda m: m['control_number'])
+    experiment_of = {}  # collaboration names first, then subgroups, then other names of the experiment
+    for names in (lambda m: [(m.get('collaboration') or {}).get('value')],
+                  lambda m: (m.get('collaboration') or {}).get('subgroup_names') or [],
+                  lambda m: m.get('name_variants') or []):
+        for m in exps:
+            for name in names(m):
+                if name:
+                    experiment_of.setdefault(name.strip().lower(), str(m['control_number']))
+    n = write_jsonl_gz(out / 'experiments.jsonl.gz', (experiment_row(m) for m in exps))
+    log(f'experiments.jsonl.gz: {n}')
 
     # 2. institutions (all of them) and author profiles (all, or the cited ones in a test run)
     if a.recids:
@@ -279,8 +339,13 @@ def main(argv=None):
     # 3. papers, in record-number order; note each profile's first affiliation country and name
     first_country, seen_name = {}, {}
     def papers():
-        for p in lit:
-            for w in works(p):
+        # lit and big share the windows, so the papers stay in record-number order
+        for p, q in zip(lit, big, strict=True):
+            rows = [(w['control_number'], 0, w) for w in works(p)] + [(w['control_number'], 1, w) for w in works(q)]
+            for _, is_big, w in sorted(rows, key=lambda r: r[:2]):
+                if is_big:
+                    yield big_row(w, corpus, inst_country, experiment_of)
+                    continue
                 row = paper_row(w, corpus, inst_country)
                 for au in row['authors']:
                     k = au['profile_id']

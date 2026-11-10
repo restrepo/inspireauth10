@@ -1,6 +1,6 @@
 # Data schema
 
-`build/build_inspire10.py` writes three gzipped JSON Lines tables (one JSON object per line).
+`build/build_inspire10.py` writes four gzipped JSON Lines tables (one JSON object per line).
 They are too large for git, so they are not in the repository: a release attaches them (see
 the README). [`inspire10.schema.json`](inspire10.schema.json) is the machine-readable version
 (JSON Schema 2020-12, one definition per table), and `python docs/validate_schema.py data/`
@@ -8,9 +8,10 @@ checks the files against it (it needs `pip install jsonschema`).
 
 | File | One line per | Joins |
 |---|---|---|
-| `papers.jsonl.gz` | INSPIRE-HEP literature record with 1 to 10 authors | `authors[].profile_id` → authors, `authors[].affiliations[].institution_id` → institutions, `references[].recid` → papers |
+| `papers.jsonl.gz` | INSPIRE-HEP literature record with at least one author (the corpus: 1 to 10 authors; above 10, with collaborations instead of authors) | `authors[].profile_id` → authors, `authors[].affiliations[].institution_id` → institutions, `collaborations[].experiment_id` → experiments, `references[].recid` → papers |
 | `authors.jsonl.gz` | author profile that appears in a paper | `positions[].institution_id` → institutions |
 | `institutions.jsonl.gz` | INSPIRE-HEP institution | |
+| `experiments.jsonl.gz` | INSPIRE-HEP experiment | |
 
 ```python
 import gzip, json
@@ -27,7 +28,12 @@ papers = {p['recid']: p for p in rows('data/papers.jsonl.gz')}   # several GB in
 
 The corpus is every INSPIRE-HEP literature record with 1 to 10 authors (`ac 1->10`), of any document type,
 with or without affiliations. This is the same limit as restrepo/inspireauth: papers of large
-collaborations are left out.
+collaborations are left out of it.
+
+The papers with more than 10 authors (`ac 11->100000`) are lines of `papers.jsonl.gz` too, outside
+the corpus. They have the same fields, but `authors` is empty and `collaborations` lists their
+collaborations; `countries` still holds the countries of all their authors' institutions. Only
+these papers have `collaborations`, so `'collaborations' not in p` selects the corpus.
 
 ## `papers.jsonl.gz`
 
@@ -39,9 +45,10 @@ collaborations are left out.
 | `journal_id` | string, null | INSPIRE journal record number of the first publication, or null. |
 | `arxiv_categories` | list of strings | arXiv categories of the first e-print, primary first; empty if not on arXiv. |
 | `document_type` | list of strings | INSPIRE document types, e.g. `article`, `conference paper`, `thesis`. |
-| `n_authors` | integer | Number of authors (1 to 10). |
+| `n_authors` | integer | Number of authors (1 to 10 in the corpus; more above). |
 | `countries` | list of strings | Countries of the authors' institutions, sorted, each once; empty when no affiliation has a known country. |
-| `authors` | list | The authors in INSPIRE order (below). |
+| `authors` | list | The authors in INSPIRE order (below); empty above 10 authors. |
+| `collaborations` | list | Only above 10 authors: `{collaboration, experiment_id}` per collaboration, with the INSPIRE experiment record number (e.g. CMS → `1108642`, https://inspirehep.net/api/experiments/1108642), taken from the paper's link or, when INSPIRE did not link it, from the experiment of that collaboration name (null if there is none). A paper with no collaboration has `[{"collaboration": "Not Collaboration", "experiment_id": "0000000"}]`. |
 | `references` | list | The references INSPIRE links to a literature record (below). |
 
 ### `authors[]`
@@ -58,7 +65,7 @@ collaborations are left out.
 | Field | Type | Description |
 |---|---|---|
 | `recid` | integer | INSPIRE literature record number of the cited paper. |
-| `in_corpus` | boolean | `true` when the cited paper is in the corpus (a line of `papers.jsonl.gz`); `false` when it is outside: more than 10 authors, no authors, or not a literature record of this download. |
+| `in_corpus` | boolean | `true` when the cited paper is in the corpus (1 to 10 authors); `false` when it is outside: more than 10 authors (also a line of `papers.jsonl.gz`, with `collaborations`), no authors, or not a literature record of this download. |
 
 Each cited record appears once, in the order of the paper's reference list; a paper never cites
 itself. References that INSPIRE has not matched to a record are not included (about a quarter of
@@ -91,6 +98,15 @@ E-mail addresses are not included.
 | `institution` | string, null | INSPIRE short name (ICN), e.g. `Antioquia U.` |
 | `country` | string, null | Country of the first address. |
 | `country_code` | string, null | Its ISO 3166-1 alpha-2 code. |
+
+## `experiments.jsonl.gz`
+
+| Field | Type | Description |
+|---|---|---|
+| `experiment_id` | string | INSPIRE experiment record number. |
+| `name` | string, null | INSPIRE legacy name, e.g. `CERN-LHC-CMS`. |
+| `collaboration` | string, null | Name of its collaboration, e.g. `CMS`. |
+| `accelerator` | string, null | e.g. `LHC`. |
 
 ## Rules and pitfalls
 
