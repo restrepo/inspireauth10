@@ -2,13 +2,69 @@
  {
   "id": "2026-11-09",
   "title": "Data of 2026-11-09",
-  "note": "Local INSPIRE-HEP download of 2026-11-09 (no release)",
+  "note": "Local INSPIRE-HEP download of 2026-11-09 (no release), with the papers with more than 10 authors",
   "release": "",
-  "added": "2026-11-09",
+  "added": "2026-11-10",
   "papers": 1731145,
   "authors": 559086,
   "countries": 178,
   "references": 40816714,
-  "references_in": 35870872
+  "references_in": 35870872,
+  "regions": [
+   {
+    "slug": "latin-america",
+    "name": "Latin America",
+    "papers": 60181,
+    "authors": 19918,
+    "countries": 18,
+    "references": 1849276,
+    "references_in": 1692318
+   },
+   {
+    "slug": "africa",
+    "name": "Africa",
+    "papers": 13466,
+    "authors": 5636,
+    "countries": 39,
+    "references": 449847,
+    "references_in": 407791
+   },
+   {
+    "slug": "asia",
+    "name": "Asia",
+    "papers": 298583,
+    "authors": 102243,
+    "countries": 49,
+    "references": 9225369,
+    "references_in": 8245780
+   },
+   {
+    "slug": "europe",
+    "name": "Europe",
+    "papers": 664789,
+    "authors": 222170,
+    "countries": 47,
+    "references": 16844488,
+    "references_in": 14706717
+   },
+   {
+    "slug": "north-america",
+    "name": "North America",
+    "papers": 428184,
+    "authors": 139251,
+    "countries": 2,
+    "references": 9921688,
+    "references_in": 8746288
+   },
+   {
+    "slug": "oceania",
+    "name": "Oceania",
+    "papers": 18084,
+    "authors": 7774,
+    "countries": 8,
+    "references": 541762,
+    "references_in": 475810
+   }
+  ]
  }
 ]
