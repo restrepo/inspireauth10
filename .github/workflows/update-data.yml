@@ -103,6 +103,7 @@ jobs:
         run: |
           python reproduce/indicators.py out/data out/dash/ --year "$YEAR"
           python reproduce/standalone.py out/dash/ "out/board_$DATE.html" --set "DATE=$DATE"
+          python reproduce/regional_boards.py out/data out/ --date "$DATE" --year "$YEAR"
           python - <<'EOF' >> "$GITHUB_STEP_SUMMARY"
           import json
           s = {r['id']: r['value'] for r in json.load(open('out/dash/scalars.json'))}
@@ -116,6 +117,7 @@ jobs:
           path: |
             out/board_*.html
             out/dash/
+            out/dash_*/
           retention-days: 30
 
       - name: Attach the tables and the board to the release
@@ -123,7 +125,7 @@ jobs:
         run: |
           gh release upload "$TAG" out/data/papers.jsonl.gz out/data/authors.jsonl.gz out/data/institutions.jsonl.gz \
             out/data/experiments.jsonl.gz \
-            "out/board_$DATE.html" --clobber --repo "$GITHUB_REPOSITORY"
+            out/board_*"$DATE".html --clobber --repo "$GITHUB_REPOSITORY"
 
       - name: Add the board to GitHub Pages
         if: env.PUBLISH == 'true'
@@ -137,7 +139,7 @@ jobs:
             git worktree add --orphan -b gh-pages site
           fi
           python reproduce/pages_index.py add site --id "$DATE" --board "out/board_$DATE.html" \
-            --scalars out/dash/scalars.json --title "Data of $DATE" --release "$TAG" \
+            --scalars out/dash/scalars.json --title "Data of $DATE" --release "$TAG" --regions out \
             --note "INSPIRE-HEP download of $DATE"
           git -C site add -A
           git -C site commit -m "Board of the data of $DATE${TAG:+ (release $TAG)}"

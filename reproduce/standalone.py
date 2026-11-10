@@ -107,6 +107,10 @@ SHIM = """
 """
 
 
+# placeholders of the worldwide board; a regional board sets them (reproduce/regional_boards.py)
+DEFAULTS = {'SCOPE': 'worldwide', 'SCOPE_NOTE': '', 'TOTAL': 'World', 'TITLE': 'Worldwide'}
+
+
 def script_json(obj):
     return json.dumps(obj, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
 
@@ -114,7 +118,9 @@ def script_json(obj):
 def main(dash_dir, out_path, values=None):
     page = (HERE / 'board/index.html').read_text(encoding='utf-8')
     page = page.replace('<meta name="dash-one-writer">\n', '')
-    for key, value in (values or {}).items():
+    values = {**DEFAULTS, **(values or {})}
+    title = values['TITLE']
+    for key, value in values.items():
         page = page.replace(f'@@{key}@@', value)
     if '@@' in page:
         raise SystemExit('unfilled placeholder in the page: pass --set DATE=YYYY-MM-DD')
@@ -129,7 +135,7 @@ def main(dash_dir, out_path, values=None):
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>HECAP Worldwide</title>
+<title>HECAP {html.escape(title)}</title>
 <style>{TOKENS}</style>
 </head>
 <body class="sa-body">

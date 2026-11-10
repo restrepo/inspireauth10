@@ -59,8 +59,8 @@
 
 <div class="rp">
   <header class="card" style="background: none; border: 0; padding: 0;">
-    <h1 id="title">HECAP worldwide, papers with up to 10 authors</h1>
-    <p class="lede">Every INSPIRE-HEP paper with 1 to 10 authors (<code>data/</code> of restrepo/inspireauth10, INSPIRE-HEP downloaded on @@DATE@@), with its authors, affiliations and the INSPIRE ids of its references. Countries are those of the authors' institutions.</p>
+    <h1 id="title">HECAP @@SCOPE@@, papers with up to 10 authors</h1>
+    <p class="lede">Every INSPIRE-HEP paper with 1 to 10 authors (<code>data/</code> of restrepo/inspireauth10, INSPIRE-HEP downloaded on @@DATE@@), with its authors, affiliations and the INSPIRE ids of its references. Countries are those of the authors' institutions.@@SCOPE_NOTE@@</p>
   </header>
 
   <nav class="tabs" role="tablist" aria-label="Sections">
@@ -172,7 +172,8 @@ python reproduce/standalone.py out/dash/ out/board.html --set DATE=YYYY-MM-DD</p
 const rp = window.rp = {
   int: d3.format(','),
   num: (v) => v == null || v === '' ? '—' : Number.isInteger(+v) ? d3.format(',')(+v) : d3.format(',.1f')(+v),
-  ui: { metric: 'papers', sort: 'papers', desc: true, q: '', country: 'World', genCountry: 'World' },
+  ui: { metric: 'papers', sort: 'papers', desc: true, q: '', country: '@@TOTAL@@', genCountry: '@@TOTAL@@' },
+  total: '@@TOTAL@@',
 };
 rp.ready = (el, ids) => {
   const st = ids.map((id) => dash.data(id).status);
@@ -232,7 +233,7 @@ dash.draw('metric-select', (sel) => {
 dash.draw('top-chart', (el) => {
   if (!rp.ready(el, ['countries'])) return;
   const m = rp.ui.metric;
-  const all = dash.data('countries').data.filter((r) => r.country !== 'World');
+  const all = dash.data('countries').data.filter((r) => r.country !== rp.total);
   const rows = all.slice().sort((a, b) => b.papers - a.papers).slice(0, 30).filter((r) => r[m] != null).sort((a, b) => b[m] - a[m]);
   el.replaceChildren();
   const W = Math.max(300, el.clientWidth), rh = 22, mt = 4, mb = 24, H = mt + rows.length * rh + mb;
@@ -267,14 +268,14 @@ dash.draw('country-body', (tb) => {
   const d = dash.data('countries'); tb.replaceChildren(); if (d.status !== 'ok') return;
   const k = rp.ui.sort, s = rp.ui.desc ? -1 : 1;
   const rows = d.data.filter((r) => !rp.ui.q || r.country.toLowerCase().includes(rp.ui.q))
-    .sort((a, b) => (a.country === 'World') - (b.country === 'World') || (k === 'country' ? s * a.country.localeCompare(b.country) : s * ((a[k] ?? -1) - (b[k] ?? -1))));
+    .sort((a, b) => (a.country === rp.total) - (b.country === rp.total) || (k === 'country' ? s * a.country.localeCompare(b.country) : s * ((a[k] ?? -1) - (b[k] ?? -1))));
   for (const r of rows) {
     const tr = tb.insertRow();
     for (const c of rp.cols) {
       const td = tr.insertCell();
       td.textContent = c === 'country' ? r.country : rp.num(r[c]);
       if (c !== 'country') td.className = 'n';
-      if (r.country === 'World') td.style.fontWeight = 600;
+      if (r.country === rp.total) td.style.fontWeight = 600;
     }
   }
 });

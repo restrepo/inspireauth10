@@ -14,7 +14,11 @@ python build/build_inspire10.py --out data/ [--recids 2000001 2019000]   # table
 python docs/validate_schema.py data/ [--sample 50]
 python reproduce/indicators.py data/ out/dash/ [--year YYYY]
 python reproduce/standalone.py out/dash/ out/board.html --set DATE=YYYY-MM-DD
+python reproduce/regional_boards.py data/ out/ --date YYYY-MM-DD           # one board per region
 ```
+
+- **Regions** are lists of INSPIRE country names in `reproduce/regions.py`; `indicators.py --region
+  NAME` restricts the datasets to one of them, and its total row is named after the region.
 
 - **The download** is about 5,500 requests and takes several hours. Run it in the background. It is
   cached in `build/cache/` by windows of record numbers, so a stopped run resumes. Use a new
