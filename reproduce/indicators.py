@@ -17,8 +17,17 @@ Counting rules (docs/data-schema.md has the fields):
   count in every country where their profile has a position; generations are the longest chain
   of students below them, and parent advisors have no registered PhD advisor.
 
-Usage: python reproduce/indicators.py data/ out/dash/ [--year 2026]
+Regional boards (--region, the countries of reproduce/regions.py): the countries are those of
+the region, and the total row, named after the region instead of World, counts the papers with an
+author in the region, the authors affiliated there, the corpus citations received by papers with
+an author there, the profiles whose first affiliation is there, and the advisors with a position
+there. Each country's share of citations from the same country still counts citations from every
+country. The references, profiles and papers with more than 10 authors of the scalars are those
+of the region's papers and profiles.
+
+Usage: python reproduce/indicators.py data/ out/dash/ [--year 2026] [--region "Latin America"]
 --year: the last year of the per-year counts (default: the current year)
+--region: a region of reproduce/regions.py (default: the world)
 """
 import gzip
 import json
@@ -26,6 +35,8 @@ import sys
 from collections import Counter, defaultdict
 from datetime import datetime
 from pathlib import Path
+
+from regions import REGIONS
 
 TOP_FLOWS = 20
 TOP_COLLABS = 40
@@ -47,10 +58,16 @@ def h_index(cits):
     return sum(1 for i, c in enumerate(cits) if c >= i + 1)
 
 
-def main(data, outdir, year=None):
+def main(data, outdir, year=None, region=None):
     data, out = Path(data), Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
     year = year or datetime.now().year
+    TOTAL = region or 'World'
+    inside = set(REGIONS[region]) if region else None
+
+    def total(cs):
+        """[TOTAL] when the countries cs are in the region (always for the world), else []."""
+        return [TOTAL] if inside is None or inside.intersection(cs) else []
 
     def dump(name, value):
         json.dump(value, open(out / f'{name}.json', 'w', encoding='utf-8'), separators=(',', ':'), ensure_ascii=False)
@@ -64,15 +81,17 @@ def main(data, outdir, year=None):
         if cs:
             countries_of[p['recid']] = tuple(cs)
         y = int(p['year']) if str(p['year']).isdigit() else None
-        for c in cs + ['World']:
+        for c in cs + total(cs):
             papers[c] += 1
             cits[c].append(p['citation_count'] or 0)
             if y and 1950 <= y <= year:
                 years[c][y] += 1
-        n_refs += len(p['references'])
-        n_refs_in += sum(1 for r in p['references'] if r['in_corpus'])
-        for a in p['authors']:
-            authors['World'].add(a['profile_id'] or a['author_id'] or a['full_name'])
+        if total(cs):
+            n_refs += len(p['references'])
+            n_refs_in += sum(1 for r in p['references'] if r['in_corpus'])
+        if inside is None:
+            for a in p['authors']:
+                authors['World'].add(a['profile_id'] or a['author_id'] or a['full_name'])
     # authors of a country: those with an affiliation to one of its institutions
     inst_country = {r['institution_id']: r['country'] for r in rows(data / 'institutions.jsonl.gz')}
     for p in corpus_rows(data):
@@ -82,11 +101,13 @@ def main(data, outdir, year=None):
                 c = inst_country.get(aff['institution_id'])
                 if c:
                     authors[c].add(key)
+                    if inside is not None and c in inside:
+                        authors[TOTAL].add(key)
 
     # papers with more than 10 authors, by collaboration
     n_big, collab, collab_cits, collab_countries = 0, Counter(), Counter(), defaultdict(set)
     for p in rows(data / 'papers.jsonl.gz'):
-        if not p.get('collaborations'):
+        if not p.get('collaborations') or not total(p['countries']):
             continue
         n_big += 1
         for c in p['collaborations']:
@@ -103,7 +124,8 @@ def main(data, outdir, year=None):
             if not r['in_corpus']:
                 continue
             dst = countries_of.get(r['recid'], ())
-            corpus_cits['World'] += 1
+            if inside is None or inside.intersection(dst):
+                corpus_cits[TOTAL] += 1
             for b in dst:
                 corpus_cits[b] += 1
                 for a in src:
@@ -111,11 +133,13 @@ def main(data, outdir, year=None):
 
     # authors' gender and PhD advisors
     gender = defaultdict(Counter)
-    profiles = {}
+    profiles, n_profiles = {}, 0
     for a in rows(data / 'authors.jsonl.gz'):
         profiles[a['profile_id']] = a
+        in_total = total([a['country']] if a['country'] else [])
+        n_profiles += bool(in_total)
         if a['gender_probability'] >= 0.9 and a['gender'] in ('male', 'female'):
-            for c in {a['country'], 'World'} - {None}:
+            for c in {a['country'], *in_total} - {None}:
                 gender[c][a['gender']] += 1
 
     ref = {}
@@ -165,17 +189,18 @@ def main(data, outdir, year=None):
         if not g:
             continue
         cs = {p['country'] for p in profiles[k]['positions'] if p.get('country')}
-        for c in [*cs, 'World'] if cs else []:
+        for c in [*sorted(cs), *total(cs)] if cs else []:
             tree[c]['parent', g] += k not in with_advisor
             tree[c]['all', g] += 1
 
     # datasets
-    names = sorted((c for c in papers if c != 'World'), key=lambda c: -papers[c])
+    every = [c for c in papers if c != TOTAL]
+    names = sorted((c for c in every if inside is None or c in inside), key=lambda c: -papers[c])
     top = names[:TOP_FLOWS]
     dump('scalars', [
-        {'id': 'papers', 'label': 'Papers with 1 to 10 authors', 'value': papers['World']},
-        {'id': 'authors', 'label': 'Distinct authors', 'value': len(authors['World'])},
-        {'id': 'profiles', 'label': 'Authors with an INSPIRE profile', 'value': len(profiles)},
+        {'id': 'papers', 'label': 'Papers with 1 to 10 authors', 'value': papers[TOTAL]},
+        {'id': 'authors', 'label': 'Distinct authors', 'value': len(authors[TOTAL])},
+        {'id': 'profiles', 'label': 'Authors with an INSPIRE profile', 'value': n_profiles},
         {'id': 'countries', 'label': 'Countries with papers', 'value': len(names)},
         {'id': 'references', 'label': 'References linked to an INSPIRE record', 'value': n_refs},
         {'id': 'references_in', 'label': 'References to papers of the corpus', 'value': n_refs_in},
@@ -190,9 +215,9 @@ def main(data, outdir, year=None):
         n = gender[c]['male'] + gender[c]['female']
         return (round(100 * gender[c]['female'] / n, 1) if n else None), n
     country_rows = []
-    for c in ['World', *names]:
+    for c in [TOTAL, *names]:
         f, n = gpct(c)
-        recv = sum(flows[a, c] for a in names) if c != 'World' else None
+        recv = sum(flows[a, c] for a in every) if c != TOTAL else None
         country_rows.append({
             'country': c, 'papers': papers[c], 'authors': len(authors[c]), 'citations': sum(cits[c]),
             'citations_per_paper': round(sum(cits[c]) / papers[c], 2) if papers[c] else 0,
@@ -201,10 +226,10 @@ def main(data, outdir, year=None):
             'female_pct': f, 'gender_n': n})
     dump('countries', country_rows)
     dump('papers_per_year', [{'country': c, 'year': y, 'papers': n}
-                             for c in ['World', *names] for y, n in sorted(years[c].items())])
+                             for c in [TOTAL, *names] for y, n in sorted(years[c].items())])
     flow_rows = []
     for b in top:
-        recv = sum(flows[a, b] for a in names)
+        recv = sum(flows[a, b] for a in every)
         for a in top:
             flow_rows.append({'citing': a, 'cited': b, 'n': flows[a, b],
                               'pct': round(100 * flows[a, b] / recv, 2) if recv else 0})
@@ -212,14 +237,18 @@ def main(data, outdir, year=None):
     dump('advisor_generations', [
         {'country': c, 'generations': g, 'parents': v['parent', g], 'advisors': v['all', g]}
         for c, v in sorted(tree.items(), key=lambda kv: -sum(n for (k, _), n in kv[1].items() if k == 'all'))
+        if c == TOTAL or inside is None or c in inside
         for g in sorted({g for _, g in v}) if v['all', g]])
 
 
 if __name__ == '__main__':
     argv = sys.argv[1:]
-    y = None
-    if '--year' in argv:
-        i = argv.index('--year')
-        y = int(argv[i + 1])
-        del argv[i:i + 2]
-    main(*argv[:2], y)
+    opt = {}
+    for k in ('--year', '--region'):
+        if k in argv:
+            i = argv.index(k)
+            opt[k] = argv[i + 1]
+            del argv[i:i + 2]
+    if opt.get('--region') and opt['--region'] not in REGIONS:
+        sys.exit(f"unknown region {opt['--region']!r}: one of {', '.join(REGIONS)}")
+    main(*argv[:2], int(opt['--year']) if '--year' in opt else None, opt.get('--region'))

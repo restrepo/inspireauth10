@@ -52,8 +52,16 @@ Publishing a GitHub release whose tag starts with `v` runs
 4. it adds the board to GitHub Pages (branch `gh-pages`, `reproduce/pages_index.py`).
 
 A pull request that touches the code runs a small test, with nothing published. No release has
-been made yet: the board of a local build of 2026-11-09 was added to the
+been made yet: the boards of a local build of 2026-11-09 were added to the
 [GitHub Pages site](https://restrepo.github.io/inspireauth10/) by hand, with `pages_index.py add`.
+
+## Regional boards
+
+`python reproduce/regional_boards.py data/ out/ --date YYYY-MM-DD` makes a board for each region of
+[`reproduce/regions.py`](reproduce/regions.py): Latin America (the 18 countries of restrepo/inspireauth),
+Africa, Asia, Europe, North America and Oceania. Each counts the countries of its region, and its
+total row counts the papers with an author in the region. A release builds them too and adds them
+to GitHub Pages next to the worldwide board.
 
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.

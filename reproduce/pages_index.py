@@ -5,13 +5,17 @@ a manifest boards.json and index.html, which lists every board from the manifest
 
 Usage:
   python reproduce/pages_index.py add SITE --id 2027-02-01 --board board.html \\
-      --scalars dash/scalars.json --title "Data of 2027-02-01" [--note "..."] [--release v2.0.0]
+      --scalars dash/scalars.json --title "Data of 2027-02-01" [--note "..."] [--release v2.0.0] \\
+      [--regions out/]
   python reproduce/pages_index.py render SITE
+--regions: also copy the regional boards of reproduce/regional_boards.py found in that folder
+      (board_<slug>_<id>.html, datasets dash_<slug>/) to boards/<id>/<slug>/.
 """
 import argparse
 import html
 import json
 import shutil
+import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -43,18 +47,40 @@ def stats(scalars):
     return {k: s[k] for k in ['papers', 'authors', 'countries', 'references', 'references_in']}
 
 
-def add(site, id, board, scalars, title, note='', release=''):
+def add(site, id, board, scalars, title, note='', release='', regions_dir=None):
     site = Path(site)
     dest = site / 'boards' / id
     dest.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(board, dest / 'index.html')
+    regions = []
+    if regions_dir:
+        sys.path.insert(0, str(Path(__file__).resolve().parent))
+        from regional_boards import slug
+        from regions import REGIONS
+        for name in REGIONS:
+            src = Path(regions_dir) / f'board_{slug(name)}_{id}.html'
+            if src.exists():
+                (dest / slug(name)).mkdir(exist_ok=True)
+                shutil.copyfile(src, dest / slug(name) / 'index.html')
+                regions.append({'slug': slug(name), 'name': name,
+                                **stats(Path(regions_dir) / f'dash_{slug(name)}' / 'scalars.json')})
     manifest = site / 'boards.json'
     boards = json.load(open(manifest, encoding='utf-8')) if manifest.exists() else []
     boards = [b for b in boards if b['id'] != id]
     boards.append({'id': id, 'title': title, 'note': note, 'release': release,
-                   'added': datetime.now(timezone.utc).strftime('%Y-%m-%d'), **stats(scalars)})
+                   'added': datetime.now(timezone.utc).strftime('%Y-%m-%d'), **stats(scalars),
+                   **({'regions': regions} if regions else {})})
     manifest.write_text(json.dumps(boards, indent=1, ensure_ascii=False), encoding='utf-8')
     render(site)
+
+
+def regions_list(b):
+    if not b.get('regions'):
+        return ''
+    e = html.escape
+    links = ' · '.join(f'<a href="boards/{e(b["id"])}/{e(r["slug"])}/">{e(r["name"])}</a> ({r["papers"]:,} papers)'
+                       for r in b['regions'])
+    return f'<div class="meta" style="margin-top:10px">Regional boards: {links}</div>\n'
 
 
 def render(site):
@@ -75,7 +101,7 @@ def render(site):
 <div class="stats"><div><b>{b['papers']:,}</b>papers</div><div><b>{b['authors']:,}</b>authors</div>
 <div><b>{b['countries']:,}</b>countries</div><div><b>{b['references']:,}</b>references</div>
 <div><b>{b['references_in']:,}</b>to the corpus</div></div>
-</div>""")
+{regions_list(b)}</div>""")
     doc = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -89,7 +115,8 @@ def render(site):
 <h1>HECAP worldwide boards</h1>
 <p>Each board shows indicators of high-energy physics, cosmology and astroparticle physics for every country, from
 one download of all INSPIRE-HEP papers with up to 10 authors and their references (repository
-<a href="https://github.com/restrepo/inspireauth10">restrepo/inspireauth10</a>). It extends the study of Latin America
+<a href="https://github.com/restrepo/inspireauth10">restrepo/inspireauth10</a>), with a board for each region:
+Latin America (the 18 countries of the study), Africa, Asia, Europe, North America and Oceania. It extends the study of Latin America
 by Morales-Alvarado, Quevedo, Ramos-Hamud and Restrepo (<a href="https://restrepo.github.io/inspireauth/">its
 boards</a>). A new board is built each time a release of the repository is published. Every board is a
 self-contained page that also works offline.</p>
@@ -116,11 +143,12 @@ def main(argv=None):
     p.add_argument('--title', required=True)
     p.add_argument('--note', default='')
     p.add_argument('--release', default='')
+    p.add_argument('--regions', help='folder with the regional boards of reproduce/regional_boards.py')
     p = sub.add_parser('render')
     p.add_argument('site')
     a = ap.parse_args(argv)
     if a.cmd == 'add':
-        add(a.site, a.id, a.board, a.scalars, a.title, a.note, a.release)
+        add(a.site, a.id, a.board, a.scalars, a.title, a.note, a.release, a.regions)
     else:
         render(a.site)
 
