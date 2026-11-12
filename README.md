@@ -63,6 +63,17 @@ Africa, Asia, Europe, North America and Oceania. Each counts the countries of it
 total row counts the papers with an author in the region. A release builds them too and adds them
 to GitHub Pages next to the worldwide board.
 
+Besides the tabs of the worldwide board, the regional boards recover three tabs of restrepo/inspireauth's
+Latin American board: **Regional trends** (the region's share of the papers and citations of the
+corpus, by year), **Ranks & mobility** (where the authors of each country held the ranks under which
+they published, and where the region's PhDs go next) and the co-authorship heatmaps of
+**Collaborations**. Every board has the **Correlations** of authors, papers and citations per million
+inhabitants with R&D spending (Figs. 15–17 of the paper) and the **Gender** tab (female share per
+year and by rank).
+
+Population and R&D spending (% of GDP) come from the World Bank, in
+[`reproduce/world_bank.csv`](reproduce/world_bank.csv); `python reproduce/world_bank.py` downloads them again.
+
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
 
