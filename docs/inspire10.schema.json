@@ -18,6 +18,8 @@
         "year",
         "citation_count",
         "journal_id",
+        "journal",
+        "pub_note",
         "arxiv_categories",
         "document_type",
         "n_authors",
@@ -39,6 +41,12 @@
           ]
         },
         "journal_id": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "journal": {
+          "$ref": "#/$defs/nullableString"
+        },
+        "pub_note": {
           "$ref": "#/$defs/nullableString"
         },
         "arxiv_categories": {

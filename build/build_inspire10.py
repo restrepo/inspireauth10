@@ -32,12 +32,17 @@ limit of 10,000 results. Every window is cached (raw responses, gzipped), so a s
 resumes where it was. The whole download is about 5,500 requests (several hours), plus about
 2 GB for the papers with more than 10 authors.
 
-Usage: python build/build_inspire10.py [--cache build/cache] [--out data/] [--recids FIRST LAST] [--shard I/N]
+Usage: python build/build_inspire10.py [--cache build/cache] [--out data/] [--recids FIRST LAST] [--shard I/N] [--cached] [--last N]
 --recids: only literature records in that range, for a test run (profiles and institutions
           are then fetched only for what those papers cite).
 --shard I/N: only download the windows I, I+N, I+2N, ... into the cache and stop; N jobs with
           I = 0..N-1 share the download, and a last run without --shard on the merged caches
           writes the tables (the release workflow does this, to stay under the 6 h job limit).
+--cached: write the tables from the cache only, up to its last window, with no request to INSPIRE
+          (to rebuild the tables of a past download with a new version of this script).
+--last N: the last literature record number of the tables (default: INSPIRE's newest record, or
+          with --cached the end of the last cached window); with --cached, the `last` that the
+          log of the original build printed rebuilds the same papers.
 Output files are byte-reproducible (no name or time in the gzip header).
 """
 
@@ -199,6 +204,11 @@ def paper_row(w, corpus, inst_country):
         journal_id = w['publication_info'][0]['journal_record']['$ref'].split('/')[-1]
     except (KeyError, IndexError, TypeError):
         journal_id = None
+    # INSPIRE links the journal record of only some publications; the title is there for all, and a
+    # publication it could not parse into a journal keeps only its text
+    pubs = w.get('publication_info') or []
+    journal = next((p['journal_title'] for p in pubs if p.get('journal_title')), None)
+    pub_note = next((p['pubinfo_freetext'] for p in pubs if p.get('pubinfo_freetext')), None)
     authors, countries = [], set()
     for a in w.get('authors') or []:
         affs = []
@@ -217,7 +227,7 @@ def paper_row(w, corpus, inst_country):
             seen.add(int(rid))
             refs.append({'recid': int(rid), 'in_corpus': int(rid) in corpus})
     return {'recid': w['control_number'], 'year': year_of(w), 'citation_count': w.get('citation_count'),
-            'journal_id': journal_id, 'arxiv_categories': cats, 'document_type': w.get('document_type') or [],
+            'journal_id': journal_id, 'journal': journal, 'pub_note': pub_note, 'arxiv_categories': cats, 'document_type': w.get('document_type') or [],
             'n_authors': len(authors), 'countries': sorted(countries), 'authors': authors, 'references': refs}
 
 
@@ -248,8 +258,19 @@ def main(argv=None):
     ap.add_argument('--out', default=str(ROOT / 'data'))
     ap.add_argument('--recids', nargs=2, type=int, metavar=('FIRST', 'LAST'), help='literature range, for a test run')
     ap.add_argument('--shard', help='I/N: download one share of the windows into the cache and stop')
+    ap.add_argument('--cached', action='store_true', help='write the tables from the cache only, with no request')
+    ap.add_argument('--last', type=int, help='last literature record number of the tables')
     a = ap.parse_args(argv)
     cache, out = Path(a.cache), Path(a.out)
+    if a.cached:
+        global max_recid, search
+
+        def max_recid(kind):  # noqa: F811 - the last record number of the cached windows
+            return max(int(p.name.split('-')[1].split('.')[0]) for k in ('literature', 'authors', 'institutions')
+                       for p in (cache / k).glob('*.jsonl.gz'))
+
+        def search(*args, **kw):  # noqa: F811
+            sys.exit(f'--cached: {args[:2]} is not in the cache {cache}')
     if a.shard:
         shard = tuple(map(int, a.shard.split('/')))
         harvest('literature', lambda lo, hi: f'ac 1->10 and recid {lo}->{hi}', LIT_FIELDS, 1, max_recid('literature'),
@@ -263,7 +284,8 @@ def main(argv=None):
     out.mkdir(parents=True, exist_ok=True)
 
     # 1. literature with 1 to 10 authors, by record-number windows
-    first, last = a.recids or (1, max_recid('literature'))
+    first, last = a.recids or (1, a.last or max_recid('literature'))
+    log(f'literature records {first} to {last}')
     lit = harvest('literature', lambda lo, hi: f'ac 1->10 and recid {lo}->{hi}', LIT_FIELDS, first, last,
                   cache / 'literature')
     def works(p):

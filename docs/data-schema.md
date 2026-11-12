@@ -42,7 +42,9 @@ these papers have `collaborations`, so `'collaborations' not in p` selects the c
 | `recid` | integer | INSPIRE literature record number: `https://inspirehep.net/api/literature/<recid>`. |
 | `year` | string | Journal year, else preprint year, else INSPIRE creation year; `"0000"` when none is known. |
 | `citation_count` | integer, null | Citations in all of INSPIRE when the data were downloaded, including citing papers outside the corpus. |
-| `journal_id` | string, null | INSPIRE journal record number of the first publication, or null. |
+| `journal_id` | string, null | INSPIRE journal record number of the first publication, or null. INSPIRE links a journal record for only some publications (about half before 2021), so null does not mean unpublished. |
+| `journal` | string, null | Abbreviated journal title of the first publication that has one (`Phys.Rev.D`), or null when INSPIRE knows no journal. |
+| `pub_note` | string, null | INSPIRE's free-text publication note (`pubinfo_freetext`) of the first publication that has one, kept when INSPIRE could not parse it into a journal (`Physics of Complex Systems, 2022, vol. 3, no. 3`), else null. |
 | `arxiv_categories` | list of strings | arXiv categories of the first e-print, primary first; empty if not on arXiv. |
 | `document_type` | list of strings | INSPIRE document types, e.g. `article`, `conference paper`, `thesis`. |
 | `n_authors` | integer | Number of authors (1 to 10 in the corpus; more above). |
@@ -115,6 +117,11 @@ E-mail addresses are not included.
 - **Citations:** `citation_count` counts citing papers in all of INSPIRE. Citations from the
   corpus, or citations up to a given year, come from the `references` of the papers (each citing
   paper has a `year`).
+- **Published or not:** a paper is published when it has a `journal` or, failing that, a
+  `pub_note`; with neither, INSPIRE knows no publication: a preprint never published, or not yet
+  (many of the last two years). Do not use `journal_id` for this: INSPIRE links a journal record
+  for only about half of the published papers before 2021. INSPIRE's `refereed` flag is not in the
+  tables (the download does not ask for it). `year` is the journal year of a published paper.
 - **Rank at publication:** restrepo/inspireauth stores the rank held when each paper was published.
   Here it can be computed from `positions` (same institution, paper year between start and end).
 - **Size:** `papers.jsonl.gz` holds tens of millions of references. Read it line by line, or load

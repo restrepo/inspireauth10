@@ -26,6 +26,9 @@ python reproduce/regional_boards.py data/ out/ --date YYYY-MM-DD           # one
 - **The download** is about 5,500 requests and takes several hours. Run it in the background. It is
   cached in `build/cache/` by windows of record numbers, so a stopped run resumes. Use a new
   `--cache` folder for a new date, because an old cache returns old data.
+  `--cached` rewrites the tables from the cache alone, with no request (after changing the script).
+- **Published or not:** use `journal` or `pub_note` of a paper, never `journal_id` (INSPIRE links a
+  journal record for only about half of the published papers).
 - **The tables** (`docs/data-schema.md`) are JSON Lines: read them line by line or with DuckDB, never
   all at once with `json.load`. Papers join authors by `profile_id` and institutions by
   `institution_id`; `references[].recid` joins papers, and `in_corpus` says whether it can.

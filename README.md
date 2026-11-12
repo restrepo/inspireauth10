@@ -17,7 +17,7 @@ Four gzipped JSON Lines tables, described in [`docs/data-schema.md`](docs/data-s
 
 | File | One line per |
 |---|---|
-| `papers.jsonl.gz` | paper: year, citations, journal, arXiv categories, document type, countries, authors with affiliations (above 10 authors: collaborations), references |
+| `papers.jsonl.gz` | paper: year, citations, journal (title, INSPIRE record and publication note, so you can tell whether it was published), arXiv categories, document type, countries, authors with affiliations (above 10 authors: collaborations), references |
 | `authors.jsonl.gz` | author profile: name, ids, positions, PhD advisors, inferred gender |
 | `institutions.jsonl.gz` | INSPIRE institution: name and country |
 | `experiments.jsonl.gz` | INSPIRE experiment: name, collaboration, accelerator |
@@ -40,6 +40,10 @@ python reproduce/standalone.py out/dash/ out/board.html --set DATE=YYYY-MM-DD
 ```
 
 For a quick test, `--recids 2000001 2019000` builds the tables of two windows of record numbers.
+
+To rebuild the tables of a past download with a newer version of the build script, without
+asking INSPIRE for anything, add `--cached`: it writes them from `build/cache/` up to its last
+window.
 
 ## Releases
 
@@ -73,7 +77,7 @@ year and by rank).
 
 The Overview tab of the worldwide board also shows the papers per year by arXiv category for the
 world or each of the six regions, the arXiv categories of the 30 leading countries, and the document
-types (article, conference paper, thesis…, with or without a journal) against arXiv.
+types (article, conference paper, thesis…, published in a journal or not) against arXiv, with the share of articles never published, year by year.
 
 Population and R&D spending (% of GDP) come from the World Bank, in
 [`reproduce/world_bank.csv`](reproduce/world_bank.csv); `python reproduce/world_bank.py` downloads them again.

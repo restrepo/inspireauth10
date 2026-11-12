@@ -125,7 +125,7 @@
     </div>
     <div class="card world-only">
       <h2>Document types and arXiv</h2>
-      <p class="note">The papers by their first INSPIRE document type (articles and conference papers split by whether INSPIRE links them to a journal) and their main arXiv category; grey is not on arXiv. From 1991, when arXiv started.</p>
+      <p class="note">The papers by their first INSPIRE document type (articles and conference papers split by whether they were published, that is, INSPIRE gives them a journal or a publication note) and their main arXiv category; grey is not on arXiv. From 1991, when arXiv started.</p>
       <div class="controls"><label for="rp-doc-from">Papers</label>
         <select id="rp-doc-from" data-draw="doc-from" data-source="doctype_year"><option value="1991">Since 1991</option><option value="2016">Since 2016</option></select></div>
       <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
@@ -133,7 +133,10 @@
       <h3>Share on arXiv, by year</h3>
       <div class="legend" data-draw="doc-legend" data-source="doctype_year"></div>
       <div class="chart" data-draw="doc-arxiv" data-source="doctype_year"></div>
-      <p class="note">An article without a journal is a preprint, or a published article whose journal INSPIRE does not link.</p>
+      <h3>Articles not published in a journal, by year</h3>
+      <div class="legend"><span><i class="sq" data-i="0"></i>On arXiv</span><span><i class="sq" style="background: var(--cds-chart-muted)"></i>Not on arXiv</span></div>
+      <div class="chart" data-draw="doc-unpub" data-source="doctype_year"></div>
+      <p class="note">The share of the articles of each year that INSPIRE gives no journal nor publication note: preprints never published, or not yet; the last two years are high because many of their preprints are still waiting for publication.</p>
     </div>
   </section>
 
@@ -759,7 +762,7 @@ dash.draw('catov-chart', (el) => {
 // overview (worldwide board): document types
 rp.docName = { article: 'Article', 'conference paper': 'Conference paper', thesis: 'Thesis', proceedings: 'Proceedings', book: 'Book or chapter', other: 'Other' };
 // articles and conference papers split by whether INSPIRE links a journal; the other types are not
-rp.docRow = (r) => ['article', 'conference paper'].includes(r.type) ? `${rp.docName[r.type]}, ${r.journal ? 'in a journal' : 'no journal'}` : rp.docName[r.type] || r.type;
+rp.docRow = (r) => ['article', 'conference paper'].includes(r.type) ? `${rp.docName[r.type]}, ${r.journal ? 'in a journal' : 'not in a journal'}` : rp.docName[r.type] || r.type;
 dash.draw('doc-from', (sel) => {
   sel.value = String(rp.ui.docFrom);
   sel.onchange = () => { rp.ui.docFrom = +sel.value; dash.draw('doc-chart'); };
@@ -772,7 +775,7 @@ dash.draw('doc-chart', (el) => {
   rp.shareBars(el, rp.catShares([all, ...[...by].map(([label, rs]) => ({ label, n: Object.fromEntries(rp.cats.map((k) => [k, d3.sum(rs, (r) => +r[k])])) }))]), rp.ui.docFrom);
 });
 // share of the papers of each year on arXiv, for the largest groups
-rp.docLines = [['Article, in a journal', 0], ['Article, no journal', 1], ['Conference paper, in a journal', 2], ['Conference paper, no journal', 3]];
+rp.docLines = [['Article, in a journal', 0], ['Article, not in a journal', 1], ['Conference paper, in a journal', 2], ['Conference paper, not in a journal', 3]];
 dash.draw('doc-legend', (el) => {
   el.replaceChildren(...rp.docLines.map(([k, i]) => {
     const sp = document.createElement('span'), sw = document.createElement('i');
@@ -810,6 +813,39 @@ dash.draw('doc-arxiv', (el) => {
     rule.attr('x1', x(yy)).attr('x2', x(yy)).attr('visibility', 'visible');
     tip.show([`${yy} · on arXiv`, ...pts.map(([k, r]) => `${k}: ${d3.format('.0f')(r.p)}% of ${rp.int(r.total)}`)], x(yy), 20);
   }).on('pointerleave', () => { tip.hide(); rule.attr('visibility', 'hidden'); });
+});
+dash.draw('doc-unpub', (el) => {
+  if (!rp.ready(el, ['doctype_year'])) return;
+  const d = dash.data('doctype_year').data.filter((r) => r.type === 'article');
+  const tot = (v) => d3.sum(v, (r) => d3.sum(rp.cats, (c) => +r[c]));
+  const rows = [...d3.group(d, (r) => +r.year)].map(([year, v]) => {
+    const all = tot(v), un = v.filter((r) => !r.journal), off = d3.sum(un, (r) => +r.none);
+    return { year, all, n: tot(un), arxiv: (100 * (tot(un) - off)) / all, off: (100 * off) / all };
+  }).sort((a, b) => a.year - b.year);
+  el.replaceChildren();
+  if (!rows.length) return;
+  const W = Math.max(300, el.clientWidth), H = 280, mb = 24;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const y = d3.scaleLinear([0, d3.max(rows, (r) => r.arxiv + r.off)], [H - mb, 10]).nice(), yfmt = (v) => `${v}%`;
+  const ml = rp.textW(svg, y.ticks(5).map(yfmt)) + 10;
+  const years = rows.map((r) => r.year), x = d3.scaleBand(years, [ml + 4, W - 6]).padding(0.12);
+  svg.append('g').attr('transform', `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(yfmt))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  const step = Math.max(1, Math.ceil(years.length / Math.max(2, Math.floor((W - ml) / 48))));
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).tickValues(years.filter((yy, i) => i % step === 0)).tickFormat(d3.format('d')))
+    .attr('font-size', null).attr('font-family', null);
+  const g = svg.append('g');
+  g.selectAll('rect.a').data(rows).join('rect').attr('class', 'a').attr('fill', dash.colors[0])
+    .attr('x', (r) => x(r.year)).attr('width', x.bandwidth()).attr('y', (r) => y(r.arxiv)).attr('height', (r) => y(0) - y(r.arxiv));
+  g.selectAll('rect.o').data(rows).join('rect').attr('class', 'o').attr('fill', 'var(--cds-chart-muted)')
+    .attr('x', (r) => x(r.year)).attr('width', x.bandwidth()).attr('y', (r) => y(r.arxiv + r.off)).attr('height', (r) => y(r.arxiv) - y(r.arxiv + r.off));
+  const tip = rp.tip(el), pc = d3.format('.1f');
+  svg.on('pointermove', (ev) => {
+    const [px] = d3.pointer(ev, el);
+    const r = d3.least(rows, (q) => Math.abs(x(q.year) + x.bandwidth() / 2 - px)); if (!r) return;
+    tip.show([`${r.year} · ${rp.int(r.n)} of ${rp.int(r.all)} articles not in a journal (${pc(r.arxiv + r.off)}%)`,
+      `On arXiv: ${pc(r.arxiv)}%`, `Not on arXiv: ${pc(r.off)}%`], x(r.year), y(r.arxiv + r.off));
+  }).on('pointerleave', () => tip.hide());
 });
 dash.draw('share-chart', (el) => {
   if (!rp.ready(el, ['region_share'])) return;
