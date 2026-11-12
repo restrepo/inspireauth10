@@ -109,6 +109,7 @@ html { background: var(--color-bg); }
 .rp .tab:focus-visible, .rp select:focus-visible, .rp input:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
 .rp section { display: flex; flex-direction: column; gap: var(--cds-gap-md); }
 .rp .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+.rp .grid.wide { grid-template-columns: 1fr; }
 .rp .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
 .rp .card h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; text-wrap: balance; }
 .rp .card h3 { font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); margin: 0; }
@@ -206,11 +207,12 @@ html { background: var(--color-bg); }
   </section>
 
   <section id="correlations" role="tabpanel" hidden>
-    <p class="note">Figs. 15–17 of the Latin American paper, for the countries of this board with 1 million inhabitants or more and R&amp;D data: authors, papers and citations per million inhabitants against the average R&amp;D expenditure in % of GDP (World Bank, every year with a value from 1996 on). The dashed line is the least-squares fit.</p>
-    <div class="grid">
-      <div class="card"><h2>Authors per million inhabitants vs R&amp;D</h2><p class="r2line">R² <b data-draw="fit-r2" data-source="fits" data-fit="authors_pmi|rd_avg">—</b></p><div class="chart" data-draw="scatter" data-source="countries fits" data-metric="authors_pmi" data-x="rd_avg"></div><p class="note">x: R&amp;D, average % of GDP</p></div>
-      <div class="card"><h2>Papers per million inhabitants vs R&amp;D</h2><p class="r2line">R² <b data-draw="fit-r2" data-source="fits" data-fit="papers_pmi|rd_avg">—</b></p><div class="chart" data-draw="scatter" data-source="countries fits" data-metric="papers_pmi" data-x="rd_avg"></div><p class="note">x: R&amp;D, average % of GDP</p></div>
-      <div class="card"><h2>Citations per million inhabitants vs R&amp;D</h2><p class="r2line">R² <b data-draw="fit-r2" data-source="fits" data-fit="citations_pmi|rd_avg">—</b></p><div class="chart" data-draw="scatter" data-source="countries fits" data-metric="citations_pmi" data-x="rd_avg"></div><p class="note">x: R&amp;D, average % of GDP</p></div>
+    <p class="note">Figs. 15–17 of the Latin American paper, for the countries of this board with 1 million inhabitants or more and R&amp;D data: authors, papers and citations per million inhabitants against the average R&amp;D expenditure in % of GDP (World Bank, every year with a value from 1996 on). The dashed line is the least-squares fit: on log-log axes, of log<sub>10</sub> y on log<sub>10</sub> x, a power law y = A·x<sup>b</sup> (countries with a value of 0 are left out); on linear axes, of y on x. Each country is labelled where its code fits without overlapping another; hover over a point for its name.</p>
+    <div class="controls"><label for="rp-scale">Axes</label><select id="rp-scale" data-draw="scale-select" data-source="countries"><option value="log">Log-log</option><option value="lin">Linear</option></select></div>
+    <div class="grid wide">
+      <div class="card"><h2>Authors per million inhabitants vs R&amp;D</h2><p class="r2line">R² <b data-draw="fit-r2" data-source="fits countries" data-fit="authors_pmi|rd_avg">—</b></p><div class="chart" data-draw="scatter" data-source="countries fits" data-metric="authors_pmi" data-x="rd_avg"></div><p class="note">x: R&amp;D, average % of GDP</p></div>
+      <div class="card"><h2>Papers per million inhabitants vs R&amp;D</h2><p class="r2line">R² <b data-draw="fit-r2" data-source="fits countries" data-fit="papers_pmi|rd_avg">—</b></p><div class="chart" data-draw="scatter" data-source="countries fits" data-metric="papers_pmi" data-x="rd_avg"></div><p class="note">x: R&amp;D, average % of GDP</p></div>
+      <div class="card"><h2>Citations per million inhabitants vs R&amp;D</h2><p class="r2line">R² <b data-draw="fit-r2" data-source="fits countries" data-fit="citations_pmi|rd_avg">—</b></p><div class="chart" data-draw="scatter" data-source="countries fits" data-metric="citations_pmi" data-x="rd_avg"></div><p class="note">x: R&amp;D, average % of GDP</p></div>
     </div>
   </section>
 
@@ -352,7 +354,7 @@ const rp = window.rp = {
   int: d3.format(','),
   num: (v) => v == null || v === '' ? '—' : Number.isInteger(+v) ? d3.format(',')(+v) : d3.format(',.1f')(+v),
   ui: { metric: 'papers', pmi: 'papers_pmi', sort: 'papers', desc: true, q: '', country: 'North America', genCountry: 'North America',
-    genderCountry: 'North America', mobCountry: null, catCountry: 'North America', catMode: 'n' },
+    genderCountry: 'North America', mobCountry: null, catCountry: 'North America', catMode: 'n', scale: 'log' },
   total: 'North America',
 };
 document.querySelector('.rp').dataset.scope = rp.total === 'World' ? 'world' : 'region';
@@ -389,11 +391,22 @@ rp.metricName = {
   corpus_citations: 'Citations from the corpus', self_citation_pct: 'Same country %', female_pct: 'Female %', gender_n: 'With gender',
   population: 'Population', papers_pmi: 'Papers per million', authors_pmi: 'Authors per million', citations_pmi: 'Citations per million',
 };
-rp.axes = (svg, x, y, W, H, ml, mb, xfmt, yfmt) => {
-  svg.append('g').attr('transform', `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(yfmt))
+rp.axes = (svg, x, y, W, H, ml, mb, xfmt, yfmt, xt, yt) => {
+  const ya = d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(yfmt);
+  const xa = d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - ml) / 70))).tickFormat(xfmt);
+  if (yt) ya.tickValues(yt);
+  if (xt) xa.tickValues(xt);
+  svg.append('g').attr('transform', `translate(${ml},0)`).call(ya)
     .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
-  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - ml) / 70))).tickFormat(xfmt))
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(xa)
     .attr('font-size', null).attr('font-family', null);
+};
+// tick values of a log axis: 1, 3, 10, 30… or, over many decades, the powers of 10
+rp.logTicks = (sc) => {
+  const [a, b] = sc.domain(), out = [];
+  const steps = Math.log10(b / a) > 4 ? [1] : [1, 3];
+  for (let e = Math.floor(Math.log10(a)); e <= Math.ceil(Math.log10(b)); e++) for (const k of steps) { const v = k * 10 ** e; if (v >= a && v <= b) out.push(v); }
+  return out;
 };
 
 // tabs
@@ -462,39 +475,76 @@ dash.draw('pmi-chart', (el) => {
 });
 
 // correlations
+dash.draw('scale-select', (sel) => {
+  sel.value = rp.ui.scale;
+  sel.onchange = () => { rp.ui.scale = sel.value; dash.draw('fit-r2'); dash.draw('scatter'); };
+});
+// rows of a scatter: the countries with both values (positive ones on log axes)
+rp.scatterRows = (xk, yk) => dash.data('countries').data.filter((r) => r.country !== rp.total && r[xk] != null && r[yk] != null
+  && (rp.ui.scale !== 'log' || (r[xk] > 0 && r[yk] > 0)));
+// least-squares fit of log10 y on log10 x, the shape of the rows of fits.json
+rp.logFit = (rows, xk, yk) => {
+  const X = rows.map((r) => Math.log10(r[xk])), Y = rows.map((r) => Math.log10(r[yk])), n = X.length;
+  if (n < 3) return null;
+  const mx = d3.mean(X), my = d3.mean(Y);
+  let sxy = 0, sxx = 0, syy = 0;
+  X.forEach((v, i) => { sxy += (v - mx) * (Y[i] - my); sxx += (v - mx) ** 2; syy += (Y[i] - my) ** 2; });
+  return { slope: sxy / sxx, intercept: my - (sxy / sxx) * mx, r2: (sxy * sxy) / (sxx * syy), n };
+};
 dash.draw('fit-r2', (el) => {
   const d = dash.data('fits');
-  const f = d.status === 'ok' ? d.data.find((q) => q.fit === el.dataset.fit) : null;
-  el.textContent = f ? `${d3.format('.2f')(f.r2)} (${f.n} countries)` : '—';
+  const [yk, xk] = el.dataset.fit.split('|');
+  const f = rp.ui.scale === 'log'
+    ? (dash.data('countries').status === 'ok' ? rp.logFit(rp.scatterRows(xk, yk), xk, yk) : null)
+    : (d.status === 'ok' ? d.data.find((q) => q.fit === el.dataset.fit) : null);
+  el.textContent = f ? `${d3.format('.2f')(f.r2)} (${f.n} countries)` + (rp.ui.scale === 'log' ? `, exponent b = ${d3.format('.2f')(f.slope)}` : '') : '—';
 });
 dash.draw('scatter', (el) => {
   if (!rp.ready(el, ['countries', 'fits'])) return;
-  const xk = el.dataset.x, yk = el.dataset.metric;
-  const rows = dash.data('countries').data.filter((r) => r.country !== rp.total && r[xk] != null && r[yk] != null);
-  const fit = dash.data('fits').data.find((f) => f.fit === `${yk}|${xk}`);
-  const W = Math.max(280, el.clientWidth), H = 256, mb = 24;
+  const xk = el.dataset.x, yk = el.dataset.metric, log = rp.ui.scale === 'log';
+  const rows = rp.scatterRows(xk, yk);
+  const fit = log ? rp.logFit(rows, xk, yk) : dash.data('fits').data.find((f) => f.fit === `${yk}|${xk}`);
+  // wide and tall enough for most country codes to be read
+  const W = Math.max(280, el.clientWidth), H = Math.round(Math.max(256, Math.min(560, W * 0.55))), mb = 24;
   el.replaceChildren();
   if (!rows.length) return;
   const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
-  const y = d3.scaleLinear([0, d3.max(rows, (r) => +r[yk]) * 1.05], [H - mb, 10]).nice();
-  const yfmt = d3.format('~s');
-  const ml = rp.textW(svg, y.ticks(5).map(yfmt)) + 10;
-  const x = d3.scaleLinear([0, d3.max(rows, (r) => +r[xk])], [ml + 6, W - 34]).nice();
-  rp.axes(svg, x, y, W, H, ml, mb, d3.format('.1f'), yfmt);
+  const yfmt = (v) => (log && v < 1 ? d3.format('~g') : d3.format('~s'))(v);
+  let x, y, xt, yt;
+  if (log) {
+    const pad = (e) => [e[0] / 1.4, e[1] * 1.4];
+    y = d3.scaleLog(pad(d3.extent(rows, (r) => +r[yk])), [H - mb, 10]);
+    yt = rp.logTicks(y);
+  } else y = d3.scaleLinear([0, d3.max(rows, (r) => +r[yk]) * 1.05], [H - mb, 10]).nice();
+  const ml = rp.textW(svg, (yt || y.ticks(5)).map(yfmt)) + 10;
+  if (log) {
+    x = d3.scaleLog([d3.min(rows, (r) => +r[xk]) / 1.4, d3.max(rows, (r) => +r[xk]) * 1.4], [ml + 6, W - 34]);
+    xt = rp.logTicks(x);
+  } else x = d3.scaleLinear([0, d3.max(rows, (r) => +r[xk])], [ml + 6, W - 34]).nice();
+  rp.axes(svg, x, y, W, H, ml, mb, d3.format(log ? '~g' : '.1f'), yfmt, xt, yt);
   if (fit) {
-    const [x0, x1] = x.domain();
-    const clampY = (v) => Math.max(y.domain()[0], Math.min(y.domain()[1], v));
-    svg.append('line').attr('x1', x(x0)).attr('x2', x(x1))
-      .attr('y1', y(clampY(fit.intercept + fit.slope * x0))).attr('y2', y(clampY(fit.intercept + fit.slope * x1)))
+    const [x0, x1] = x.domain(), [y0, y1] = y.domain();
+    const pts = d3.range(61).map((i) => (log ? x0 * (x1 / x0) ** (i / 60) : x0 + ((x1 - x0) * i) / 60))
+      .map((v) => [v, log ? 10 ** (fit.intercept + fit.slope * Math.log10(v)) : fit.intercept + fit.slope * v])
+      .filter(([, v]) => v >= y0 && v <= y1);
+    svg.append('path').attr('d', d3.line((p) => x(p[0]), (p) => y(p[1]))(pts)).attr('fill', 'none')
       .attr('stroke', dash.colors[1]).attr('stroke-width', 2).attr('stroke-linecap', 'round').attr('stroke-dasharray', '6 4');
   }
-  // label every country on a small board, else the 12 highest
-  const labelled = new Set((rows.length <= 25 ? rows : rows.slice().sort((a, b) => b[yk] - a[yk]).slice(0, 12)).map((r) => r.country));
   const pts = svg.append('g');
   pts.selectAll('circle').data(rows).join('circle').attr('cx', (r) => x(+r[xk])).attr('cy', (r) => y(+r[yk])).attr('r', 4)
     .attr('fill', dash.colors[0]).attr('fill-opacity', 0.8);
-  pts.selectAll('text').data(rows.filter((r) => labelled.has(r.country))).join('text')
-    .attr('x', (r) => x(+r[xk]) + 6).attr('y', (r) => y(+r[yk]) + 4).text((r) => r.code || r.country);
+  // label a country only where its code fits without covering another label or point; the countries with the most papers first
+  const lg = svg.append('g'), boxes = rows.map((r) => ({ x0: x(+r[xk]) - 4, x1: x(+r[xk]) + 4, y0: y(+r[yk]) - 4, y1: y(+r[yk]) + 4 }));
+  const free = (b) => b.x0 >= ml && b.x1 <= W - 2 && b.y0 >= 0 && b.y1 <= H - mb
+    && !boxes.some((o) => b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1);
+  for (const r of rows.slice().sort((a, b) => (b.papers ?? 0) - (a.papers ?? 0))) {
+    const t = lg.append('text').text(r.code || r.country), w = t.node().getComputedTextLength(), h = 10;
+    const cx = x(+r[xk]), cy = y(+r[yk]);
+    const spots = [[cx + 6, cy - h / 2], [cx - 6 - w, cy - h / 2], [cx - w / 2, cy - 6 - h], [cx - w / 2, cy + 6],
+      [cx + 4, cy - 4 - h], [cx + 4, cy + 4], [cx - 4 - w, cy - 4 - h], [cx - 4 - w, cy + 4]];
+    const at = spots.map(([bx, by]) => ({ x0: bx, x1: bx + w, y0: by, y1: by + h })).find(free);
+    if (at) { boxes.push(at); t.attr('x', at.x0).attr('y', at.y1 - 1); } else t.remove();
+  }
   const tip = rp.tip(el);
   const unit = { authors_pmi: 'authors', papers_pmi: 'papers', citations_pmi: 'citations' }[yk];
   svg.on('pointermove', (ev) => {
