@@ -20,6 +20,9 @@ Counting rules (docs/data-schema.md has the fields):
   for countries of 1 million inhabitants or more; the correlations (Figs. 15-17 of the Latin
   American paper) fit a line to authors, papers and citations per million against the average
   R&D expenditure (% of GDP, 1996 on) over those countries;
+- arXiv categories: the papers of each year by the main (first) arXiv category of the paper,
+  without its subject class (astro-ph.CO is astro-ph), with nucl-th and nucl-ex as nucl, for the
+  total and the countries of the region (the world: the 30 countries with the most papers), 1991 on;
 - female share per year (Fig. 21): distinct profiles with gender probability 0.9 or more with a
   paper of the year affiliated to the country; by rank (Table 8): profiles holding a declared
   rank (in the region, for a regional board) in a year in which they published.
@@ -63,6 +66,7 @@ HERE = Path(__file__).resolve().parent
 TOP_FLOWS = 20
 TOP_COLLABS = 40
 TOP_GENDER = 30
+CATEGORIES = ['hep-ph', 'hep-th', 'hep-ex', 'hep-lat', 'astro-ph', 'gr-qc', 'nucl']
 MIN_POP = 1_000_000
 RANK_GROUPS = {'Undergraduate, Master, PhD': {'UNDERGRADUATE', 'MASTER', 'PHD'}, 'Postdoc': {'POSTDOC'},
                'Junior or Staff': {'JUNIOR', 'STAFF'}, 'Senior': {'SENIOR'}}
@@ -112,6 +116,15 @@ def frac(genders):
     return n, round(100 * f, 2), round(100 * 1.96 * math.sqrt(f * (1 - f) / n), 2) if n else 0
 
 
+def category(p):
+    """The main arXiv category of a paper, grouped as the board's chart."""
+    if not p['arxiv_categories']:
+        return 'none'
+    c = p['arxiv_categories'][0].split('.')[0]
+    c = 'nucl' if c.startswith('nucl') else c
+    return c if c in CATEGORIES else 'other'
+
+
 def h_index(cits):
     cits = sorted(cits, reverse=True)
     return sum(1 for i, c in enumerate(cits) if c >= i + 1)
@@ -149,6 +162,7 @@ def main(data, outdir, year=None, region=None):
     papers, authors, cits, years = Counter(), defaultdict(set), defaultdict(list), defaultdict(Counter)
     countries_of, n_refs, n_refs_in = {}, 0, 0
     world_year, world_cits_year, total_cits_year, pairs = Counter(), Counter(), Counter(), Counter()
+    cat_year = defaultdict(Counter)
     for p in corpus_rows(data):
         cs = p['countries']
         if cs:
@@ -164,6 +178,8 @@ def main(data, outdir, year=None, region=None):
             cits[c].append(p['citation_count'] or 0)
             if y and 1950 <= y <= year:
                 years[c][y] += 1
+                if y >= 1991:
+                    cat_year[c, y][category(p)] += 1
         if inside is not None:
             for a in inside.intersection(cs):
                 for b in cs:
@@ -415,6 +431,9 @@ def main(data, outdir, year=None, region=None):
                              for c, v in sorted(dest.items(), key=lambda kv: (-sum(kv[1].values()), kv[0]))
                              for w in ('same', 'region', 'outside', 'unknown', 'none') if v[w]])
     dump('coauthorship', coauthors)
+    dump('categories_year', [{'country': c, 'year': y, **{k: cat_year[c, y][k] for k in [*CATEGORIES, 'other', 'none']}}
+                             for c in [TOTAL, *(names if inside is not None else names[:TOP_GENDER])]
+                             for y in range(1991, year + 1) if cat_year[c, y]])
     dump('papers_per_year', [{'country': c, 'year': y, 'papers': n}
                              for c in [TOTAL, *names] for y, n in sorted(years[c].items())])
     flow_rows = []
