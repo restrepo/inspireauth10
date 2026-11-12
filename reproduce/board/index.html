@@ -106,6 +106,35 @@
         </select></div>
       <div class="chart tall" data-draw="pmi-chart" data-source="countries"></div>
     </div>
+    <div class="card world-only">
+      <h2>Papers per year by arXiv category</h2>
+      <p class="note">The papers of each year from 1991, when arXiv started, by the main (first) arXiv category of the paper, for the world or one of the six regions of the regional boards (the papers with an author in the region; <code>reproduce/regions.py</code>). Subject classes are merged (astro-ph.CO is astro-ph) and nucl-th with nucl-ex. INSPIRE appears to have taken in most of astro-ph around 2003–2007, and later only the astrophysics close to particle physics.</p>
+      <div class="controls"><label for="rp-catw-country">World or region</label><select id="rp-catw-country" data-draw="cat-select" data-ui="catw" data-scopes="total region" data-source="categories_year"></select>
+        <label for="rp-catw-mode">Show</label><select id="rp-catw-mode" data-draw="cat-mode" data-ui="catw" data-source="categories_year"><option value="n">Papers</option><option value="pct">Share of the year's papers</option></select></div>
+      <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
+      <div class="chart tall" data-draw="cat-chart" data-ui="catw" data-source="categories_year"></div>
+    </div>
+    <div class="card world-only">
+      <h2>Leading countries by arXiv category</h2>
+      <p class="note">The share of each main (first) arXiv category in the papers of the world and of the 30 countries with the most papers, from 1991, when arXiv started (the Papers per year tab shows them year by year). INSPIRE appears to have taken in most of astro-ph around 2003–2007 only, which raises the astro-ph share of those years.</p>
+      <div class="controls"><label for="rp-catov-from">Papers</label>
+        <select id="rp-catov-from" data-draw="catov-from" data-source="categories_year"><option value="1991">Since 1991</option><option value="2016">Since 2016</option></select>
+        <label for="rp-catov-sort">Sort by</label><select id="rp-catov-sort" data-draw="catov-sort" data-source="categories_year"></select></div>
+      <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
+      <div class="chart tall" data-draw="catov-chart" data-source="categories_year"></div>
+    </div>
+    <div class="card world-only">
+      <h2>Document types and arXiv</h2>
+      <p class="note">The papers by their first INSPIRE document type (articles and conference papers split by whether INSPIRE links them to a journal) and their main arXiv category; grey is not on arXiv. From 1991, when arXiv started.</p>
+      <div class="controls"><label for="rp-doc-from">Papers</label>
+        <select id="rp-doc-from" data-draw="doc-from" data-source="doctype_year"><option value="1991">Since 1991</option><option value="2016">Since 2016</option></select></div>
+      <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
+      <div class="chart" data-draw="doc-chart" data-source="doctype_year"></div>
+      <h3>Share on arXiv, by year</h3>
+      <div class="legend" data-draw="doc-legend" data-source="doctype_year"></div>
+      <div class="chart" data-draw="doc-arxiv" data-source="doctype_year"></div>
+      <p class="note">An article without a journal is a preprint, or a published article whose journal INSPIRE does not link.</p>
+    </div>
   </section>
 
   <section id="correlations" role="tabpanel" hidden>
@@ -144,7 +173,7 @@
     </div>
     <div class="card">
       <h2>Papers per year by arXiv category</h2>
-      <p class="note">The papers of each year from 1991, when arXiv started, by the main (first) arXiv category of the paper; subject classes are merged (astro-ph.CO is astro-ph) and nucl-th with nucl-ex. The coverage of INSPIRE changes with time: it appears to have taken in most of astro-ph around 2003–2007, and later only the astrophysics close to particle physics.<span class="world-only"> Countries: the 30 with the most papers.</span></p>
+      <p class="note">The papers of each year from 1991, when arXiv started, by the main (first) arXiv category of the paper; subject classes are merged (astro-ph.CO is astro-ph) and nucl-th with nucl-ex. The coverage of INSPIRE changes with time: it appears to have taken in most of astro-ph around 2003–2007, and later only the astrophysics close to particle physics.<span class="world-only"> The world, the six regions of the regional boards (the papers with an author in the region) and the 30 countries with the most papers.</span></p>
       <div class="controls"><label for="rp-cat-country">Country</label><select id="rp-cat-country" data-draw="cat-select" data-source="categories_year"></select>
         <label for="rp-cat-mode">Show</label><select id="rp-cat-mode" data-draw="cat-mode" data-source="categories_year"><option value="n">Papers</option><option value="pct">Share of the year's papers</option></select></div>
       <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
@@ -256,7 +285,7 @@ const rp = window.rp = {
   int: d3.format(','),
   num: (v) => v == null || v === '' ? '—' : Number.isInteger(+v) ? d3.format(',')(+v) : d3.format(',.1f')(+v),
   ui: { metric: 'papers', pmi: 'papers_pmi', sort: 'papers', desc: true, q: '', country: '@@TOTAL@@', genCountry: '@@TOTAL@@',
-    genderCountry: '@@TOTAL@@', mobCountry: null, catCountry: '@@TOTAL@@', catMode: 'n', scale: 'log' },
+    genderCountry: '@@TOTAL@@', mobCountry: null, catCountry: '@@TOTAL@@', catMode: 'n', scale: 'log', catovFrom: 1991, catovSort: 'papers', catwCountry: '@@TOTAL@@', catwMode: 'n', docFrom: 1991 },
   total: '@@TOTAL@@',
 };
 document.querySelector('.rp').dataset.scope = rp.total === 'World' ? 'world' : 'region';
@@ -624,20 +653,29 @@ dash.draw('cat-legend', (el) => {
 });
 dash.draw('cat-select', (sel) => {
   const d = dash.data('categories_year');
-  const cs = d.status === 'ok' ? [...new Set(d.data.map((r) => r.country))] : [];
-  sel.replaceChildren(...cs.map((c) => new Option(c, c)));
-  if (!cs.includes(rp.ui.catCountry)) rp.ui.catCountry = cs[0] || null;
-  sel.value = rp.ui.catCountry || '';
-  sel.onchange = () => { rp.ui.catCountry = sel.value; dash.draw('cat-chart'); };
+  const u = sel.dataset.ui || 'cat', scopes = sel.dataset.scopes ? sel.dataset.scopes.split(' ') : null;
+  // scope: total, region (the worldwide board's regions) or country; data without it are countries but the total
+  const scopeOf = (r) => r.scope || (r.country === rp.total ? 'total' : 'country');
+  const rows = d.status === 'ok' ? d.data.filter((r) => !scopes || scopes.includes(scopeOf(r))) : [];
+  const groups = d3.group(rows, scopeOf), cs = [...new Set(rows.map((r) => r.country))];
+  const opts = (s) => [...new Set((groups.get(s) || []).map((r) => r.country))].map((c) => new Option(c, c));
+  const label = { region: 'Regions', country: 'Countries' };
+  sel.replaceChildren(...opts('total'), ...['region', 'country'].filter((s) => groups.has(s)).map((s) => {
+    const g = document.createElement('optgroup'); g.label = label[s]; g.append(...opts(s)); return g;
+  }));
+  if (!cs.includes(rp.ui[`${u}Country`])) rp.ui[`${u}Country`] = cs[0] || null;
+  sel.value = rp.ui[`${u}Country`] || '';
+  sel.onchange = () => { rp.ui[`${u}Country`] = sel.value; dash.draw('cat-chart'); };
 });
 dash.draw('cat-mode', (sel) => {
-  sel.value = rp.ui.catMode;
-  sel.onchange = () => { rp.ui.catMode = sel.value; dash.draw('cat-chart'); };
+  const u = sel.dataset.ui || 'cat';
+  sel.value = rp.ui[`${u}Mode`];
+  sel.onchange = () => { rp.ui[`${u}Mode`] = sel.value; dash.draw('cat-chart'); };
 });
 dash.draw('cat-chart', (el) => {
   if (!rp.ready(el, ['categories_year'])) return;
-  const pct = rp.ui.catMode === 'pct';
-  const rows = dash.data('categories_year').data.filter((r) => r.country === rp.ui.catCountry).map((r) => {
+  const u = el.dataset.ui || 'cat', who = rp.ui[`${u}Country`], pct = rp.ui[`${u}Mode`] === 'pct';
+  const rows = dash.data('categories_year').data.filter((r) => r.country === who).map((r) => {
     const tot = d3.sum(rp.cats, (k) => +r[k]);
     return { year: +r.year, total: tot, ...Object.fromEntries(rp.cats.map((k) => [k, pct ? 100 * r[k] / tot : +r[k]])) };
   });
@@ -664,9 +702,114 @@ dash.draw('cat-chart', (el) => {
   svg.on('pointermove', (ev) => {
     const [px] = d3.pointer(ev, el);
     const r = d3.least(rows, (q) => Math.abs(x(q.year) + x.bandwidth() / 2 - px)); if (!r) return;
-    tip.show([`${rp.ui.catCountry} · ${r.year} · ${rp.int(r.total)} papers`, ...rp.cats.filter((k) => r[k]).map((k) => `${rp.catName[k] || k}: ${fmt(r[k])}`)],
+    tip.show([`${who} · ${r.year} · ${rp.int(r.total)} papers`, ...rp.cats.filter((k) => r[k]).map((k) => `${rp.catName[k] || k}: ${fmt(r[k])}`)],
       x(r.year), y(pct ? 100 : r.total));
   }).on('pointerleave', () => tip.hide());
+});
+// overview (worldwide board): category profile of the leading countries
+dash.draw('catov-from', (sel) => {
+  sel.value = String(rp.ui.catovFrom);
+  sel.onchange = () => { rp.ui.catovFrom = +sel.value; dash.draw('catov-chart'); };
+});
+dash.draw('catov-sort', (sel) => {
+  sel.replaceChildren(new Option('Papers', 'papers'), ...rp.cats.map((k) => new Option(`Share of ${rp.catName[k] || k}`, k)));
+  sel.value = rp.ui.catovSort;
+  sel.onchange = () => { rp.ui.catovSort = sel.value; dash.draw('catov-chart'); };
+});
+// rows {label, n: {category: papers}} with their total and the share of each category
+rp.catShares = (rows) => rows.map((r) => {
+  const total = d3.sum(rp.cats, (k) => r.n[k] || 0);
+  return { ...r, total, ...Object.fromEntries(rp.cats.map((k) => [k, total ? (r.n[k] || 0) / total : 0])) };
+}).filter((r) => r.total);
+// 100% stacked horizontal bars by arXiv category, one per row of rp.catShares, the papers at the right
+rp.shareBars = (el, rows, from) => {
+  el.replaceChildren();
+  if (!rows.length) return;
+  const bh = 18, mt = 22, H = mt + rows.length * bh + 4, W = Math.max(300, el.clientWidth);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const ml = rp.textW(svg, rows.map((r) => r.label)) + 8, mr = rp.textW(svg, rows.map((r) => rp.int(r.total))) + 8;
+  const x = d3.scaleLinear([0, 1], [ml, W - mr]), y = d3.scaleBand(rows.map((r) => r.label), [mt, H - 4]).padding(0.15);
+  svg.append('g').attr('transform', `translate(0,${mt})`).call(d3.axisTop(x).ticks(5).tickSize(-(H - mt - 4)).tickFormat(d3.format('.0%')))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  svg.append('g').selectAll('g').data(d3.stack().keys(rp.cats)(rows)).join('g').attr('fill', (s, i) => rp.catColor(s.key, i))
+    .selectAll('rect').data((s) => s).join('rect')
+    .attr('x', (s) => x(s[0])).attr('width', (s) => Math.max(0, x(s[1]) - x(s[0]))).attr('y', (s) => y(s.data.label)).attr('height', y.bandwidth());
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', ml - 6).attr('y', (r) => y(r.label) + y.bandwidth() / 2 + 4)
+    .attr('text-anchor', 'end').style('font-weight', (r) => r.bold ? 600 : null).text((r) => r.label);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', W - mr + 6).attr('y', (r) => y(r.label) + y.bandwidth() / 2 + 4)
+    .text((r) => rp.int(r.total));
+  const tip = rp.tip(el);
+  svg.on('pointermove', (ev) => {
+    const [, py] = d3.pointer(ev, el);
+    const r = rows.find((q) => py >= y(q.label) && py < y(q.label) + y.step()); if (!r) return tip.hide();
+    tip.show([`${r.label} · ${rp.int(r.total)} papers since ${from}`,
+      ...rp.cats.filter((c) => r.n[c]).map((c) => `${rp.catName[c] || c}: ${d3.format('.1%')(r[c])} (${rp.int(r.n[c])})`)], x(1) - 160, y(r.label));
+  }).on('pointerleave', () => tip.hide());
+};
+dash.draw('catov-chart', (el) => {
+  if (!rp.ready(el, ['categories_year'])) return;
+  const by = d3.group(dash.data('categories_year').data.filter((r) => +r.year >= rp.ui.catovFrom && r.scope !== 'region'), (r) => r.country);
+  const rows = rp.catShares([...by].map(([country, rs]) => ({ label: country, bold: country === rp.total,
+    n: Object.fromEntries(rp.cats.map((k) => [k, d3.sum(rs, (r) => +r[k])])) })));
+  const k = rp.ui.catovSort;
+  rows.sort((a, b) => b.bold - a.bold || (k === 'papers' ? b.total - a.total : b[k] - a[k]));
+  rp.shareBars(el, rows, rp.ui.catovFrom);
+});
+
+// overview (worldwide board): document types
+rp.docName = { article: 'Article', 'conference paper': 'Conference paper', thesis: 'Thesis', proceedings: 'Proceedings', book: 'Book or chapter', other: 'Other' };
+// articles and conference papers split by whether INSPIRE links a journal; the other types are not
+rp.docRow = (r) => ['article', 'conference paper'].includes(r.type) ? `${rp.docName[r.type]}, ${r.journal ? 'in a journal' : 'no journal'}` : rp.docName[r.type] || r.type;
+dash.draw('doc-from', (sel) => {
+  sel.value = String(rp.ui.docFrom);
+  sel.onchange = () => { rp.ui.docFrom = +sel.value; dash.draw('doc-chart'); };
+});
+dash.draw('doc-chart', (el) => {
+  if (!rp.ready(el, ['doctype_year'])) return;
+  const d = dash.data('doctype_year').data.filter((r) => +r.year >= rp.ui.docFrom);
+  const all = { label: 'All papers', bold: true, n: Object.fromEntries(rp.cats.map((k) => [k, d3.sum(d, (r) => +r[k])])) };
+  const by = d3.group(d, rp.docRow);
+  rp.shareBars(el, rp.catShares([all, ...[...by].map(([label, rs]) => ({ label, n: Object.fromEntries(rp.cats.map((k) => [k, d3.sum(rs, (r) => +r[k])])) }))]), rp.ui.docFrom);
+});
+// share of the papers of each year on arXiv, for the largest groups
+rp.docLines = [['Article, in a journal', 0], ['Article, no journal', 1], ['Conference paper, in a journal', 2], ['Conference paper, no journal', 3]];
+dash.draw('doc-legend', (el) => {
+  el.replaceChildren(...rp.docLines.map(([k, i]) => {
+    const sp = document.createElement('span'), sw = document.createElement('i');
+    sw.className = 'sw'; sw.style.background = dash.colors[i];
+    sp.append(sw, k); return sp;
+  }));
+});
+dash.draw('doc-arxiv', (el) => {
+  if (!rp.ready(el, ['doctype_year'])) return;
+  const d = dash.data('doctype_year').data, cur = new Date().getFullYear();
+  const series = rp.docLines.map(([k, i]) => {
+    const rows = [...d3.rollup(d.filter((r) => rp.docRow(r) === k && +r.year <= cur),
+      (v) => { const t = d3.sum(v, (r) => d3.sum(rp.cats, (c) => +r[c])); return { t, a: t - d3.sum(v, (r) => +r.none) }; }, (r) => +r.year)]
+      .map(([year, v]) => ({ year, total: v.t, p: v.t ? (100 * v.a) / v.t : null })).sort((a, b) => a.year - b.year);
+    return { k, i, rows };
+  });
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = 300, mb = 24;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const y = d3.scaleLinear([0, 100], [H - mb, 10]), yfmt = (v) => `${v}%`;
+  const ml = rp.textW(svg, y.ticks(5).map(yfmt)) + 10;
+  const x = d3.scaleLinear(d3.extent(series.flatMap((s) => s.rows), (r) => r.year), [ml + 4, W - 20]);
+  rp.axes(svg, x, y, W, H, ml, mb, d3.format('d'), yfmt);
+  for (const s of series) {
+    svg.append('path').datum(s.rows).attr('d', d3.line((r) => x(r.year), (r) => y(r.p)))
+      .attr('fill', 'none').attr('stroke', dash.colors[s.i]).attr('stroke-width', 2).attr('stroke-linejoin', 'round').attr('stroke-linecap', 'round');
+  }
+  const rule = svg.append('line').attr('y1', 10).attr('y2', H - mb).attr('stroke', 'var(--cds-chart-reference)').attr('visibility', 'hidden');
+  const tip = rp.tip(el);
+  svg.on('pointermove', (ev) => {
+    const [px] = d3.pointer(ev, el);
+    const yy = Math.round(x.invert(px));
+    const pts = series.map((s) => [s.k, s.rows.find((r) => r.year === yy)]).filter(([, r]) => r);
+    if (!pts.length) return;
+    rule.attr('x1', x(yy)).attr('x2', x(yy)).attr('visibility', 'visible');
+    tip.show([`${yy} · on arXiv`, ...pts.map(([k, r]) => `${k}: ${d3.format('.0f')(r.p)}% of ${rp.int(r.total)}`)], x(yy), 20);
+  }).on('pointerleave', () => { tip.hide(); rule.attr('visibility', 'hidden'); });
 });
 dash.draw('share-chart', (el) => {
   if (!rp.ready(el, ['region_share'])) return;

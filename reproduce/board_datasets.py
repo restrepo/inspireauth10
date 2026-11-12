@@ -20,7 +20,11 @@ DATASETS = {
     'coauthorship': ('Co-authorship between countries', "Regional boards: the share of each row country's papers "
                      'co-authored with each column country.'),
     'categories_year': ('Papers per year by arXiv category', 'Papers of the total and of the countries (the world: the '
-                        '30 with the most papers) by year, from 1991, and by main arXiv category.'),
+                        'six regions and the 30 countries with the most papers) by year, from 1991, and by main '
+                        'arXiv category; scope: total, region or country.'),
+    'doctype_year': ('Papers per year by document type and arXiv category', 'Papers of the total by year, from 1991, '
+                     'by first INSPIRE document type (book includes book chapter), whether INSPIRE links them to a '
+                     'journal, and main arXiv category.'),
     'papers_per_year': ('Papers per year', 'Papers of each country, and of the world, by publication year.'),
     'citation_flows': ('Citation flows', 'For the 20 countries with the most papers: citations between papers of the '
                        'corpus from each citing country to each cited country, and their share of the cited '
