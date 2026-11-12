@@ -22,7 +22,11 @@ Counting rules (docs/data-schema.md has the fields):
   R&D expenditure (% of GDP, 1996 on) over those countries;
 - arXiv categories: the papers of each year by the main (first) arXiv category of the paper,
   without its subject class (astro-ph.CO is astro-ph), with nucl-th and nucl-ex as nucl, for the
-  total and the countries of the region (the world: the 30 countries with the most papers), 1991 on;
+  total and the countries of the region (the world: the six regions of reproduce/regions.py, each
+  counting the papers with an author there, and the 30 countries with the most papers), 1991 on;
+- document types: the papers of the total of each year, 1991 on, by document type (the first
+  INSPIRE type: article, conference paper, thesis, proceedings, book (with book chapter) or other),
+  whether INSPIRE links them to a journal, and main arXiv category;
 - female share per year (Fig. 21): distinct profiles with gender probability 0.9 or more with a
   paper of the year affiliated to the country; by rank (Table 8): profiles holding a declared
   rank (in the region, for a regional board) in a year in which they published.
@@ -66,6 +70,7 @@ HERE = Path(__file__).resolve().parent
 TOP_FLOWS = 20
 TOP_COLLABS = 40
 TOP_GENDER = 30
+DOCTYPES = ['article', 'conference paper', 'thesis', 'proceedings', 'book']
 CATEGORIES = ['hep-ph', 'hep-th', 'hep-ex', 'hep-lat', 'astro-ph', 'gr-qc', 'nucl']
 MIN_POP = 1_000_000
 RANK_GROUPS = {'Undergraduate, Master, PhD': {'UNDERGRADUATE', 'MASTER', 'PHD'}, 'Postdoc': {'POSTDOC'},
@@ -116,6 +121,13 @@ def frac(genders):
     return n, round(100 * f, 2), round(100 * 1.96 * math.sqrt(f * (1 - f) / n), 2) if n else 0
 
 
+def doctype(p):
+    """The first INSPIRE document type of a paper, grouped as the board's chart."""
+    t = (p['document_type'] or ['other'])[0]
+    t = 'book' if t == 'book chapter' else t
+    return t if t in DOCTYPES else 'other'
+
+
 def category(p):
     """The main arXiv category of a paper, grouped as the board's chart."""
     if not p['arxiv_categories']:
@@ -163,6 +175,8 @@ def main(data, outdir, year=None, region=None):
     countries_of, n_refs, n_refs_in = {}, 0, 0
     world_year, world_cits_year, total_cits_year, pairs = Counter(), Counter(), Counter(), Counter()
     cat_year = defaultdict(Counter)
+    doc_year = defaultdict(Counter)
+    region_of = {c: r for r, cs in REGIONS.items() for c in cs}
     for p in corpus_rows(data):
         cs = p['countries']
         if cs:
@@ -180,6 +194,11 @@ def main(data, outdir, year=None, region=None):
                 years[c][y] += 1
                 if y >= 1991:
                     cat_year[c, y][category(p)] += 1
+        if total(cs) and y and 1991 <= y <= year:
+            doc_year[doctype(p), p['journal_id'] is not None, y][category(p)] += 1
+        if inside is None and y and 1991 <= y <= year:
+            for r in {region_of[c] for c in cs if c in region_of}:
+                cat_year[r, y][category(p)] += 1
         if inside is not None:
             for a in inside.intersection(cs):
                 for b in cs:
@@ -431,9 +450,13 @@ def main(data, outdir, year=None, region=None):
                              for c, v in sorted(dest.items(), key=lambda kv: (-sum(kv[1].values()), kv[0]))
                              for w in ('same', 'region', 'outside', 'unknown', 'none') if v[w]])
     dump('coauthorship', coauthors)
-    dump('categories_year', [{'country': c, 'year': y, **{k: cat_year[c, y][k] for k in [*CATEGORIES, 'other', 'none']}}
-                             for c in [TOTAL, *(names if inside is not None else names[:TOP_GENDER])]
+    scope = {TOTAL: 'total', **({r: 'region' for r in REGIONS} if inside is None else {})}
+    dump('categories_year', [{'country': c, 'scope': scope.get(c, 'country'), 'year': y,
+                              **{k: cat_year[c, y][k] for k in [*CATEGORIES, 'other', 'none']}}
+                             for c in [TOTAL, *(names if inside is not None else [*REGIONS, *names[:TOP_GENDER]])]
                              for y in range(1991, year + 1) if cat_year[c, y]])
+    dump('doctype_year', [{'type': t, 'journal': j, 'year': y, **{k: v[k] for k in [*CATEGORIES, 'other', 'none']}}
+                          for (t, j, y), v in sorted(doc_year.items(), key=lambda kv: ([*DOCTYPES, 'other'].index(kv[0][0]), not kv[0][1], kv[0][2]))])
     dump('papers_per_year', [{'country': c, 'year': y, 'papers': n}
                              for c in [TOTAL, *names] for y, n in sorted(years[c].items())])
     flow_rows = []

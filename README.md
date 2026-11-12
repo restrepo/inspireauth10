@@ -71,6 +71,10 @@ they published, and where the region's PhDs go next) and the co-authorship heatm
 inhabitants with R&D spending (Figs. 15–17 of the paper; log-log axes by default, with a power-law fit, or linear) and the **Gender** tab (female share per
 year and by rank).
 
+The Overview tab of the worldwide board also shows the papers per year by arXiv category for the
+world or each of the six regions, the arXiv categories of the 30 leading countries, and the document
+types (article, conference paper, thesis…, with or without a journal) against arXiv.
+
 Population and R&D spending (% of GDP) come from the World Bank, in
 [`reproduce/world_bank.csv`](reproduce/world_bank.csv); `python reproduce/world_bank.py` downloads them again.
 
