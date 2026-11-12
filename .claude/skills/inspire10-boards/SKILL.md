@@ -19,6 +19,9 @@ python reproduce/regional_boards.py data/ out/ --date YYYY-MM-DD           # one
 
 - **Regions** are lists of INSPIRE country names in `reproduce/regions.py`; `indicators.py --region
   NAME` restricts the datasets to one of them, and its total row is named after the region.
+- **Population and R&D** (per million inhabitants, correlations) come from
+  `reproduce/world_bank.csv`, joined to the tables by `country_code`; refresh it with
+  `python reproduce/world_bank.py`. Board elements with class `regional` show only on regional boards.
 
 - **The download** is about 5,500 requests and takes several hours. Run it in the background. It is
   cached in `build/cache/` by windows of record numbers, so a stopped run resumes. Use a new
