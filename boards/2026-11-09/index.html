@@ -204,6 +204,15 @@ html { background: var(--color-bg); }
         </select></div>
       <div class="chart tall" data-draw="pmi-chart" data-source="countries"></div>
     </div>
+    <div class="card world-only">
+      <h2>Leading countries by arXiv category</h2>
+      <p class="note">The share of each main (first) arXiv category in the papers of the world and of the 30 countries with the most papers, from 1991, when arXiv started (the Papers per year tab shows them year by year). INSPIRE appears to have taken in most of astro-ph around 2003–2007 only, which raises the astro-ph share of those years.</p>
+      <div class="controls"><label for="rp-catov-from">Papers</label>
+        <select id="rp-catov-from" data-draw="catov-from" data-source="categories_year"><option value="1991">Since 1991</option><option value="2016">Since 2016</option></select>
+        <label for="rp-catov-sort">Sort by</label><select id="rp-catov-sort" data-draw="catov-sort" data-source="categories_year"></select></div>
+      <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
+      <div class="chart tall" data-draw="catov-chart" data-source="categories_year"></div>
+    </div>
   </section>
 
   <section id="correlations" role="tabpanel" hidden>
@@ -354,7 +363,7 @@ const rp = window.rp = {
   int: d3.format(','),
   num: (v) => v == null || v === '' ? '—' : Number.isInteger(+v) ? d3.format(',')(+v) : d3.format(',.1f')(+v),
   ui: { metric: 'papers', pmi: 'papers_pmi', sort: 'papers', desc: true, q: '', country: 'World', genCountry: 'World',
-    genderCountry: 'World', mobCountry: null, catCountry: 'World', catMode: 'n', scale: 'log' },
+    genderCountry: 'World', mobCountry: null, catCountry: 'World', catMode: 'n', scale: 'log', catovFrom: 1991, catovSort: 'papers' },
   total: 'World',
 };
 document.querySelector('.rp').dataset.scope = rp.total === 'World' ? 'world' : 'region';
@@ -764,6 +773,49 @@ dash.draw('cat-chart', (el) => {
     const r = d3.least(rows, (q) => Math.abs(x(q.year) + x.bandwidth() / 2 - px)); if (!r) return;
     tip.show([`${rp.ui.catCountry} · ${r.year} · ${rp.int(r.total)} papers`, ...rp.cats.filter((k) => r[k]).map((k) => `${rp.catName[k] || k}: ${fmt(r[k])}`)],
       x(r.year), y(pct ? 100 : r.total));
+  }).on('pointerleave', () => tip.hide());
+});
+// overview (worldwide board): category profile of the leading countries
+dash.draw('catov-from', (sel) => {
+  sel.value = String(rp.ui.catovFrom);
+  sel.onchange = () => { rp.ui.catovFrom = +sel.value; dash.draw('catov-chart'); };
+});
+dash.draw('catov-sort', (sel) => {
+  sel.replaceChildren(new Option('Papers', 'papers'), ...rp.cats.map((k) => new Option(`Share of ${rp.catName[k] || k}`, k)));
+  sel.value = rp.ui.catovSort;
+  sel.onchange = () => { rp.ui.catovSort = sel.value; dash.draw('catov-chart'); };
+});
+dash.draw('catov-chart', (el) => {
+  if (!rp.ready(el, ['categories_year'])) return;
+  const by = d3.group(dash.data('categories_year').data.filter((r) => +r.year >= rp.ui.catovFrom), (r) => r.country);
+  const rows = [...by].map(([country, rs]) => {
+    const n = Object.fromEntries(rp.cats.map((k) => [k, d3.sum(rs, (r) => +r[k])]));
+    const total = d3.sum(rp.cats, (k) => n[k]);
+    return { country, total, n, ...Object.fromEntries(rp.cats.map((k) => [k, total ? n[k] / total : 0])) };
+  }).filter((r) => r.total);
+  const k = rp.ui.catovSort;
+  rows.sort((a, b) => (b.country === rp.total) - (a.country === rp.total) || (k === 'papers' ? b.total - a.total : b[k] - a[k]));
+  el.replaceChildren();
+  if (!rows.length) return;
+  const bh = 18, mt = 22, H = mt + rows.length * bh + 4, W = Math.max(300, el.clientWidth);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const ml = rp.textW(svg, rows.map((r) => r.country)) + 8, mr = rp.textW(svg, rows.map((r) => rp.int(r.total))) + 8;
+  const x = d3.scaleLinear([0, 1], [ml, W - mr]), y = d3.scaleBand(rows.map((r) => r.country), [mt, H - 4]).padding(0.15);
+  svg.append('g').attr('transform', `translate(0,${mt})`).call(d3.axisTop(x).ticks(5).tickSize(-(H - mt - 4)).tickFormat(d3.format('.0%')))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  svg.append('g').selectAll('g').data(d3.stack().keys(rp.cats)(rows)).join('g').attr('fill', (s, i) => rp.catColor(s.key, i))
+    .selectAll('rect').data((s) => s).join('rect')
+    .attr('x', (s) => x(s[0])).attr('width', (s) => Math.max(0, x(s[1]) - x(s[0]))).attr('y', (s) => y(s.data.country)).attr('height', y.bandwidth());
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', ml - 6).attr('y', (r) => y(r.country) + y.bandwidth() / 2 + 4)
+    .attr('text-anchor', 'end').style('font-weight', (r) => r.country === rp.total ? 600 : null).text((r) => r.country);
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', W - mr + 6).attr('y', (r) => y(r.country) + y.bandwidth() / 2 + 4)
+    .text((r) => rp.int(r.total));
+  const tip = rp.tip(el);
+  svg.on('pointermove', (ev) => {
+    const [, py] = d3.pointer(ev, el);
+    const r = rows.find((q) => py >= y(q.country) && py < y(q.country) + y.step()); if (!r) return tip.hide();
+    tip.show([`${r.country} · ${rp.int(r.total)} papers since ${rp.ui.catovFrom}`,
+      ...rp.cats.filter((c) => r.n[c]).map((c) => `${rp.catName[c] || c}: ${d3.format('.1%')(r[c])} (${rp.int(r.n[c])})`)], x(1) - 160, y(r.country));
   }).on('pointerleave', () => tip.hide());
 });
 dash.draw('share-chart', (el) => {
