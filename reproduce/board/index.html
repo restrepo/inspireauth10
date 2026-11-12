@@ -140,6 +140,14 @@
       <div class="controls"><label for="rp-country">Country</label><select id="rp-country" data-draw="country-select" data-source="papers_per_year"></select></div>
       <div class="chart" data-draw="year-chart" data-source="papers_per_year"></div>
     </div>
+    <div class="card">
+      <h2>Papers per year by arXiv category</h2>
+      <p class="note">The papers of each year from 1991, when arXiv started, by the main (first) arXiv category of the paper; subject classes are merged (astro-ph.CO is astro-ph) and nucl-th with nucl-ex. The coverage of INSPIRE changes with time: it appears to have taken in most of astro-ph around 2003–2007, and later only the astrophysics close to particle physics.<span class="world-only"> Countries: the 30 with the most papers.</span></p>
+      <div class="controls"><label for="rp-cat-country">Country</label><select id="rp-cat-country" data-draw="cat-select" data-source="categories_year"></select>
+        <label for="rp-cat-mode">Show</label><select id="rp-cat-mode" data-draw="cat-mode" data-source="categories_year"><option value="n">Papers</option><option value="pct">Share of the year's papers</option></select></div>
+      <div class="legend" data-draw="cat-legend" data-source="categories_year"></div>
+      <div class="chart tall" data-draw="cat-chart" data-source="categories_year"></div>
+    </div>
   </section>
 
   <section id="mobility" role="tabpanel" hidden>
@@ -246,7 +254,7 @@ const rp = window.rp = {
   int: d3.format(','),
   num: (v) => v == null || v === '' ? '—' : Number.isInteger(+v) ? d3.format(',')(+v) : d3.format(',.1f')(+v),
   ui: { metric: 'papers', pmi: 'papers_pmi', sort: 'papers', desc: true, q: '', country: '@@TOTAL@@', genCountry: '@@TOTAL@@',
-    genderCountry: '@@TOTAL@@', mobCountry: null },
+    genderCountry: '@@TOTAL@@', mobCountry: null, catCountry: '@@TOTAL@@', catMode: 'n' },
   total: '@@TOTAL@@',
 };
 document.querySelector('.rp').dataset.scope = rp.total === 'World' ? 'world' : 'region';
@@ -554,6 +562,62 @@ dash.draw('gen-chart', (el) => {
 });
 
 // regional trends
+rp.cats = ['hep-ph', 'hep-th', 'hep-ex', 'hep-lat', 'astro-ph', 'gr-qc', 'nucl', 'other', 'none'];
+rp.catName = { nucl: 'nucl-th, nucl-ex', other: 'Other arXiv', none: 'Not on arXiv' };
+rp.catColor = (k, i) => k === 'none' ? 'var(--cds-chart-muted)' : dash.colors[i];
+dash.draw('cat-legend', (el) => {
+  el.replaceChildren(...rp.cats.map((k, i) => {
+    const sp = document.createElement('span'), sq = document.createElement('i');
+    sq.className = 'sq'; sq.style.background = rp.catColor(k, i);
+    sp.append(sq, rp.catName[k] || k); return sp;
+  }));
+});
+dash.draw('cat-select', (sel) => {
+  const d = dash.data('categories_year');
+  const cs = d.status === 'ok' ? [...new Set(d.data.map((r) => r.country))] : [];
+  sel.replaceChildren(...cs.map((c) => new Option(c, c)));
+  if (!cs.includes(rp.ui.catCountry)) rp.ui.catCountry = cs[0] || null;
+  sel.value = rp.ui.catCountry || '';
+  sel.onchange = () => { rp.ui.catCountry = sel.value; dash.draw('cat-chart'); };
+});
+dash.draw('cat-mode', (sel) => {
+  sel.value = rp.ui.catMode;
+  sel.onchange = () => { rp.ui.catMode = sel.value; dash.draw('cat-chart'); };
+});
+dash.draw('cat-chart', (el) => {
+  if (!rp.ready(el, ['categories_year'])) return;
+  const pct = rp.ui.catMode === 'pct';
+  const rows = dash.data('categories_year').data.filter((r) => r.country === rp.ui.catCountry).map((r) => {
+    const tot = d3.sum(rp.cats, (k) => +r[k]);
+    return { year: +r.year, total: tot, ...Object.fromEntries(rp.cats.map((k) => [k, pct ? 100 * r[k] / tot : +r[k]])) };
+  });
+  el.replaceChildren();
+  if (!rows.length) return;
+  const years = rows.map((r) => r.year);
+  const stacked = d3.stack().keys(rp.cats)(rows);
+  const W = Math.max(300, el.clientWidth), H = 330, mb = 24;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const y = d3.scaleLinear([0, pct ? 100 : d3.max(rows, (r) => r.total)], [H - mb, 10]).nice();
+  const yfmt = pct ? (v) => `${v}%` : d3.format(',');
+  const ml = rp.textW(svg, y.ticks(5).map(yfmt)) + 10;
+  const x = d3.scaleBand(years, [ml + 4, W - 6]).padding(0.12);
+  svg.append('g').attr('transform', `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(yfmt))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  const step = Math.max(1, Math.ceil(years.length / Math.max(2, Math.floor((W - ml) / 48))));
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).tickValues(years.filter((yy, i) => i % step === 0)).tickFormat(d3.format('d')))
+    .attr('font-size', null).attr('font-family', null);
+  svg.append('g').selectAll('g').data(stacked).join('g').attr('fill', (s, i) => rp.catColor(s.key, i))
+    .selectAll('rect').data((s) => s).join('rect')
+    .attr('x', (s) => x(s.data.year)).attr('width', x.bandwidth()).attr('y', (s) => y(s[1])).attr('height', (s) => Math.max(0, y(s[0]) - y(s[1])));
+  const tip = rp.tip(el);
+  const fmt = pct ? (v) => `${d3.format('.1f')(v)}%` : rp.int;
+  svg.on('pointermove', (ev) => {
+    const [px] = d3.pointer(ev, el);
+    const r = d3.least(rows, (q) => Math.abs(x(q.year) + x.bandwidth() / 2 - px)); if (!r) return;
+    tip.show([`${rp.ui.catCountry} · ${r.year} · ${rp.int(r.total)} papers`, ...rp.cats.filter((k) => r[k]).map((k) => `${rp.catName[k] || k}: ${fmt(r[k])}`)],
+      x(r.year), y(pct ? 100 : r.total));
+  }).on('pointerleave', () => tip.hide());
+});
 dash.draw('share-chart', (el) => {
   if (!rp.ready(el, ['region_share'])) return;
   const rows = dash.data('region_share').data;
