@@ -26,7 +26,7 @@ Counting rules (docs/data-schema.md has the fields):
   counting the papers with an author there, and the 30 countries with the most papers), 1991 on;
 - document types: the papers of the total of each year, 1991 on, by document type (the first
   INSPIRE type: article, conference paper, thesis, proceedings, book (with book chapter) or other),
-  whether INSPIRE links them to a journal, and main arXiv category;
+  whether they are published (a journal or a publication note), and main arXiv category;
 - female share per year (Fig. 21): distinct profiles with gender probability 0.9 or more with a
   paper of the year affiliated to the country; by rank (Table 8): profiles holding a declared
   rank (in the region, for a regional board) in a year in which they published.
@@ -195,7 +195,7 @@ def main(data, outdir, year=None, region=None):
                 if y >= 1991:
                     cat_year[c, y][category(p)] += 1
         if total(cs) and y and 1991 <= y <= year:
-            doc_year[doctype(p), p['journal_id'] is not None, y][category(p)] += 1
+            doc_year[doctype(p), bool(p.get('journal') or p.get('pub_note')), y][category(p)] += 1
         if inside is None and y and 1991 <= y <= year:
             for r in {region_of[c] for c in cs if c in region_of}:
                 cat_year[r, y][category(p)] += 1
