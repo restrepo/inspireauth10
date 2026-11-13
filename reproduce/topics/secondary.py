@@ -8,13 +8,21 @@ links to, marked as inferred. Papers with no link to any topic keep no topic.
 Writes an npz aligned with network.npz: recid, topic (3 columns, -1 if none), score (3 columns),
 links (3 columns), n_links (links to papers with a topic) and inferred.
 
-Usage: python secondary.py network.npz topics_final.npz topics_multi.npz
+With --csv DIR it also writes DIR/papers_topics.csv.gz (one row per paper with a topic: recid and,
+for each of the three topics, its number, score and links, plus n_links) and DIR/topics.csv (topic
+number, name, area number, area name, papers), with the names of names.py.
+
+Usage: python secondary.py network.npz topics_final.npz topics_multi.npz [--csv DIR]
 """
+import csv
+import gzip
 import sys
+from pathlib import Path
 
 import numpy as np
 
 net, clusters, out = sys.argv[1:4]
+csv_dir = sys.argv[sys.argv.index('--csv') + 1] if '--csv' in sys.argv else None
 z = np.load(net)
 n = len(z['recid'])
 lo, hi = np.minimum(z['src'], z['dst']), np.maximum(z['src'], z['dst'])
@@ -65,3 +73,24 @@ print(f'second topic links above the main topic\'s (score capped at 1): {((L[:, 
 for r in (1, 2):
     v = S[T[:, r] >= 0, r]
     print(f'score of topic {r + 1}: median {np.median(v):.3f}, quartiles {np.percentile(v, 25):.3f}-{np.percentile(v, 75):.3f}')
+
+if csv_dir:
+    from names import AREAS, TOPICS
+    d = Path(csv_dir)
+    d.mkdir(parents=True, exist_ok=True)
+    area = np.load(clusters)['area_of_topic']
+    size = np.bincount(T[has, 0], minlength=m)
+    with open(d / 'topics.csv', 'w', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['topic', 'name', 'area', 'area_name', 'papers'])
+        w.writerows([i, TOPICS[i], int(area[i]), AREAS[int(area[i])], int(size[i])] for i in range(m))
+    with gzip.open(d / 'papers_topics.csv.gz', 'wt', newline='') as f:
+        w = csv.writer(f)
+        w.writerow(['recid'] + [f'{c}_{r}' for r in (1, 2, 3) for c in ('topic', 'score', 'links')] + ['n_links'])
+        recid = z['recid']
+        for i in np.flatnonzero(has):
+            row = [int(recid[i])]
+            for r in range(3):
+                row += [int(T[i, r]), f'{S[i, r]:.4f}', int(L[i, r])] if T[i, r] >= 0 else ['', '', '']
+            w.writerow(row + [int(n_links[i])])
+    print(f'CSV files in {d}')

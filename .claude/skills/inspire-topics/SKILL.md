@@ -93,6 +93,11 @@ more links to their second topic than to their own). Output aligned with `networ
 `score`, `links` (3 columns each, -1/0 when missing), `n_links`, `inferred` (main topic taken from
 links for unassigned papers; 0 in 2026-11-09, since every unassigned paper has no citation link).
 
+`--csv out/topics_csv` also writes `papers_topics.csv.gz` and `topics.csv`. They are published in the
+Drive folder `topics` (id 1vWw2pQJzx7WeUhgdvc0zJuaF0AtmD_ON) of the public backup, with links and MD5
+sums in the README; re-upload with `rclone copy out/topics_csv gdrive:topics --drive-root-folder-id
+1AQav5Ho8sruJFZ3qeBSFb7_8RZyk3XNp`.
+
 ## VOSviewer
 
 ```bash
@@ -163,3 +168,4 @@ parameters and result.
 | 2026-11-13 | VOSviewer input, `reproduce/topics/vosviewer.py` | `out/vosviewer/`: 304 topics, 6 clusters (areas), 39,502 links; 18,658,344 citation links between topics, 25,684,345 inside; JSON 2.2 MB, map 18 KB, network 408 KB |
 | 2026-11-13 | VOSviewer files to Google Drive (`rclone copy`), links in the README | Drive folder `vosviewer` in the public backup; anonymous downloads match the MD5 sums |
 | 2026-11-13 | Second and third topics, `reproduce/topics/secondary.py` | 1,583,351 papers with a main topic, 1,380,553 with a second, 1,195,976 with a third; score of the second: median 0.27 (quartiles 0.13-0.51), third: median 0.13 (0.06-0.26); 20,894 second topics capped at 1; `out/clusters/topics_multi.npz` |
+| 2026-11-13 | Topic CSVs (`secondary.py --csv`) to Google Drive, links in the README | `papers_topics.csv.gz` 21 MB (1,583,351 rows), `topics.csv` 31 kB; anonymous downloads match the MD5 sums |
