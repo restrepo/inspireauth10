@@ -115,6 +115,23 @@ of the topics, each topic's papers per year, journals, countries and most cited 
 and shrinking topics, and the topics of each country. The skill `.claude/skills/inspire-topics` has
 the commands and the log of every run.
 
+The graph of topics, for [VOSviewer](https://www.vosviewer.com/) (1.6.16+ or VOSviewer Online), is
+on Google Drive in the folder
+[`vosviewer`](https://drive.google.com/drive/folders/19x_PdTijtNm3qeNNv0ZylPaX2mm92iT0) of the
+backup above. It has 304 topics as items, with the area as cluster, papers and citation links as
+weights, and the median year as score. It also has 39,502 links between topics, each weighted by the
+citation links between their papers. `reproduce/topics/vosviewer.py` writes these files:
+
+| File | Size | MD5 |
+|---|---|---|
+| [`topics_vosviewer.json`](https://drive.google.com/file/d/1k15nF6PStcnobW4nW53f97H44riRwQxU/view) (VOSviewer JSON) | 2.2 MB | `1bac4c0b1d83f1034cd164f6452ad37c` |
+| [`topics_map.txt`](https://drive.google.com/file/d/1NbhTXkxYiRY9OI3Qg2UEpdvr7spKzyiV/view) (map file) | 18 kB | `cd1f8690b49513976990e437ad6cc01c` |
+| [`topics_network.txt`](https://drive.google.com/file/d/1FoxTPVx_YkbJbKFeCb53pLh_F1BQSyrS/view) (network file) | 408 kB | `7db10cb76ac38c06b66d887cc63aaf57` |
+
+```bash
+curl -L -o topics_vosviewer.json 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1k15nF6PStcnobW4nW53f97H44riRwQxU'
+```
+
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
 

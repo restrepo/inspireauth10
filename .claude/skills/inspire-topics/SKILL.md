@@ -93,6 +93,11 @@ Median year); link strength is the number of distinct citation links between two
 `--min-links N` drops weaker links (all 39,502 are kept by default; VOSviewer's own "maximum
 number of lines" thins the drawing).
 
+Published copy: Drive folder `vosviewer` (id 19x_PdTijtNm3qeNNv0ZylPaX2mm92iT0) inside the public
+backup folder; links and MD5 sums in the README's Topics section. Re-upload after a rerun with
+`rclone copy out/vosviewer gdrive:vosviewer --drive-root-folder-id 1AQav5Ho8sruJFZ3qeBSFb7_8RZyk3XNp`
+and update the MD5 sums (file ids stay the same when rclone overwrites).
+
 ## Choosing the resolution
 
 Scan `--res` and keep a value where (a) most linked papers fall in topics of a few hundred to a
@@ -142,3 +147,4 @@ parameters and result.
 | 2026-11-13 | `describe.py` on the kept clustering; names by overlap, `reproduce/topics/names.py` | 295 of 304 topics share 60%+ of their papers both ways with a topic of the first run and keep its name; 9 merged or split topics named again |
 | 2026-11-13 | Names, `reproduce/topics/names_r16.py` | 307 topic names and 6 area names (Theory; Experiment and phenomenology; Strong interactions; Astrophysics and gravitational waves; Quantum physics; Nuclear structure and reactions); the Quantum physics area (248,230 papers, 50% quant-ph) is the boards' growing "Other arXiv" block |
 | 2026-11-13 | VOSviewer input, `reproduce/topics/vosviewer.py` | `out/vosviewer/`: 304 topics, 6 clusters (areas), 39,502 links; 18,658,344 citation links between topics, 25,684,345 inside; JSON 2.2 MB, map 18 KB, network 408 KB |
+| 2026-11-13 | VOSviewer files to Google Drive (`rclone copy`), links in the README | Drive folder `vosviewer` in the public backup; anonymous downloads match the MD5 sums |
