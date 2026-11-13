@@ -3,12 +3,16 @@
 Topics: Leiden (modularity with resolution --res, the RB configuration model) on the undirected direct-citation graph;
 topics smaller than --min papers are merged into the topic they share the most links with, and
 papers with no link stay unassigned (-1). Areas: Leiden (modularity, resolution --res-area) on the
-graph of topics weighted by the links between them. Writes clusters.npz (topic and area of each
+graph of topics weighted by the links between them, with the links inside each topic as
+self-loops (the network coarsened to topics), the best of --area-seeds seeds. Writes clusters.npz (topic and area of each
 paper) and prints a summary.
 
-Usage: python cluster.py network.npz clusters.npz [--res 8] [--min 100] [--res-area 1] [--seed 1] [--iter 2] [--engine igraph]
+Usage: python cluster.py network.npz clusters.npz [--res 8] [--min 100] [--res-area 0.3] [--seed 1] [--iter 2] [--engine igraph] [--area-seeds 50]
 --iter: Leiden passes (each pass refines the previous partition; -1 repeats until no change,
         which on the whole network runs for many hours).
+--iter with igraph stops early when a pass no longer raises the quality.
+--area-seeds: Leiden runs (until no change) on the graph of topics; the partition of highest
+        quality is kept.
 --engine: igraph (Graph.community_leiden, in C, default) or leidenalg; same algorithm and objective,
         igraph is faster and lighter. Both run on one thread: run resolutions in parallel processes.
 """
@@ -26,10 +30,11 @@ ap.add_argument('network')
 ap.add_argument('out')
 ap.add_argument('--res', type=float, default=8.0)
 ap.add_argument('--min', type=int, default=100)
-ap.add_argument('--res-area', type=float, default=1.0)
+ap.add_argument('--res-area', type=float, default=0.3)
 ap.add_argument('--seed', type=int, default=1)
 ap.add_argument('--iter', type=int, default=2)
 ap.add_argument('--engine', choices=['igraph', 'leidenalg'], default='igraph')
+ap.add_argument('--area-seeds', type=int, default=50)
 a = ap.parse_args()
 t0 = time.time()
 z = np.load(a.network)
@@ -48,12 +53,16 @@ def mem():
 if a.engine == 'igraph':
     random.seed(a.seed)
     ig.set_random_number_generator(random)
-    part = None
+    part, last = None, None
     for i in range(a.iter):
         part = g.community_leiden(objective_function='modularity', resolution=a.res, n_iterations=1,
                                   initial_membership=part.membership if part else None)
-        print(f'leiden pass {i + 1}: {len(part)} clusters, quality {part.quality:.4g} ({time.time() - t0:.0f} s, {mem()})')
+        print(f'leiden pass {i + 1}: {len(part)} clusters, quality {part.quality:.6g} ({time.time() - t0:.0f} s, {mem()})')
+        if last is not None and part.quality - last <= 1e-7 * abs(last):
+            break
+        last = part.quality
     topic = np.array(part.membership)
+    quality = part.quality
 else:
     part = la.RBConfigurationVertexPartition(g, resolution_parameter=a.res)
     opt = la.Optimiser()
@@ -64,6 +73,7 @@ else:
         if gain <= 0:
             break
     topic = np.array(part.membership)
+    quality = part.quality()
 
 deg = np.bincount(np.r_[lo, hi], minlength=n)
 topic[deg == 0] = -1
@@ -102,12 +112,15 @@ print(f'topics: {len(ids)} with {a.min}+ papers, {np.count_nonzero(topic >= 0)} 
 
 # areas: Leiden on the graph of topics
 tl, th = topic[lo], topic[hi]
-ok = (tl >= 0) & (th >= 0) & (tl != th)
+ok = (tl >= 0) & (th >= 0)
 k, w = np.unique(np.minimum(tl[ok], th[ok]).astype(np.int64) * len(ids) + np.maximum(tl[ok], th[ok]), return_counts=True)
 tg = ig.Graph(n=len(ids), edges=np.column_stack([k // len(ids), k % len(ids)]), directed=False)
 tg.es['weight'] = w.tolist()
-ap_ = la.find_partition(tg, la.RBConfigurationVertexPartition, weights='weight', resolution_parameter=a.res_area,
-                        n_iterations=a.iter, seed=a.seed)
+runs = [la.find_partition(tg, la.RBConfigurationVertexPartition, weights='weight', resolution_parameter=a.res_area,
+                          n_iterations=-1, seed=s) for s in range(1, a.area_seeds + 1)]
+ap_ = max(runs, key=lambda q: q.quality())
+counts = np.bincount([len(q) for q in runs])
+print('areas over seeds: ' + ', '.join(f'{c} runs with {k}' for k, c in enumerate(counts) if c))
 area_of_topic = np.array(ap_.membership)
 tsize = np.bincount(topic[topic >= 0])
 asize = np.bincount(area_of_topic, weights=tsize)
@@ -116,4 +129,5 @@ arank[np.argsort(-asize)] = np.arange(len(asize))
 area_of_topic = arank[area_of_topic]
 area = np.where(topic >= 0, area_of_topic[np.maximum(topic, 0)], -1)
 print(f'areas: {len(asize)} ({time.time() - t0:.0f} s)')
-np.savez_compressed(a.out, recid=z['recid'], topic=topic, area=area, area_of_topic=area_of_topic)
+np.savez_compressed(a.out, recid=z['recid'], topic=topic, area=area, area_of_topic=area_of_topic, quality=quality,
+                    area_quality=ap_.quality())
