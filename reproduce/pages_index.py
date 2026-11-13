@@ -7,6 +7,7 @@ Usage:
   python reproduce/pages_index.py add SITE --id 2027-02-01 --board board.html \\
       --scalars dash/scalars.json --title "Data of 2027-02-01" [--note "..."] [--release v2.0.0] \\
       [--regions out/]
+  python reproduce/pages_index.py topics SITE --id 2027-02-01 --board topics.html --scalars topics_dash/scalars.json
   python reproduce/pages_index.py render SITE
 --regions: also copy the regional boards of reproduce/regional_boards.py found in that folder
       (board_<slug>_<id>.html, datasets dash_<slug>/) to boards/<id>/<slug>/.
@@ -74,6 +75,29 @@ def add(site, id, board, scalars, title, note='', release='', regions_dir=None):
     render(site)
 
 
+def add_topics(site, id, board, scalars):
+    """Copy the topics board (reproduce/topics/board.py) of an existing board's data to boards/<id>/topics/."""
+    site = Path(site)
+    manifest = site / 'boards.json'
+    boards = json.load(open(manifest, encoding='utf-8'))
+    b = next(x for x in boards if x['id'] == id)
+    dest = site / 'boards' / id / 'topics'
+    dest.mkdir(parents=True, exist_ok=True)
+    shutil.copyfile(board, dest / 'index.html')
+    s = {r['id']: r['value'] for r in json.load(open(scalars, encoding='utf-8'))}
+    b['topics'] = {k: s[k] for k in ['topics', 'areas', 'assigned']}
+    manifest.write_text(json.dumps(boards, indent=1, ensure_ascii=False), encoding='utf-8')
+    render(site)
+
+
+def topics_link(b):
+    if not b.get('topics'):
+        return ''
+    t, e = b['topics'], html.escape
+    return (f'<div class="meta" style="margin-top:6px">Topics board: <a href="boards/{e(b["id"])}/topics/">{t["topics"]} '
+            f'research topics in {t["areas"]} areas</a>, from the citation network ({t["assigned"]:,} papers)</div>\n')
+
+
 def regions_list(b):
     if not b.get('regions'):
         return ''
@@ -101,7 +125,7 @@ def render(site):
 <div class="stats"><div><b>{b['papers']:,}</b>papers</div><div><b>{b['authors']:,}</b>authors</div>
 <div><b>{b['countries']:,}</b>countries</div><div><b>{b['references']:,}</b>references</div>
 <div><b>{b['references_in']:,}</b>to the corpus</div></div>
-{regions_list(b)}</div>""")
+{regions_list(b)}{topics_link(b)}</div>""")
     doc = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -144,11 +168,18 @@ def main(argv=None):
     p.add_argument('--note', default='')
     p.add_argument('--release', default='')
     p.add_argument('--regions', help='folder with the regional boards of reproduce/regional_boards.py')
+    p = sub.add_parser('topics', help='add the topics board of an existing board id')
+    p.add_argument('site')
+    p.add_argument('--id', required=True)
+    p.add_argument('--board', required=True)
+    p.add_argument('--scalars', required=True)
     p = sub.add_parser('render')
     p.add_argument('site')
     a = ap.parse_args(argv)
     if a.cmd == 'add':
         add(a.site, a.id, a.board, a.scalars, a.title, a.note, a.release, a.regions)
+    elif a.cmd == 'topics':
+        add_topics(a.site, a.id, a.board, a.scalars)
     else:
         render(a.site)
 

@@ -104,6 +104,17 @@ types (article, conference paper, thesis…, published in a journal or not) agai
 Population and R&D spending (% of GDP) come from the World Bank, in
 [`reproduce/world_bank.csv`](reproduce/world_bank.csv); `python reproduce/world_bank.py` downloads them again.
 
+## Topics
+
+[`reproduce/topics/`](reproduce/topics) defines research topics from scratch, by Leiden clustering of
+the direct-citation network of all the papers of the tables (the method CWTS used for the OpenAlex
+topics, with no reference to any outside taxonomy): for the tables of 2026-11-09, 304 named topics
+in 6 areas, the most typical of four seeds. A separate board,
+[HECAP topics](https://restrepo.github.io/inspireauth10/boards/2026-11-09/topics/), shows them: a map
+of the topics, each topic's papers per year, journals, countries and most cited papers, the growing
+and shrinking topics, and the topics of each country. The skill `.claude/skills/inspire-topics` has
+the commands and the log of every run.
+
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
 

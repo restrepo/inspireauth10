@@ -1,0 +1,452 @@
+<style>
+#dash-root { --dash-gutter: var(--cds-pad-lg); }
+.rp { font-family: var(--font-anthropic-sans); display: flex; flex-direction: column; gap: var(--cds-gap-lg); max-width: 84rem; margin-inline: auto; }
+.rp h1 { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); margin: 0; text-wrap: balance; }
+.rp .lede { margin: 0; color: var(--color-fg-muted); max-width: 72ch; line-height: 1.5; }
+.rp .lede b, .rp .note b, .rp .r2line b { color: var(--color-fg); font-weight: 600; font-variant-numeric: tabular-nums; }
+.rp .tabs { display: flex; flex-wrap: wrap; gap: var(--cds-gap-xs); border-bottom: 1px solid var(--color-border-line); }
+.rp .tab { appearance: none; background: none; border: 0; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: var(--cds-pad-sm) var(--cds-pad-md); font: inherit; color: var(--color-fg-muted); cursor: pointer; }
+.rp .tab:hover { color: var(--color-fg); }
+.rp .tab[aria-selected="true"] { color: var(--color-fg); border-bottom-color: var(--color-fg); }
+.rp .tab:focus-visible, .rp select:focus-visible, .rp input:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.rp section { display: flex; flex-direction: column; gap: var(--cds-gap-md); }
+.rp .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 22rem), 1fr)); gap: var(--cds-gap-md); }
+.rp .grid.wide { grid-template-columns: 1fr; }
+.rp .card { background: var(--color-panel); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-lg); display: flex; flex-direction: column; gap: var(--cds-gap-sm); min-width: 0; }
+.rp .card h2 { font-size: var(--cds-font-size-heading); font-weight: var(--cds-font-weight-medium); margin: 0; text-wrap: balance; }
+.rp .card h3 { font-size: var(--cds-font-size-body); font-weight: var(--cds-font-weight-medium); margin: 0; }
+.rp .note { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; line-height: 1.45; }
+.rp .r2line { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); margin: 0; }
+.rp .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 12rem), 1fr)); gap: var(--cds-gap-md); }
+.rp .tile { gap: var(--cds-gap-xs); }
+.rp .tile .lbl { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rp .tile .big { font-family: var(--font-anthropic-serif); font-weight: 400; font-size: var(--cds-font-size-title); font-variant-numeric: tabular-nums; }
+.rp .scroll { overflow: auto; max-height: 30rem; }
+.rp table { border-collapse: collapse; width: 100%; font-size: var(--cds-font-size-caption); font-variant-numeric: tabular-nums; }
+.rp th { text-align: left; font-weight: var(--cds-font-weight-medium); color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); position: sticky; top: 0; background: var(--color-panel); }
+.rp td { padding: var(--cds-pad-xs) var(--cds-pad-sm); border-bottom: 1px solid var(--color-border-line); }
+.rp th.n, .rp td.n { text-align: right; }
+.rp .chip { display: inline-block; padding: 0 var(--cds-pad-xs); border-radius: var(--cds-radius); border: 1px solid currentColor; white-space: nowrap; }
+.rp .chip.ok { color: var(--color-ok); }
+.rp .chip.warn { color: var(--color-warn); }
+.rp .chip.bad { color: var(--color-bad); }
+.rp .controls { display: flex; flex-wrap: wrap; gap: var(--cds-gap-sm); align-items: center; font-size: var(--cds-font-size-caption); }
+.rp select, .rp input[type="search"] { font: inherit; color: var(--color-fg); background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); padding: var(--cds-pad-xs) var(--cds-pad-sm); max-width: 100%; }
+.rp .chart { position: relative; min-height: 16rem; }
+.rp .chart.tall { min-height: 22rem; }
+.rp .legend { display: flex; flex-wrap: wrap; gap: var(--cds-gap-md); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rp .sw { display: inline-block; width: 0.75rem; height: 0.2rem; border-radius: 1px; vertical-align: middle; margin-right: var(--cds-pad-xs); background: var(--cds-chart-muted); }
+.rp svg text { fill: var(--color-fg-muted); font-size: var(--cds-font-size-caption); font-family: var(--font-anthropic-sans); }
+.rp svg .tick line { stroke: var(--cds-chart-grid); }
+.rp svg .domain { stroke: var(--cds-chart-axis); }
+.rp .rp-tip { position: absolute; background: var(--cds-surface-popover); border: 1px solid var(--cds-border); border-radius: var(--cds-radius); box-shadow: var(--cds-shadow-popover); padding: var(--cds-pad-xs) var(--cds-pad-sm); font-size: var(--cds-font-size-caption); pointer-events: none; white-space: nowrap; z-index: 2; }
+.rp .rp-tip .h { color: var(--cds-text-secondary); }
+.rp .rp-fail { display: flex; align-items: center; justify-content: center; gap: var(--cds-gap-xs); min-height: inherit; color: var(--color-fg-muted); font-size: var(--cds-font-size-caption); }
+.rp .rp-fail::before { content: ""; width: 0.375rem; height: 0.375rem; border-radius: 50%; background: var(--color-bad); }
+.rp [data-dash-source-state="empty"] { color: transparent; }
+.rp [data-dash-source-state="refreshing"] { opacity: .5; transition: opacity var(--cds-dur-slow); }
+.rp code, .rp pre { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: var(--cds-font-size-caption); }
+.rp pre { margin: 0; padding: var(--cds-pad-sm); background: var(--color-bg); border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow-x: auto; }
+.rp .dot { display: inline-block; width: 0.6rem; height: 0.6rem; border-radius: 50%; vertical-align: middle; margin-right: var(--cds-pad-xs); }
+.rp .dot.ring { border: 1.5px solid var(--color-fg-muted); }
+.rp .dot.fill { background: var(--cds-chart-series-0, #3266ad); }
+.rp .sq { display: inline-block; width: 0.7rem; height: 0.7rem; border-radius: 2px; vertical-align: middle; margin-right: var(--cds-pad-xs); background: var(--cds-chart-muted); }
+.rp .sq.empty { background: none; border: 1px dashed var(--color-fg-muted); }
+.rp .new { font-size: var(--cds-font-size-caption); font-weight: 400; color: var(--color-fg-muted); border: 1px solid var(--color-border-line); border-radius: 99px; padding: 0 var(--cds-pad-sm); margin-left: var(--cds-pad-xs); vertical-align: middle; white-space: nowrap; }
+.rp .finding { margin: 0; line-height: 1.5; max-width: 72ch; }
+.rp .finding b { font-weight: 600; font-variant-numeric: tabular-nums; }
+.rp[data-scope="world"] .regional, .rp[data-scope="region"] .world-only { display: none !important; }
+.rp .sq.muted { background: var(--cds-chart-muted); }
+.rp ul { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: var(--cds-gap-xs); line-height: 1.5; }
+</style>
+<style>
+.rp .map { min-height: 34rem; }
+.rp .map text { paint-order: stroke; stroke: var(--color-panel); stroke-width: 3px; stroke-linejoin: round; fill: var(--color-fg); }
+.rp .clickable tbody tr { cursor: pointer; }
+.rp .clickable tbody tr:hover td { background: var(--color-bg); }
+.rp tr.sel td { background: var(--color-bg); font-weight: 600; }
+.rp .kv { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 16rem), 1fr)); gap: var(--cds-gap-md); }
+.rp .kv ol { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 2px; font-size: var(--cds-font-size-caption); }
+.rp .kv ol li span { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
+.rp .papers li { line-height: 1.4; }
+.rp .papers a { color: inherit; }
+.rp .stats { display: flex; flex-wrap: wrap; gap: var(--cds-gap-lg); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rp .stats b { display: block; font-size: var(--cds-font-size-heading); color: var(--color-fg); font-weight: 500; font-variant-numeric: tabular-nums; }
+.rp .up { color: var(--color-ok); } .rp .down { color: var(--color-bad); }
+</style>
+
+<div class="rp" data-scope="world">
+  <header class="card" style="background: none; border: 0; padding: 0;">
+    <h1>HECAP topics</h1>
+    <p class="lede">Research topics of the INSPIRE-HEP literature, defined from scratch by clustering its own citation network, with no outside taxonomy: two papers share a topic when they cite each other densely. <b data-draw="value" data-source="scalars" data-id="assigned">—</b> papers in <b data-draw="value" data-source="scalars" data-id="topics">—</b> topics and <b data-draw="value" data-source="scalars" data-id="areas">—</b> areas, from the tables of restrepo/inspireauth10 (INSPIRE-HEP downloaded on @@DATE@@), all papers including those with more than 10 authors. The Method tab says how.</p>
+  </header>
+
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button class="tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
+    <button class="tab" role="tab" data-tab="topics" aria-selected="false">Topics</button>
+    <button class="tab" role="tab" data-tab="trends" aria-selected="false">Trends</button>
+    <button class="tab" role="tab" data-tab="countries" aria-selected="false">Countries</button>
+    <button class="tab" role="tab" data-tab="method" aria-selected="false">Method</button>
+  </nav>
+
+  <section id="overview" role="tabpanel">
+    <div class="tiles">
+      <div class="card tile"><span class="lbl">Topics</span><span class="big" data-draw="value" data-source="scalars" data-id="topics">—</span></div>
+      <div class="card tile"><span class="lbl">Areas</span><span class="big" data-draw="value" data-source="scalars" data-id="areas">—</span></div>
+      <div class="card tile"><span class="lbl">Papers with a topic</span><span class="big" data-draw="value" data-source="scalars" data-id="assigned">—</span></div>
+      <div class="card tile"><span class="lbl">Papers without a topic</span><span class="big" data-draw="value" data-source="scalars" data-id="unassigned">—</span><span class="note">no citation link to another paper of the tables</span></div>
+    </div>
+    <div class="card">
+      <h2>Areas</h2>
+      <p class="note">Areas are clusters of topics, by the citations between them. Change: papers of 2021–2025 against 2011–2015.</p>
+      <div class="scroll"><table><thead><tr><th>Area</th><th class="n">Papers</th><th class="n">Topics</th><th class="n">Change</th><th>Main arXiv categories</th></tr></thead><tbody data-draw="area-table" data-source="areas"></tbody></table></div>
+    </div>
+    <div class="card">
+      <h2>Map of the topics</h2>
+      <p class="note">Each circle is a topic, sized by its papers and colored by its area; topics that cite each other strongly sit close together, and lines join each topic to its strongest neighbours. Hover for the name; click to open the topic.</p>
+      <div class="legend" data-draw="area-legend" data-source="areas"></div>
+      <div class="chart map" data-draw="topic-map" data-source="topics topic_links"></div>
+    </div>
+  </section>
+
+  <section id="topics" role="tabpanel" hidden>
+    <div class="card">
+      <h2>All topics</h2>
+      <div class="controls"><label for="tp-q">Search</label><input id="tp-q" type="search" placeholder="neutrino, lattice, qubit…">
+        <label for="tp-area">Area</label><select id="tp-area" data-draw="area-select" data-source="areas"></select>
+        <label for="tp-sort">Sort by</label><select id="tp-sort" data-draw="sort-select" data-source="topics">
+          <option value="papers">Papers</option><option value="citations_per_paper">Citations per paper</option><option value="change">Change 2011–15 to 2021–25</option><option value="year_median">Median year</option></select></div>
+      <div class="scroll clickable" style="max-height: 26rem"><table><thead><tr><th>#</th><th>Topic</th><th>Area</th><th class="n">Papers</th><th class="n">Citations per paper</th><th class="n">Median year</th><th class="n">Change</th></tr></thead><tbody data-draw="topic-table" data-source="topics"></tbody></table></div>
+    </div>
+    <div class="card" data-draw="topic-detail" data-source="topics topic_year"></div>
+  </section>
+
+  <section id="trends" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Papers per year by area</h2>
+      <div class="controls"><label for="tr-mode">Show</label><select id="tr-mode" data-draw="trend-mode" data-source="area_year"><option value="n">Papers</option><option value="pct">Share of the year's papers</option></select></div>
+      <div class="legend" data-draw="area-legend" data-source="areas"></div>
+      <div class="chart tall" data-draw="area-trend" data-source="area_year"></div>
+      <p class="note">Only papers with a topic. INSPIRE's coverage changes with time: it took in most of astro-ph around 2003–2007 and much of quant-ph lately, which shows in the astrophysics and quantum physics areas.</p>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Growing topics</h2><p class="note">Papers of 2021–2025 against 2011–2015, topics with 300 or more papers in 2021–2025.</p><div class="chart tall" data-draw="grow-chart" data-source="topics" data-dir="up"></div></div>
+      <div class="card"><h2>Shrinking topics</h2><p class="note">The same ratio, topics with 300 or more papers in 2011–2015.</p><div class="chart tall" data-draw="grow-chart" data-source="topics" data-dir="down"></div></div>
+    </div>
+  </section>
+
+  <section id="countries" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Areas of a country</h2>
+      <div class="controls"><label for="ct-country">Country</label><select id="ct-country" data-draw="country-select" data-source="country_area"></select></div>
+      <p class="note">Share of the country's papers in each area, against the share of all papers with a topic. A paper counts for every country of its authors' affiliations.</p>
+      <div class="chart" data-draw="country-areas" data-source="country_area areas"></div>
+    </div>
+    <div class="card">
+      <h2>Topics of the country</h2>
+      <p class="note">Specialization: the topic's share of the country's papers divided by its share of all papers with a topic; above 1, the country publishes relatively more in it. Topics with 30 or more of the country's papers. Click a column to sort.</p>
+      <div class="scroll clickable" style="max-height: 28rem"><table><thead data-draw="country-head" data-source="country_topic"></thead><tbody data-draw="country-topics" data-source="country_topic topics"></tbody></table></div>
+    </div>
+  </section>
+
+  <section id="method" role="tabpanel" hidden>
+    <div class="card">
+      <h2>How the topics were made</h2>
+      <ul class="finding">
+        <li><b>Network.</b> Every paper of the tables is a node, the corpus of 1 to 10 authors and the collaboration papers alike; a link joins two papers when one cites the other (<b data-draw="value" data-source="scalars" data-id="citation_links">—</b> links). This is the direct-citation approach of Waltman &amp; van Eck (2012), used by CWTS for the OpenAlex topics, but nothing here is mapped to OpenAlex, arXiv or any other classification.</li>
+        <li><b>Topics.</b> Leiden clustering (Traag, Waltman &amp; van Eck 2019) maximizing modularity at resolution <b data-draw="value" data-source="scalars" data-id="resolution">—</b>, with igraph, up to 20 passes. Clusters under 100 papers join the cluster they share the most links with. Papers with no link (old records, theses, notes) get no topic.</li>
+        <li><b>Seeds.</b> Leiden is randomized. Four runs with different seeds agree at NMI 0.84–0.85 and ARI 0.64–0.69 for topics; the run that agrees best with the others is kept. Small topics shift a little between runs, so their exact borders should not be over-read.</li>
+        <li><b>Areas.</b> Leiden on the graph of topics, with the links inside each topic kept, at resolution <b data-draw="value" data-source="scalars" data-id="area_resolution">—</b>, the best of 50 runs; the four seeds agree at ARI 0.85–0.90.</li>
+        <li><b>Names.</b> Each topic was named from the titles of its most cited papers (from INSPIRE), checked against its arXiv categories and journals.</li>
+        <li><b>Map.</b> Topics are placed by a force layout of the graph of topics, each topic linked to its 6 strongest neighbours by association strength (links between two topics over the product of their total links).</li>
+      </ul>
+      <p class="note">Code: <code>reproduce/topics/</code> of restrepo/inspireauth10, and the step log in <code>.claude/skills/inspire-topics/SKILL.md</code>.</p>
+    </div>
+  </section>
+</div>
+
+<script>
+const rp = window.rp = {
+  int: d3.format(','),
+  ui: { topic: 0, q: '', area: '', sort: 'papers', trend: 'n', country: null, csort: 'papers' },
+};
+rp.ready = (el, ids) => {
+  const st = ids.map((id) => dash.data(id).status);
+  if (st.every((s) => s === 'ok')) return true;
+  el.replaceChildren();
+  const f = document.createElement('div'); f.className = 'rp-fail'; f.textContent = 'Failed to load'; el.appendChild(f);
+  return false;
+};
+rp.tip = (el) => {
+  const t = document.createElement('div'); t.className = 'rp-tip'; t.hidden = true; el.appendChild(t);
+  return {
+    show(lines, x, y) {
+      t.replaceChildren(...lines.map((l, i) => { const d = document.createElement('div'); d.textContent = l; if (i === 0) d.className = 'h'; return d; }));
+      t.hidden = false;
+      t.style.left = Math.max(0, Math.min(x + 12, el.clientWidth - t.offsetWidth)) + 'px';
+      t.style.top = Math.max(0, y - t.offsetHeight - 8) + 'px';
+    },
+    hide() { t.hidden = true; },
+  };
+};
+rp.textW = (svg, strs) => {
+  const g = svg.append('g');
+  const w = d3.max(strs, (s) => g.append('text').text(s).node().getComputedTextLength()) || 0;
+  g.remove();
+  return w;
+};
+rp.axes = (svg, x, y, W, H, ml, mb, xfmt, yfmt) => {
+  svg.append('g').attr('transform', `translate(${ml},0)`).call(d3.axisLeft(y).ticks(5).tickSize(-(W - ml - 8)).tickFormat(yfmt))
+    .attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  svg.append('g').attr('transform', `translate(0,${H - mb})`).call(d3.axisBottom(x).ticks(Math.max(2, Math.floor((W - ml) / 70))).tickFormat(xfmt))
+    .attr('font-size', null).attr('font-family', null);
+};
+rp.color = (area) => dash.colors[area % dash.colors.length];
+rp.change = (t) => t.papers_2011_2015 ? t.papers_2021_2025 / t.papers_2011_2015 : null;
+rp.fmtChange = (r) => r == null ? '—' : `×${d3.format('.2~f')(r)}`;
+rp.scalar = (id) => { const d = dash.data('scalars'); const r = d.status === 'ok' ? d.data.find((q) => q.id === id) : null; return r ? r.value : null; };
+
+// tabs
+const showTab = (name) => {
+  document.querySelectorAll('.rp [role="tabpanel"]').forEach((s) => { s.hidden = s.id !== name; });
+  document.querySelectorAll('.rp .tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
+  ['topic-map', 'topic-detail', 'area-trend', 'grow-chart', 'country-areas'].forEach((k) => dash.draw(k));
+};
+rp.showTab = showTab;
+document.querySelectorAll('.rp .tab').forEach((b) => b.addEventListener('click', () => { showTab(b.dataset.tab); dash.setLink(b.dataset.tab); }));
+rp.openTopic = (t) => { rp.ui.topic = t; showTab('topics'); dash.setLink('topics'); dash.draw('topic-table'); dash.draw('topic-detail'); };
+
+dash.draw('value', (el) => {
+  const v = rp.scalar(el.dataset.id);
+  el.textContent = v == null ? '—' : Number.isInteger(v) ? rp.int(v) : String(v);
+});
+dash.draw('area-legend', (el) => {
+  const d = dash.data('areas'); if (d.status !== 'ok') return;
+  el.replaceChildren(...d.data.map((a) => {
+    const sp = document.createElement('span'), sq = document.createElement('i');
+    sq.className = 'sq'; sq.style.background = rp.color(a.area); sp.append(sq, a.name); return sp;
+  }));
+});
+dash.draw('area-table', (tb) => {
+  const d = dash.data('areas'); tb.replaceChildren(); if (d.status !== 'ok') return;
+  for (const a of d.data) {
+    const tr = tb.insertRow();
+    const name = tr.insertCell(); const sq = document.createElement('i'); sq.className = 'sq'; sq.style.background = rp.color(a.area); name.append(sq, a.name);
+    const r = rp.change(a);
+    for (const [v, cls] of [[rp.int(a.papers), 'n'], [a.topics, 'n'], [rp.fmtChange(r), 'n ' + (r > 1 ? 'up' : 'down')], [a.arxiv.slice(0, 3).map(([c, p]) => `${c === 'none' ? 'not on arXiv' : c} ${Math.round(p)}%`).join(', '), '']]) {
+      const td = tr.insertCell(); td.textContent = v; td.className = cls;
+    }
+  }
+});
+
+dash.draw('topic-map', (el) => {
+  if (!rp.ready(el, ['topics', 'topic_links'])) return;
+  if (el.closest('[hidden]')) return;
+  const T = dash.data('topics').data, L = dash.data('topic_links').data;
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = Math.round(Math.max(380, Math.min(760, W * 0.62))), pad = 26;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const x = d3.scaleLinear(d3.extent(T, (t) => t.x), [pad, W - pad]), y = d3.scaleLinear(d3.extent(T, (t) => t.y), [H - pad, pad]);
+  const r = d3.scaleSqrt([0, d3.max(T, (t) => t.papers)], [0, Math.max(10, W / 45)]);
+  const byId = new Map(T.map((t) => [t.topic, t]));
+  svg.append('g').attr('stroke', 'var(--cds-chart-grid)').attr('stroke-width', 0.7).selectAll('line').data(L).join('line')
+    .attr('x1', (l) => x(byId.get(l.a).x)).attr('y1', (l) => y(byId.get(l.a).y)).attr('x2', (l) => x(byId.get(l.b).x)).attr('y2', (l) => y(byId.get(l.b).y));
+  const nodes = svg.append('g').selectAll('circle').data(T.slice().sort((a, b) => b.papers - a.papers)).join('circle')
+    .attr('cx', (t) => x(t.x)).attr('cy', (t) => y(t.y)).attr('r', (t) => Math.max(2, r(t.papers)))
+    .attr('fill', (t) => rp.color(t.area)).attr('fill-opacity', 0.75).attr('stroke', 'var(--color-panel)').attr('stroke-width', 0.8)
+    .style('cursor', 'pointer').on('click', (ev, t) => rp.openTopic(t.topic));
+  // label the largest topics where they fit
+  const boxes = [];
+  const lab = svg.append('g');
+  for (const t of T.slice().sort((a, b) => b.papers - a.papers).slice(0, 40)) {
+    const tx = lab.append('text').text(t.name.length > 34 ? t.name.slice(0, 32) + '…' : t.name).attr('text-anchor', 'middle').style('font-size', '10px');
+    const w = tx.node().getComputedTextLength(), cx = x(t.x), cy = y(t.y) - Math.max(2, r(t.papers)) - 3;
+    const b = { x0: cx - w / 2, x1: cx + w / 2, y0: cy - 10, y1: cy };
+    if (b.x0 < 0 || b.x1 > W || b.y0 < 0 || boxes.some((o) => b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1)) { tx.remove(); continue; }
+    boxes.push(b); tx.attr('x', cx).attr('y', cy);
+  }
+  const tip = rp.tip(el);
+  nodes.on('pointerenter', (ev, t) => tip.show([t.name, t.area_name, `${rp.int(t.papers)} papers · median year ${t.year_median}`], x(t.x), y(t.y)))
+    .on('pointerleave', () => tip.hide());
+});
+
+dash.draw('area-select', (sel) => {
+  const d = dash.data('areas'); if (d.status !== 'ok') return;
+  sel.replaceChildren(new Option('All areas', ''), ...d.data.map((a) => new Option(a.name, String(a.area))));
+  sel.value = rp.ui.area;
+  sel.onchange = () => { rp.ui.area = sel.value; dash.draw('topic-table'); };
+});
+dash.draw('sort-select', (sel) => {
+  sel.value = rp.ui.sort;
+  sel.onchange = () => { rp.ui.sort = sel.value; dash.draw('topic-table'); };
+});
+document.getElementById('tp-q').addEventListener('input', (e) => { rp.ui.q = e.target.value.trim().toLowerCase(); dash.draw('topic-table'); });
+dash.draw('topic-table', (tb) => {
+  const d = dash.data('topics'); tb.replaceChildren(); if (d.status !== 'ok') return;
+  const k = rp.ui.sort, val = (t) => (k === 'change' ? rp.change(t) ?? -1 : t[k]);
+  const rows = d.data.filter((t) => (!rp.ui.q || t.name.toLowerCase().includes(rp.ui.q)) && (rp.ui.area === '' || String(t.area) === rp.ui.area))
+    .sort((a, b) => val(b) - val(a));
+  for (const t of rows) {
+    const tr = tb.insertRow(); if (t.topic === rp.ui.topic) tr.className = 'sel';
+    const cells = [t.topic, t.name, null, rp.int(t.papers), t.citations_per_paper, t.year_median, rp.fmtChange(rp.change(t))];
+    cells.forEach((v, i) => {
+      const td = tr.insertCell();
+      if (i === 2) { const sq = document.createElement('i'); sq.className = 'sq'; sq.style.background = rp.color(t.area); td.append(sq, t.area_name.split(':')[0]); }
+      else td.textContent = v;
+      if (i > 2 || i === 0) td.className = 'n';
+    });
+    tr.onclick = () => { rp.ui.topic = t.topic; dash.draw('topic-table'); dash.draw('topic-detail'); };
+  }
+});
+dash.draw('topic-detail', (el) => {
+  if (!rp.ready(el, ['topics', 'topic_year'])) return;
+  if (el.closest('[hidden]')) return;
+  const t = dash.data('topics').data.find((q) => q.topic === rp.ui.topic); if (!t) return;
+  const rows = dash.data('topic_year').data.filter((r) => r.topic === t.topic && r.year >= 1950);
+  el.replaceChildren();
+  const h = document.createElement('h2'); h.textContent = t.name;
+  const sub = document.createElement('p'); sub.className = 'note'; sub.textContent = `Topic ${t.topic} · ${t.area_name}`;
+  const stats = document.createElement('div'); stats.className = 'stats';
+  for (const [k, v] of [['Papers', rp.int(t.papers)], ['With 1 to 10 authors', rp.int(t.corpus_papers)], ['Citations per paper', t.citations_per_paper],
+    ['Years (10–90%)', `${t.year_p10}–${t.year_p90}`], ['Change 2011–15 to 2021–25', rp.fmtChange(rp.change(t))]]) {
+    const s = document.createElement('div'); const b = document.createElement('b'); b.textContent = v; s.append(b, k); stats.append(s);
+  }
+  const chart = document.createElement('div'); chart.className = 'chart';
+  el.append(h, sub, stats, chart);
+  const W = Math.max(300, chart.clientWidth), H = 220, mb = 24;
+  const svg = d3.select(chart).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const y = d3.scaleLinear([0, d3.max(rows, (r) => r.papers) || 1], [H - mb, 8]).nice();
+  const ml = rp.textW(svg, y.ticks(5).map(d3.format(','))) + 10;
+  const x = d3.scaleLinear([d3.min(rows, (r) => r.year) ?? 1990, 2026], [ml + 4, W - 10]);
+  rp.axes(svg, x, y, W, H, ml, mb, d3.format('d'), d3.format(','));
+  const bw = Math.max(1, (x(2) - x(1)) * 0.8);
+  svg.append('g').attr('fill', rp.color(t.area)).selectAll('rect').data(rows).join('rect')
+    .attr('x', (r) => x(r.year) - bw / 2).attr('width', bw).attr('y', (r) => y(r.papers)).attr('height', (r) => y(0) - y(r.papers));
+  const tip = rp.tip(chart);
+  svg.on('pointermove', (ev) => { const [px] = d3.pointer(ev, chart); const r = d3.least(rows, (q) => Math.abs(x(q.year) - px)); if (r) tip.show([String(r.year), `${rp.int(r.papers)} papers`], x(r.year), y(r.papers)); })
+    .on('pointerleave', () => tip.hide());
+  const kv = document.createElement('div'); kv.className = 'kv';
+  const list = (title, items) => { const box = document.createElement('div'); const h3 = document.createElement('h3'); h3.textContent = title; const ol = document.createElement('ol');
+    for (const [name, pct] of items) { const li = document.createElement('li'); const s = document.createElement('span'); s.textContent = ` ${pct}%`; li.append(name === 'none' ? 'not on arXiv' : name, s); ol.append(li); }
+    box.append(h3, ol); return box; };
+  kv.append(list('arXiv categories', t.arxiv), list('Journals', t.journals), list('Countries', t.countries));
+  const pbox = document.createElement('div'); const ph = document.createElement('h3'); ph.textContent = 'Most cited papers'; const pol = document.createElement('ol'); pol.className = 'papers';
+  for (const p of t.top_papers) { const li = document.createElement('li'); const a = document.createElement('a'); a.href = `https://inspirehep.net/literature/${p.recid}`; a.target = '_blank'; a.rel = 'noopener'; a.textContent = p.title || `INSPIRE ${p.recid}`; const s = document.createElement('span'); s.textContent = ` ${rp.int(p.citations)} citations`; li.append(a, s); pol.append(li); }
+  pbox.append(ph, pol);
+  el.append(kv, pbox);
+});
+
+dash.draw('trend-mode', (sel) => { sel.value = rp.ui.trend; sel.onchange = () => { rp.ui.trend = sel.value; dash.draw('area-trend'); }; });
+dash.draw('area-trend', (el) => {
+  if (!rp.ready(el, ['area_year', 'areas'])) return;
+  if (el.closest('[hidden]')) return;
+  const areas = dash.data('areas').data.map((a) => a.area), pct = rp.ui.trend === 'pct';
+  const by = d3.rollup(dash.data('area_year').data.filter((r) => r.year >= 1960 && r.year <= 2026), (v) => new Map(v.map((r) => [r.area, r.papers])), (r) => r.year);
+  const rows = [...by].sort((a, b) => a[0] - b[0]).map(([year, m]) => {
+    const tot = d3.sum(areas, (k) => m.get(k) || 0);
+    return { year, tot, ...Object.fromEntries(areas.map((k) => [k, pct ? (100 * (m.get(k) || 0)) / tot : m.get(k) || 0])) };
+  });
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = 340, mb = 24;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const st = d3.stack().keys(areas)(rows);
+  const y = d3.scaleLinear([0, pct ? 100 : d3.max(rows, (r) => r.tot)], [H - mb, 8]).nice(), yfmt = pct ? (v) => `${v}%` : d3.format(',');
+  const ml = rp.textW(svg, y.ticks(5).map(yfmt)) + 10;
+  const x = d3.scaleLinear(d3.extent(rows, (r) => r.year), [ml + 4, W - 10]);
+  rp.axes(svg, x, y, W, H, ml, mb, d3.format('d'), yfmt);
+  svg.append('g').selectAll('path').data(st).join('path').attr('fill', (s) => rp.color(+s.key)).attr('fill-opacity', 0.85)
+    .attr('d', d3.area().x((p) => x(p.data.year)).y0((p) => y(p[0])).y1((p) => y(p[1])));
+  const names = new Map(dash.data('areas').data.map((a) => [a.area, a.name]));
+  const tip = rp.tip(el);
+  svg.on('pointermove', (ev) => { const [px] = d3.pointer(ev, el); const r = d3.least(rows, (q) => Math.abs(x(q.year) - px)); if (!r) return;
+    tip.show([`${r.year} · ${rp.int(r.tot)} papers`, ...areas.slice().reverse().map((k) => `${names.get(k).split(':')[0]}: ${pct ? d3.format('.1f')(r[k]) + '%' : rp.int(r[k])}`)], x(r.year), 20); })
+    .on('pointerleave', () => tip.hide());
+});
+dash.draw('grow-chart', (el) => {
+  if (!rp.ready(el, ['topics'])) return;
+  if (el.closest('[hidden]')) return;
+  const up = el.dataset.dir === 'up';
+  const rows = dash.data('topics').data.filter((t) => (up ? t.papers_2021_2025 : t.papers_2011_2015) >= 300 && t.papers_2011_2015 > 0)
+    .map((t) => ({ ...t, r: rp.change(t) })).sort((a, b) => (up ? b.r - a.r : a.r - b.r)).slice(0, 15);
+  el.replaceChildren();
+  const bh = 20, H = rows.length * bh + 28, W = Math.max(300, el.clientWidth);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const label = (t) => (t.name.length > 44 ? t.name.slice(0, 42) + '…' : t.name);
+  const ml = Math.min(W * 0.6, rp.textW(svg, rows.map(label)) + 10);
+  const x = d3.scaleLog([Math.min(1, d3.min(rows, (t) => t.r)) * 0.9, Math.max(1, d3.max(rows, (t) => t.r)) * 1.1], [ml, W - 40]);
+  const y = d3.scaleBand(rows.map((t) => t.topic), [20, H - 8]).padding(0.2);
+  svg.append('line').attr('x1', x(1)).attr('x2', x(1)).attr('y1', 14).attr('y2', H - 8).attr('stroke', 'var(--cds-chart-reference)');
+  svg.append('text').attr('x', x(1)).attr('y', 10).attr('text-anchor', 'middle').text('×1');
+  svg.append('g').selectAll('rect').data(rows).join('rect').attr('fill', (t) => rp.color(t.area))
+    .attr('x', (t) => Math.min(x(1), x(t.r))).attr('width', (t) => Math.abs(x(t.r) - x(1))).attr('y', (t) => y(t.topic)).attr('height', y.bandwidth())
+    .style('cursor', 'pointer').on('click', (ev, t) => rp.openTopic(t.topic));
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', ml - 6).attr('y', (t) => y(t.topic) + y.bandwidth() / 2 + 4).attr('text-anchor', 'end').text(label)
+    .style('cursor', 'pointer').on('click', (ev, t) => rp.openTopic(t.topic));
+  svg.append('g').selectAll('text').data(rows).join('text').attr('x', (t) => (up ? x(t.r) + 4 : x(1) + 4)).attr('y', (t) => y(t.topic) + y.bandwidth() / 2 + 4).text((t) => rp.fmtChange(t.r));
+  const tip = rp.tip(el);
+  svg.selectAll('rect').on('pointerenter', (ev, t) => tip.show([t.name, `${rp.int(t.papers_2011_2015)} papers in 2011–15, ${rp.int(t.papers_2021_2025)} in 2021–25`], x(t.r), y(t.topic)))
+    .on('pointerleave', () => tip.hide());
+});
+
+dash.draw('country-select', (sel) => {
+  const d = dash.data('country_area'); if (d.status !== 'ok') return;
+  const tot = d3.rollup(d.data, (v) => d3.sum(v, (r) => r.papers), (r) => r.country);
+  const cs = [...tot].sort((a, b) => b[1] - a[1]).map(([c]) => c);
+  if (!rp.ui.country) rp.ui.country = cs[0];
+  sel.replaceChildren(...cs.map((c) => new Option(c, c)));
+  if (!cs.includes(rp.ui.country)) rp.ui.country = cs[0];
+  sel.value = rp.ui.country;
+  sel.onchange = () => { rp.ui.country = sel.value; dash.draw('country-areas'); dash.draw('country-topics'); };
+});
+dash.draw('country-areas', (el) => {
+  if (!rp.ready(el, ['country_area', 'areas'])) return;
+  if (el.closest('[hidden]')) return;
+  const A = dash.data('areas').data, all = d3.sum(A, (a) => a.papers);
+  const mine = dash.data('country_area').data.filter((r) => r.country === rp.ui.country), ctot = d3.sum(mine, (r) => r.papers);
+  const rows = A.map((a) => ({ a, world: (100 * a.papers) / all, c: (100 * ((mine.find((r) => r.area === a.area) || {}).papers || 0)) / ctot }));
+  el.replaceChildren();
+  const bh = 34, H = rows.length * bh + 30, W = Math.max(300, el.clientWidth);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const label = (r) => r.a.name.split(':')[0];
+  const ml = rp.textW(svg, rows.map(label)) + 12;
+  const x = d3.scaleLinear([0, d3.max(rows, (r) => Math.max(r.world, r.c)) * 1.15], [ml, W - 50]);
+  const y = d3.scaleBand(rows.map((r) => r.a.area), [24, H - 4]).padding(0.25);
+  svg.append('g').attr('transform', 'translate(0,20)').call(d3.axisTop(x).ticks(5).tickFormat((v) => `${v}%`).tickSize(-(H - 24))).attr('font-size', null).attr('font-family', null).call((g) => g.select('.domain').remove());
+  const g = svg.append('g').selectAll('g').data(rows).join('g');
+  g.append('rect').attr('x', ml).attr('y', (r) => y(r.a.area)).attr('height', y.bandwidth() / 2).attr('width', (r) => x(r.c) - ml).attr('fill', (r) => rp.color(r.a.area));
+  g.append('rect').attr('x', ml).attr('y', (r) => y(r.a.area) + y.bandwidth() / 2).attr('height', y.bandwidth() / 2).attr('width', (r) => x(r.world) - ml).attr('fill', 'var(--cds-chart-muted)');
+  g.append('text').attr('x', ml - 6).attr('y', (r) => y(r.a.area) + y.bandwidth() / 2 + 4).attr('text-anchor', 'end').text(label);
+  g.append('text').attr('x', (r) => x(r.c) + 4).attr('y', (r) => y(r.a.area) + y.bandwidth() / 4 + 4).text((r) => `${d3.format('.1f')(r.c)}%`);
+  g.append('text').attr('x', (r) => x(r.world) + 4).attr('y', (r) => y(r.a.area) + (3 * y.bandwidth()) / 4 + 4).text((r) => `${d3.format('.1f')(r.world)}% all`);
+});
+rp.ccols = [['topic', 'Topic'], ['area', 'Area'], ['papers', 'Papers'], ['share', 'Share of country'], ['spec', 'Specialization']];
+dash.draw('country-head', (th) => {
+  const tr = document.createElement('tr');
+  for (const [k, label] of rp.ccols) {
+    const h = document.createElement('th'); h.textContent = label + (rp.ui.csort === k ? ' ↓' : ''); if (k !== 'topic' && k !== 'area') h.className = 'n';
+    h.style.cursor = 'pointer'; h.onclick = () => { rp.ui.csort = k; dash.draw('country-head'); dash.draw('country-topics'); };
+    tr.append(h);
+  }
+  th.replaceChildren(tr);
+});
+dash.draw('country-topics', (tb) => {
+  tb.replaceChildren();
+  if (dash.data('country_topic').status !== 'ok' || dash.data('topics').status !== 'ok' || !rp.ui.country) return;
+  const T = new Map(dash.data('topics').data.map((t) => [t.topic, t])), all = d3.sum(dash.data('topics').data, (t) => t.papers);
+  const mine = dash.data('country_topic').data.filter((r) => r.country === rp.ui.country), ctot = d3.sum(mine, (r) => r.papers);
+  const k = rp.ui.csort;
+  const rows = mine.filter((r) => r.papers >= 30).map((r) => { const t = T.get(r.topic); return { t, papers: r.papers, share: (100 * r.papers) / ctot, spec: r.papers / ctot / (t.papers / all) }; })
+    .sort((a, b) => (k === 'topic' ? a.t.name.localeCompare(b.t.name) : k === 'area' ? a.t.area - b.t.area || b.papers - a.papers : b[k] - a[k]));
+  for (const r of rows) {
+    const tr = tb.insertRow();
+    const c0 = tr.insertCell(); c0.textContent = r.t.name;
+    const c1 = tr.insertCell(); const sq = document.createElement('i'); sq.className = 'sq'; sq.style.background = rp.color(r.t.area); c1.append(sq, r.t.area_name.split(':')[0]);
+    for (const v of [rp.int(r.papers), `${d3.format('.2f')(r.share)}%`, d3.format('.2f')(r.spec)]) { const td = tr.insertCell(); td.textContent = v; td.className = 'n'; }
+    if (r.spec >= 2) tr.cells[4].classList.add('up');
+    tr.onclick = () => rp.openTopic(r.t.topic);
+  }
+});
+
+const startTab = location.hash.slice(1);
+if (startTab && document.querySelector(`.rp .tab[data-tab="${CSS.escape(startTab)}"]`)) showTab(startTab);
+</script>

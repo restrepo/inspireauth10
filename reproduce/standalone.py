@@ -115,8 +115,15 @@ def script_json(obj):
     return json.dumps(obj, ensure_ascii=False, separators=(',', ':')).replace('</', '<\\/')
 
 
-def main(dash_dir, out_path, values=None):
-    page = (HERE / 'board/index.html').read_text(encoding='utf-8')
+CREDIT = ('Computed by <code>reproduce/indicators.py</code> of restrepo/inspireauth10 from the tables in <code>data/</code>\n'
+          '(INSPIRE-HEP, CC0), with genders from genderize-offline 0.1.0 (World Gender Name Dictionary 2.0).')
+
+
+def main(dash_dir, out_path, values=None, page=None, datasets=None, credit=CREDIT):
+    """page: the board's HTML (default board/index.html); datasets: {name: (title, description)}
+    (default board_datasets.DATASETS); credit: the first sentence of the Sources section."""
+    datasets = datasets or DATASETS
+    page = Path(page or HERE / 'board/index.html').read_text(encoding='utf-8')
     page = page.replace('<meta name="dash-one-writer">\n', '')
     values = {**DEFAULTS, **(values or {})}
     title = values['TITLE']
@@ -124,12 +131,12 @@ def main(dash_dir, out_path, values=None):
         page = page.replace(f'@@{key}@@', value)
     if '@@' in page:
         raise SystemExit('unfilled placeholder in the page: pass --set DATE=YYYY-MM-DD')
-    data = {k: json.load(open(Path(dash_dir) / f'{k}.json', encoding='utf-8')) for k in DATASETS}
+    data = {k: json.load(open(Path(dash_dir) / f'{k}.json', encoding='utf-8')) for k in datasets}
     built = datetime.now(timezone.utc).strftime('%Y-%m-%d')
     sources = ''.join(
         f'<li><b>{html.escape(t)}</b> ({len(data[k])} rows): {html.escape(d)} '
         f'<a href="#" data-sa-download="{k}">Download JSON</a></li>'
-        for k, (t, d) in DATASETS.items())
+        for k, (t, d) in datasets.items())
     doc = f"""<!doctype html>
 <html lang="en">
 <head>
@@ -146,8 +153,7 @@ def main(dash_dir, out_path, values=None):
 {page}
 <section class="sa-sources">
 <h2>Sources</h2>
-<p>Computed by <code>reproduce/indicators.py</code> of restrepo/inspireauth10 from the tables in <code>data/</code>
-(INSPIRE-HEP, CC0), with genders from genderize-offline 0.1.0 (World Gender Name Dictionary 2.0). Built {built}.
+<p>{credit} Built {built}.
 Self-contained page; d3 v7.9.0 (ISC licence) is included.</p>
 <ul>{sources}</ul>
 </section>
