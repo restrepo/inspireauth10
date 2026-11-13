@@ -79,6 +79,20 @@ python reproduce/pages_index.py topics out/site --id 2026-11-09 --board out/topi
   papers, topics with a specialization index), Method.
 - Template: `reproduce/topics/board/index.html` (the other boards' styles, its own drawers).
 
+## Second and third topics
+
+```bash
+python reproduce/topics/secondary.py out/clusters/network.npz out/clusters/topics_final.npz \
+    out/clusters/topics_multi.npz                                                               # ~1 min
+```
+
+Each paper's citation links (references and citing papers, once per pair) are counted by the topic
+at the other end. Main topic = the paper's own topic, score 1; second and third = the other topics
+with most links, score = links to it / links to the main topic, capped at 1 (1.3% of papers have
+more links to their second topic than to their own). Output aligned with `network.npz`: `topic`,
+`score`, `links` (3 columns each, -1/0 when missing), `n_links`, `inferred` (main topic taken from
+links for unassigned papers; 0 in 2026-11-09, since every unassigned paper has no citation link).
+
 ## VOSviewer
 
 ```bash
@@ -148,3 +162,4 @@ parameters and result.
 | 2026-11-13 | Names, `reproduce/topics/names_r16.py` | 307 topic names and 6 area names (Theory; Experiment and phenomenology; Strong interactions; Astrophysics and gravitational waves; Quantum physics; Nuclear structure and reactions); the Quantum physics area (248,230 papers, 50% quant-ph) is the boards' growing "Other arXiv" block |
 | 2026-11-13 | VOSviewer input, `reproduce/topics/vosviewer.py` | `out/vosviewer/`: 304 topics, 6 clusters (areas), 39,502 links; 18,658,344 citation links between topics, 25,684,345 inside; JSON 2.2 MB, map 18 KB, network 408 KB |
 | 2026-11-13 | VOSviewer files to Google Drive (`rclone copy`), links in the README | Drive folder `vosviewer` in the public backup; anonymous downloads match the MD5 sums |
+| 2026-11-13 | Second and third topics, `reproduce/topics/secondary.py` | 1,583,351 papers with a main topic, 1,380,553 with a second, 1,195,976 with a third; score of the second: median 0.27 (quartiles 0.13-0.51), third: median 0.13 (0.06-0.26); 20,894 second topics capped at 1; `out/clusters/topics_multi.npz` |
