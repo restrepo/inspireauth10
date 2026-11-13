@@ -1,8 +1,8 @@
 # Data schema
 
 `build/build_inspire10.py` writes four gzipped JSON Lines tables (one JSON object per line).
-They are too large for git, so they are not in the repository: a release attaches them (see
-the README). [`inspire10.schema.json`](inspire10.schema.json) is the machine-readable version
+They are too large for git, so they are not in the repository: a release attaches them, and the
+tables of 2026-11-09 are on Google Drive (see "Download" in the README). [`inspire10.schema.json`](inspire10.schema.json) is the machine-readable version
 (JSON Schema 2020-12, one definition per table), and `python docs/validate_schema.py data/`
 checks the files against it (it needs `pip install jsonschema`).
 

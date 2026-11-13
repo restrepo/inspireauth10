@@ -29,6 +29,28 @@ from the corpus only, citations up to any year, and citation flows between count
 The tables are too large for git (hundreds of MB), so they are not in the repository. A release
 attaches them, and they can be built locally (below).
 
+### Download
+
+No release has been made yet. The tables of the local download of **2026-11-09** (literature
+records up to 3213510, the data of the boards on GitHub Pages) are on Google Drive, public, in the
+folder [`inspireauth10_2026-11-09`](https://drive.google.com/drive/folders/1AQav5Ho8sruJFZ3qeBSFb7_8RZyk3XNp):
+
+| File | Size | MD5 |
+|---|---|---|
+| [`papers.jsonl.gz`](https://drive.google.com/file/d/1VKd-X-zV4xCrRZJtWXHMko259s0nBPWe/view) | 406 MB | `eb3590c74f8b3a71ed27093b53f20448` |
+| [`authors.jsonl.gz`](https://drive.google.com/file/d/1W-c6_ZQUXAq5HQpd42WlDIUNbpvklMr2/view) | 25.5 MB | `76e2693f9ca8ea5bbc20ed406fbf1dbb` |
+| [`institutions.jsonl.gz`](https://drive.google.com/file/d/1Hz1j9W4eVf5FzEOkyzlS8R0qwnxlcbUH/view) | 207 kB | `3ad7c9b85360ed1220d9c108f5a3ede0` |
+| [`experiments.jsonl.gz`](https://drive.google.com/file/d/1_RIPAMfXOOe2nXlIrodLEOUKLC6GTEgz/view) | 43 kB | `21fff3661aafe0e7355a7e2e3e8516b6` |
+
+```bash
+mkdir -p data
+curl -L -o data/papers.jsonl.gz 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1VKd-X-zV4xCrRZJtWXHMko259s0nBPWe'
+curl -L -o data/authors.jsonl.gz 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1W-c6_ZQUXAq5HQpd42WlDIUNbpvklMr2'
+curl -L -o data/institutions.jsonl.gz 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1Hz1j9W4eVf5FzEOkyzlS8R0qwnxlcbUH'
+curl -L -o data/experiments.jsonl.gz 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1_RIPAMfXOOe2nXlIrodLEOUKLC6GTEgz'
+md5sum data/*.jsonl.gz
+```
+
 ## Building
 
 ```bash
