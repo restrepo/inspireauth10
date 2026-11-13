@@ -79,6 +79,20 @@ python reproduce/pages_index.py topics out/site --id 2026-11-09 --board out/topi
   papers, topics with a specialization index), Method.
 - Template: `reproduce/topics/board/index.html` (the other boards' styles, its own drawers).
 
+## VOSviewer
+
+```bash
+python reproduce/topics/vosviewer.py out/clusters/network.npz out/clusters/topics_final.npz \
+    out/clusters/topics_final.json out/vosviewer/                                               # ~25 s
+```
+
+Writes `topics_vosviewer.json` (VOSviewer 1.6.16+ and VOSviewer Online: File → Open → JSON) and
+`topics_map.txt` + `topics_network.txt` (classic map and network files). Items are topics (id =
+topic + 1, cluster = area + 1, weights Papers, Citation links and Internal citation links, score
+Median year); link strength is the number of distinct citation links between two topics' papers.
+`--min-links N` drops weaker links (all 39,502 are kept by default; VOSviewer's own "maximum
+number of lines" thins the drawing).
+
 ## Choosing the resolution
 
 Scan `--res` and keep a value where (a) most linked papers fall in topics of a few hundred to a
@@ -127,3 +141,4 @@ parameters and result.
 | 2026-11-13 | Topics board: `indicators.py`, `board.py`, `pages_index.py topics` | `out/topics_2026-11-09.html`, 2.3 MB; 304 topics, 6 areas, 73 countries; all tabs draw with no console error, no horizontal scroll at 375 px; added to the Pages site at `boards/2026-11-09/topics/`, pushed 2026-11-13 (gh-pages a2b6467): https://restrepo.github.io/inspireauth10/boards/2026-11-09/topics/ |
 | 2026-11-13 | `describe.py` on the kept clustering; names by overlap, `reproduce/topics/names.py` | 295 of 304 topics share 60%+ of their papers both ways with a topic of the first run and keep its name; 9 merged or split topics named again |
 | 2026-11-13 | Names, `reproduce/topics/names_r16.py` | 307 topic names and 6 area names (Theory; Experiment and phenomenology; Strong interactions; Astrophysics and gravitational waves; Quantum physics; Nuclear structure and reactions); the Quantum physics area (248,230 papers, 50% quant-ph) is the boards' growing "Other arXiv" block |
+| 2026-11-13 | VOSviewer input, `reproduce/topics/vosviewer.py` | `out/vosviewer/`: 304 topics, 6 clusters (areas), 39,502 links; 18,658,344 citation links between topics, 25,684,345 inside; JSON 2.2 MB, map 18 KB, network 408 KB |
