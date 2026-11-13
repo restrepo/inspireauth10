@@ -115,6 +115,30 @@ of the topics, each topic's papers per year, journals, countries and most cited 
 and shrinking topics, and the topics of each country. The skill `.claude/skills/inspire-topics` has
 the commands and the log of every run.
 
+Each paper has up to three topics. The main topic is the paper's own topic and has score 1. The
+second and third are the two other topics with the most citation links (references and citing
+papers), each scored as its number of links divided by the links to the main topic, capped at 1.
+`reproduce/topics/secondary.py` computes them. The tables are on Google Drive in the folder
+[`topics`](https://drive.google.com/drive/folders/1vWw2pQJzx7WeUhgdvc0zJuaF0AtmD_ON) of the backup
+above:
+
+| File | Size | MD5 |
+|---|---|---|
+| [`papers_topics.csv.gz`](https://drive.google.com/file/d/1wwUjXf9DLSyt8dBSvOjzMy9zWiAR63MK/view) | 21 MB | `5afa1a868165184be38af2bd26a697ec` |
+| [`topics.csv`](https://drive.google.com/file/d/1KC7kY2oGBti0P0EkcQiTTV-Ddr5eZN8A/view) | 31 kB | `0ed70fffb1b5efd23acef3f9e2a6f77b` |
+
+- `papers_topics.csv.gz` has one row per paper with a topic, 1,583,351 in all. Its columns are
+  `recid`, then `topic_k`, `score_k` and `links_k` for k = 1, 2, 3 (empty when the paper has no
+  such topic), and `n_links`.
+- `topics.csv` gives the number, name, area and paper count of each of the 304 topics.
+
+The 288,870 papers that have no citation link get no topic.
+
+```bash
+curl -L -o papers_topics.csv.gz 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1wwUjXf9DLSyt8dBSvOjzMy9zWiAR63MK'
+curl -L -o topics.csv 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1KC7kY2oGBti0P0EkcQiTTV-Ddr5eZN8A'
+```
+
 The graph of topics, for [VOSviewer](https://www.vosviewer.com/) (1.6.16+ or VOSviewer Online), is
 on Google Drive in the folder
 [`vosviewer`](https://drive.google.com/drive/folders/19x_PdTijtNm3qeNNv0ZylPaX2mm92iT0) of the
