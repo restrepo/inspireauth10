@@ -56,6 +56,29 @@ python reproduce/topics/describe.py out/clusters/steady_r16_s1.npz data/papers.j
     out/clusters/topics_final.json out/clusters/areas_final.json --top 8
 ```
 
+## Topics board
+
+An independent, self-contained board ("HECAP topics"), built by the same `standalone.py` as the
+other boards with its own page and datasets:
+
+```bash
+python reproduce/topics/indicators.py data out/clusters/topics_final.npz out/clusters/topics_final.json \
+    out/clusters/network.npz out/topics_dash/                                                   # ~2 min
+python reproduce/topics/board.py out/topics_dash/ out/topics_2026-11-09.html --date 2026-11-09
+python reproduce/pages_index.py topics out/site --id 2026-11-09 --board out/topics_2026-11-09.html \
+    --scalars out/topics_dash/scalars.json                                                      # boards/<id>/topics/
+```
+
+- Datasets (`reproduce/topics/board_datasets.py`): scalars, areas, topics (with map position),
+  topic_links, topic_year, area_year, country_area and country_topic (countries with 1,000+
+  papers with a topic, 73 in 2026-11-09).
+- Tabs: Overview (totals, areas, a map of the topics placed by a force layout of each topic's 6
+  strongest links by association strength), Topics (search, sort, detail with papers per year,
+  arXiv, journals, countries and most cited papers linked to INSPIRE), Trends (areas per year,
+  growing and shrinking topics, 2021-2025 against 2011-2015), Countries (area shares against all
+  papers, topics with a specialization index), Method.
+- Template: `reproduce/topics/board/index.html` (the other boards' styles, its own drawers).
+
 ## Choosing the resolution
 
 Scan `--res` and keep a value where (a) most linked papers fall in topics of a few hundred to a
@@ -101,5 +124,6 @@ parameters and result.
 | 2026-11-13 | Area resolution scan on the topic graphs of seeds 1 and 2 | 0.2: 6/5 areas, ARI 0.721; **0.3: 6/6 areas, NMI 0.843, ARI 0.867**; 0.5: 8/8, ARI 0.861; 0.7: 10/10, ARI 0.829; 1.0: 14/15, ARI 0.721. Default `--res-area` is now 0.3; `areas.py` recomputes areas of an existing clustering |
 | 2026-11-13 | Resolution 16, `--iter 20`, seeds 3 and 4; areas of all four at 0.3 | 304 and 307 topics; seed 4 has a seventh area of 134 papers. Four seeds: topic NMI 0.839-0.848, ARI 0.636-0.692; area NMI 0.819-0.866, ARI 0.852-0.902 |
 | 2026-11-13 | Kept: seed 1, the medoid (mean topic NMI 0.846); `out/clusters/topics_final.npz` | 304 topics; 6 areas: Particle physics: experiment, phenomenology, QCD and hadrons (529,313 papers, 105 topics); Theory: strings, fields, gravity and cosmology (364,782, 88); Astrophysics and gravitational waves (257,596, 50); Quantum physics: information, optics and condensed matter (250,924, 44); Nuclear structure and reactions (108,651, 10); Accelerator physics (72,085, 7) |
+| 2026-11-13 | Topics board: `indicators.py`, `board.py`, `pages_index.py topics` | `out/topics_2026-11-09.html`, 2.3 MB; 304 topics, 6 areas, 73 countries; all tabs draw with no console error, no horizontal scroll at 375 px; added to the local Pages site at `boards/2026-11-09/topics/` (not pushed) |
 | 2026-11-13 | `describe.py` on the kept clustering; names by overlap, `reproduce/topics/names.py` | 295 of 304 topics share 60%+ of their papers both ways with a topic of the first run and keep its name; 9 merged or split topics named again |
 | 2026-11-13 | Names, `reproduce/topics/names_r16.py` | 307 topic names and 6 area names (Theory; Experiment and phenomenology; Strong interactions; Astrophysics and gravitational waves; Quantum physics; Nuclear structure and reactions); the Quantum physics area (248,230 papers, 50% quant-ph) is the boards' growing "Other arXiv" block |
