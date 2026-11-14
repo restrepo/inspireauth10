@@ -70,9 +70,18 @@
 .rp .kv ol li span { color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
 .rp .papers li { line-height: 1.4; }
 .rp .papers a { color: inherit; }
+.rp iframe.timeline { width: 100%; height: 1150px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; }
 .rp .stats { display: flex; flex-wrap: wrap; gap: var(--cds-gap-lg); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .rp .stats b { display: block; font-size: var(--cds-font-size-heading); color: var(--color-fg); font-weight: 500; font-variant-numeric: tabular-nums; }
 .rp .up { color: var(--color-ok); } .rp .down { color: var(--color-bad); }
+.rp .chip.trend-Growing { color: var(--color-ok); } .rp .chip.trend-Shrinking { color: var(--color-bad); } .rp .chip.trend-Stable { color: var(--color-fg-muted); }
+.rp .sankey { min-height: 22rem; }
+.rp .flowmap { min-height: 30rem; }
+.rp .flowmap text, .rp .sankey text.lab { fill: var(--color-fg); }
+.rp .flowmap text { paint-order: stroke; stroke: var(--color-panel); stroke-width: 3px; stroke-linejoin: round; }
+.rp .seg { display: inline-flex; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); overflow: hidden; }
+.rp .seg button { appearance: none; border: 0; background: none; font: inherit; color: var(--color-fg-muted); padding: var(--cds-pad-xs) var(--cds-pad-sm); cursor: pointer; }
+.rp .seg button[aria-pressed="true"] { background: var(--color-fg); color: var(--color-bg); }
 </style>
 
 <div class="rp" data-scope="world">
@@ -85,6 +94,8 @@
     <button class="tab" role="tab" data-tab="overview" aria-selected="true">Overview</button>
     <button class="tab" role="tab" data-tab="topics" aria-selected="false">Topics</button>
     <button class="tab" role="tab" data-tab="trends" aria-selected="false">Trends</button>
+    <button class="tab" role="tab" data-tab="authors" aria-selected="false">Authors</button>
+    <button class="tab" role="tab" data-tab="landmarks" aria-selected="false">Landmarks</button>
     <button class="tab" role="tab" data-tab="countries" aria-selected="false">Countries</button>
     <button class="tab" role="tab" data-tab="method" aria-selected="false">Method</button>
   </nav>
@@ -114,9 +125,10 @@
       <h2>All topics</h2>
       <div class="controls"><label for="tp-q">Search</label><input id="tp-q" type="search" placeholder="neutrino, lattice, qubit…">
         <label for="tp-area">Area</label><select id="tp-area" data-draw="area-select" data-source="areas"></select>
+        <label for="tp-trend">Trend</label><select id="tp-trend" data-draw="trend-select" data-source="topics"><option value="">All</option><option>Growing</option><option>Stable</option><option>Shrinking</option></select>
         <label for="tp-sort">Sort by</label><select id="tp-sort" data-draw="sort-select" data-source="topics">
-          <option value="papers">Papers</option><option value="citations_per_paper">Citations per paper</option><option value="change">Change 2011–15 to 2021–25</option><option value="year_median">Median year</option></select></div>
-      <div class="scroll clickable" style="max-height: 26rem"><table><thead><tr><th>#</th><th>Topic</th><th>Area</th><th class="n">Papers</th><th class="n">Citations per paper</th><th class="n">Median year</th><th class="n">Change</th></tr></thead><tbody data-draw="topic-table" data-source="topics"></tbody></table></div>
+          <option value="papers">Papers</option><option value="citations_per_paper">Citations per paper</option><option value="change">Change 2011–15 to 2021–25</option><option value="share_ratio">Change of share</option><option value="year_median">Median year</option></select></div>
+      <div class="scroll clickable" style="max-height: 26rem"><table><thead><tr><th>#</th><th>Topic</th><th>Area</th><th class="n">Papers</th><th class="n">Citations per paper</th><th class="n">Median year</th><th class="n">Change</th><th>Trend</th></tr></thead><tbody data-draw="topic-table" data-source="topics"></tbody></table></div>
     </div>
     <div class="card" data-draw="topic-detail" data-source="topics topic_year"></div>
   </section>
@@ -129,9 +141,65 @@
       <div class="chart tall" data-draw="area-trend" data-source="area_year"></div>
       <p class="note">Only papers with a topic. INSPIRE's coverage changes with time: it took in most of astro-ph around 2003–2007 and much of quant-ph lately, which shows in the astrophysics and quantum physics areas.</p>
     </div>
+    <div class="card">
+      <h2>Growing, stable and shrinking topics</h2>
+      <p class="note">A topic's trend compares its share of all papers with a topic in 2021–2025 with its share in 2011–2015, so the growth of the whole literature (×1.32 between the two periods) is taken out: <b>Growing</b> when the share rose by more than half (×1.5), <b>Shrinking</b> when it fell by more than a third (below ×0.67), <b>Stable</b> otherwise. The trend is also in the Topics table and in the data (<code>topics.jsonl.gz</code>).</p>
+      <div class="tiles" data-draw="trend-tiles" data-source="topics"></div>
+      <div class="scroll clickable" style="max-height: 22rem"><table><thead><tr><th>Area</th><th class="n">Growing</th><th class="n">Stable</th><th class="n">Shrinking</th></tr></thead><tbody data-draw="trend-areas" data-source="topics areas"></tbody></table></div>
+    </div>
     <div class="grid">
       <div class="card"><h2>Growing topics</h2><p class="note">Papers of 2021–2025 against 2011–2015, topics with 300 or more papers in 2021–2025.</p><div class="chart tall" data-draw="grow-chart" data-source="topics" data-dir="up"></div></div>
       <div class="card"><h2>Shrinking topics</h2><p class="note">The same ratio, topics with 300 or more papers in 2011–2015.</p><div class="chart tall" data-draw="grow-chart" data-source="topics" data-dir="down"></div></div>
+    </div>
+  </section>
+
+  <section id="authors" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Where the authors of a topic went</h2>
+      <p class="note">Each author with an INSPIRE profile gets a main topic in a period: the topic with most of their papers, each paper counting 1/number of authors, papers with more than 10 authors left out. Authors with at least 2 papers in the early period are followed to the late period: their main topic there, or <b>stopped</b> when they have no paper with a topic in it (left the field, retired, or now publish only in large collaborations). Profiles cover most but not all authors.</p>
+      <div class="controls"><label for="fl-period">Periods</label><select id="fl-period" data-draw="flow-period" data-source="flow_periods"></select>
+        <label for="fl-topic">Topic</label><select id="fl-topic" data-draw="flow-topic" data-source="topics"></select></div>
+      <p class="note" data-draw="flow-summary" data-source="author_flows topics flow_periods"></p>
+      <div class="chart sankey" data-draw="flow-sankey" data-source="author_flows topics flow_periods"></div>
+    </div>
+    <div class="card">
+      <h2>On the map of the topics</h2>
+      <p class="note">Arrows from the selected topic to the topics its authors moved to, width by authors; or the largest moves between any two topics. Click a topic to select it.</p>
+      <div class="controls"><div class="seg" role="group" aria-label="Arrows"><button data-m="sel" aria-pressed="true">Selected topic</button><button data-m="all" aria-pressed="false">Largest moves</button></div></div>
+      <div class="legend" data-draw="area-legend" data-source="areas"></div>
+      <div class="chart flowmap" data-draw="flow-map" data-source="author_flows topics"></div>
+    </div>
+  </section>
+
+  <section id="landmarks" role="tabpanel" hidden>
+    <div class="card">
+      <h2>Where the most cited papers are cited from</h2>
+      <p class="note">The 300 most cited papers of the network, each bar split by the area of the papers that cite it. One color means a paper used inside its own field; many colors, a paper every area uses. <b>Reach</b> is the exponential of the Shannon entropy of the shares: 1 when all citations come from one area, 6 when the six areas cite it equally. Only citations between papers with a topic are counted.</p>
+      <div class="controls"><label for="lm-area">Area of the paper</label><select id="lm-area" data-draw="lm-area" data-source="areas"></select>
+        <label for="lm-n">Show</label><select id="lm-n"><option>25</option><option selected>40</option><option>100</option><option value="300">All 300</option></select>
+        <label for="lm-sort">Order by</label><select id="lm-sort"><option value="citations">Citations</option><option value="reach">Reach</option><option value="outside">Share from other areas</option><option value="year">Year</option></select></div>
+      <div class="legend" data-draw="area-legend" data-source="areas"></div>
+      <div class="chart scroll" data-draw="lm-bars" data-source="landmarks areas"></div>
+      <div data-draw="lm-detail" data-source="landmarks areas topics"></div>
+    </div>
+    <div class="card">
+      <h2>Disruptive and consolidating papers</h2>
+      <p class="note">The CD index (Funk &amp; Owen-Smith 2017; Park, Leahey &amp; Funk 2023) looks at the later papers that cite a paper or its references: n<sub>i</sub> cite the paper only, n<sub>j</sub> the paper and some of its references, n<sub>k</sub> only its references; D = (n<sub>i</sub> − n<sub>j</sub>) / (n<sub>i</sub> + n<sub>j</sub> + n<sub>k</sub>). Near +1 the paper replaced what came before (disruptive); near −1 it is read together with its sources (consolidating). <b>CD<sub>5</sub></b> counts the first five years; <b>All years</b> has no limit, for papers recognized late. Papers up to 2020 with at least 5 references in the network.</p>
+      <div class="controls"><div class="seg" role="group" aria-label="Index"><button data-w="cd5" aria-pressed="true">CD<sub>5</sub></button><button data-w="cd" aria-pressed="false">All years</button></div>
+        <label for="lm-carea">Area</label><select id="lm-carea" data-draw="lm-carea" data-source="areas"></select>
+        <label for="lm-min">At least</label><select id="lm-min"><option>500</option><option>1000</option><option>2000</option></select><span>citations</span></div>
+      <div class="grid">
+        <div><h3>Most disruptive</h3><div class="chart" data-draw="lm-rank" data-dir="up" data-source="disruption_top"></div></div>
+        <div><h3>Most consolidating</h3><div class="chart" data-draw="lm-rank" data-dir="down" data-source="disruption_top"></div></div>
+      </div>
+      <div data-draw="lm-cd-detail" data-source="disruption_top areas topics"></div>
+    </div>
+    <div class="grid">
+      <div class="card"><h2>Papers with 500 or more citations by year</h2><p class="note">Each dot is a paper (years jittered), sized by citations. Click one to see it above.</p>
+        <div class="chart tall" data-draw="lm-scatter" data-source="disruption_top"></div></div>
+      <div class="card"><h2>Share of disruptive papers by year</h2><p class="note">Papers with D &gt; 0 among the 76,811 papers with 100 or more citations, in five-year bins (bins with fewer than 30 papers left out).</p>
+        <div class="legend" data-draw="area-legend" data-source="areas"></div>
+        <div class="chart tall" data-draw="lm-share" data-source="disruption_share areas"></div></div>
     </div>
   </section>
 
@@ -168,7 +236,7 @@
 <script>
 const rp = window.rp = {
   int: d3.format(','),
-  ui: { topic: 0, q: '', area: '', sort: 'papers', trend: 'n', country: null, csort: 'papers' },
+  ui: { topic: 0, q: '', area: '', sort: 'papers', trend: 'n', ttrend: '', country: null, csort: 'papers', fperiod: 1, ftopic: null, fmode: 'sel', lm: 51188, lmw: 'cd5', lmcd: 796247 },
 };
 rp.ready = (el, ids) => {
   const st = ids.map((id) => dash.data(id).status);
@@ -204,13 +272,14 @@ rp.axes = (svg, x, y, W, H, ml, mb, xfmt, yfmt) => {
 rp.color = (area) => dash.colors[area % dash.colors.length];
 rp.change = (t) => t.papers_2011_2015 ? t.papers_2021_2025 / t.papers_2011_2015 : null;
 rp.fmtChange = (r) => r == null ? '—' : `×${d3.format('.2~f')(r)}`;
+rp.trendChip = (t) => { const c = document.createElement('span'); c.className = `chip trend-${t.trend}`; c.textContent = t.trend; return c; };
 rp.scalar = (id) => { const d = dash.data('scalars'); const r = d.status === 'ok' ? d.data.find((q) => q.id === id) : null; return r ? r.value : null; };
 
 // tabs
 const showTab = (name) => {
   document.querySelectorAll('.rp [role="tabpanel"]').forEach((s) => { s.hidden = s.id !== name; });
   document.querySelectorAll('.rp .tab').forEach((b) => b.setAttribute('aria-selected', String(b.dataset.tab === name)));
-  ['topic-map', 'topic-detail', 'area-trend', 'grow-chart', 'country-areas'].forEach((k) => dash.draw(k));
+  ['topic-map', 'topic-detail', 'area-trend', 'grow-chart', 'country-areas', 'flow-sankey', 'flow-map', 'lm-bars', 'lm-rank', 'lm-scatter', 'lm-share'].forEach((k) => dash.draw(k));
 };
 rp.showTab = showTab;
 document.querySelectorAll('.rp .tab').forEach((b) => b.addEventListener('click', () => { showTab(b.dataset.tab); dash.setLink(b.dataset.tab); }));
@@ -284,7 +353,7 @@ document.getElementById('tp-q').addEventListener('input', (e) => { rp.ui.q = e.t
 dash.draw('topic-table', (tb) => {
   const d = dash.data('topics'); tb.replaceChildren(); if (d.status !== 'ok') return;
   const k = rp.ui.sort, val = (t) => (k === 'change' ? rp.change(t) ?? -1 : t[k]);
-  const rows = d.data.filter((t) => (!rp.ui.q || t.name.toLowerCase().includes(rp.ui.q)) && (rp.ui.area === '' || String(t.area) === rp.ui.area))
+  const rows = d.data.filter((t) => (!rp.ui.q || t.name.toLowerCase().includes(rp.ui.q)) && (rp.ui.area === '' || String(t.area) === rp.ui.area) && (!rp.ui.ttrend || t.trend === rp.ui.ttrend))
     .sort((a, b) => val(b) - val(a));
   for (const t of rows) {
     const tr = tb.insertRow(); if (t.topic === rp.ui.topic) tr.className = 'sel';
@@ -295,6 +364,7 @@ dash.draw('topic-table', (tb) => {
       else td.textContent = v;
       if (i > 2 || i === 0) td.className = 'n';
     });
+    tr.insertCell().append(rp.trendChip(t));
     tr.onclick = () => { rp.ui.topic = t.topic; dash.draw('topic-table'); dash.draw('topic-detail'); };
   }
 });
@@ -308,7 +378,7 @@ dash.draw('topic-detail', (el) => {
   const sub = document.createElement('p'); sub.className = 'note'; sub.textContent = `Topic ${t.topic} · ${t.area_name}`;
   const stats = document.createElement('div'); stats.className = 'stats';
   for (const [k, v] of [['Papers', rp.int(t.papers)], ['With 1 to 10 authors', rp.int(t.corpus_papers)], ['Citations per paper', t.citations_per_paper],
-    ['Years (10–90%)', `${t.year_p10}–${t.year_p90}`], ['Change 2011–15 to 2021–25', rp.fmtChange(rp.change(t))]]) {
+    ['Years (10–90%)', `${t.year_p10}–${t.year_p90}`], ['Change 2011–15 to 2021–25', rp.fmtChange(rp.change(t))], ['Trend (change of share)', `${t.trend} (${rp.fmtChange(t.share_ratio)})`]]) {
     const s = document.createElement('div'); const b = document.createElement('b'); b.textContent = v; s.append(b, k); stats.append(s);
   }
   const chart = document.createElement('div'); chart.className = 'chart';
@@ -333,7 +403,13 @@ dash.draw('topic-detail', (el) => {
   const pbox = document.createElement('div'); const ph = document.createElement('h3'); ph.textContent = 'Most cited papers'; const pol = document.createElement('ol'); pol.className = 'papers';
   for (const p of t.top_papers) { const li = document.createElement('li'); const a = document.createElement('a'); a.href = `https://inspirehep.net/literature/${p.recid}`; a.target = '_blank'; a.rel = 'noopener'; a.textContent = p.title || `INSPIRE ${p.recid}`; const s = document.createElement('span'); s.textContent = ` ${rp.int(p.citations)} citations`; li.append(a, s); pol.append(li); }
   pbox.append(ph, pol);
-  el.append(kv, pbox);
+  // citation timeline: timeline.html next to the board, with timelines/<topic>.json (reproduce/topics/timelines.py)
+  const tl = document.createElement('div'); const th = document.createElement('h3'); th.textContent = 'Citation network over the years';
+  const tn = document.createElement('p'); tn.className = 'note'; const ta = document.createElement('a'); ta.href = `timeline.html?topic=${t.topic}`; ta.target = '_blank'; ta.rel = 'noopener'; ta.textContent = 'Open it on its own page';
+  tn.append('Its 500 most cited papers placed by year, with the citations between them. ', ta, '.');
+  const fr = document.createElement('iframe'); fr.className = 'timeline'; fr.loading = 'lazy'; fr.title = `Citation timeline of ${t.name}`; fr.src = `timeline.html?topic=${t.topic}`;
+  tl.append(th, tn, fr);
+  el.append(kv, pbox, tl);
 });
 
 dash.draw('trend-mode', (sel) => { sel.value = rp.ui.trend; sel.onchange = () => { rp.ui.trend = sel.value; dash.draw('area-trend'); }; });
@@ -386,6 +462,294 @@ dash.draw('grow-chart', (el) => {
   const tip = rp.tip(el);
   svg.selectAll('rect').on('pointerenter', (ev, t) => tip.show([t.name, `${rp.int(t.papers_2011_2015)} papers in 2011–15, ${rp.int(t.papers_2021_2025)} in 2021–25`], x(t.r), y(t.topic)))
     .on('pointerleave', () => tip.hide());
+});
+
+dash.draw('trend-select', (sel) => { sel.value = rp.ui.ttrend; sel.onchange = () => { rp.ui.ttrend = sel.value; dash.draw('topic-table'); }; });
+dash.draw('trend-tiles', (el) => {
+  const d = dash.data('topics'); el.replaceChildren(); if (d.status !== 'ok') return;
+  for (const k of ['Growing', 'Stable', 'Shrinking']) {
+    const ts = d.data.filter((t) => t.trend === k);
+    const c = document.createElement('div'); c.className = 'card tile';
+    const l = document.createElement('span'); l.className = 'lbl'; l.textContent = `${k} topics`;
+    const b = document.createElement('span'); b.className = `big ${k === 'Growing' ? 'up' : k === 'Shrinking' ? 'down' : ''}`; b.textContent = ts.length;
+    const n = document.createElement('span'); n.className = 'note'; n.textContent = `${rp.int(d3.sum(ts, (t) => t.papers_2021_2025))} papers in 2021–2025`;
+    c.append(l, b, n); el.append(c);
+  }
+});
+dash.draw('trend-areas', (tb) => {
+  tb.replaceChildren(); if (dash.data('topics').status !== 'ok' || dash.data('areas').status !== 'ok') return;
+  for (const a of dash.data('areas').data) {
+    const tr = tb.insertRow(); const c = tr.insertCell(); const sq = document.createElement('i'); sq.className = 'sq'; sq.style.background = rp.color(a.area); c.append(sq, a.name.split(':')[0]);
+    for (const k of ['Growing', 'Stable', 'Shrinking']) { const td = tr.insertCell(); td.className = 'n'; td.textContent = dash.data('topics').data.filter((t) => t.area === a.area && t.trend === k).length; }
+    tr.onclick = () => { rp.ui.area = String(a.area); rp.ui.ttrend = ''; showTab('topics'); dash.setLink('topics'); dash.draw('area-select'); dash.draw('trend-select'); dash.draw('topic-table'); };
+  }
+});
+
+// author flows
+rp.flowRows = () => { const d = dash.data('author_flows'); return d.status === 'ok' ? d.data.filter((r) => r.period === rp.ui.fperiod) : []; };
+rp.shrinking = () => dash.data('topics').data.filter((t) => t.papers_2011_2015 >= 300).sort((a, b) => a.share_ratio - b.share_ratio).slice(0, 10);
+rp.selectFlowTopic = (t) => { rp.ui.ftopic = t; ['flow-topic', 'flow-summary', 'flow-sankey', 'flow-map'].forEach((k) => dash.draw(k)); };
+dash.draw('flow-period', (sel) => {
+  const d = dash.data('flow_periods'); if (d.status !== 'ok') return;
+  sel.replaceChildren(...d.data.map((p) => new Option(`${p.early} → ${p.late}`, String(p.period))));
+  sel.value = String(rp.ui.fperiod);
+  sel.onchange = () => { rp.ui.fperiod = +sel.value; ['flow-summary', 'flow-sankey', 'flow-map'].forEach((k) => dash.draw(k)); };
+});
+dash.draw('flow-topic', (sel) => {
+  const d = dash.data('topics'); if (d.status !== 'ok') return;
+  const sh = rp.shrinking();
+  if (rp.ui.ftopic == null) rp.ui.ftopic = sh[0].topic;
+  const g1 = document.createElement('optgroup'); g1.label = 'Fastest shrinking (2011–2015 → 2021–2025)';
+  g1.append(...sh.map((t) => new Option(`${t.name} (${rp.int(t.papers_2011_2015)} → ${rp.int(t.papers_2021_2025)} papers)`, String(t.topic))));
+  const groups = [g1];
+  for (const a of d3.groups(d.data, (t) => t.area).sort((x, y) => x[0] - y[0])) {
+    const g = document.createElement('optgroup'); g.label = a[1][0].area_name.split(':')[0];
+    g.append(...a[1].sort((x, y) => y.papers - x.papers).map((t) => new Option(t.name, String(t.topic)))); groups.push(g);
+  }
+  sel.replaceChildren(...groups); sel.value = String(rp.ui.ftopic);
+  sel.onchange = () => rp.selectFlowTopic(+sel.value);
+});
+rp.flowOut = () => {
+  const T = new Map(dash.data('topics').data.map((t) => [t.topic, t]));
+  const rows = rp.flowRows().filter((r) => r.from === rp.ui.ftopic);
+  const total = d3.sum(rows, (r) => r.authors), stay = d3.sum(rows.filter((r) => r.to === rp.ui.ftopic), (r) => r.authors);
+  const stop = d3.sum(rows.filter((r) => r.to === -1), (r) => r.authors);
+  const moved = rows.filter((r) => r.to >= 0 && r.to !== rp.ui.ftopic).sort((a, b) => b.authors - a.authors);
+  const other = rows.find((r) => r.to === -2);
+  return { T, total, stay, stop, moved, other, nmoved: d3.sum(moved, (r) => r.authors) + (other ? other.authors : 0), ntopics: moved.length + (other ? other.topics : 0) };
+};
+dash.draw('flow-summary', (el) => {
+  if (dash.data('author_flows').status !== 'ok' || dash.data('topics').status !== 'ok' || dash.data('flow_periods').status !== 'ok' || rp.ui.ftopic == null) return;
+  const f = rp.flowOut(), p = dash.data('flow_periods').data[rp.ui.fperiod], pc = (n) => `${Math.round((100 * n) / f.total)}%`;
+  el.textContent = f.total ? `${f.T.get(rp.ui.ftopic).name}: ${rp.int(f.total)} authors in ${p.early}. In ${p.late}: ${rp.int(f.stay)} stayed (${pc(f.stay)}), ${rp.int(f.nmoved)} moved to ${f.ntopics} other topics (${pc(f.nmoved)}), ${rp.int(f.stop)} stopped (${pc(f.stop)}).`
+    : `No author has this as main topic in ${p.early}.`;
+});
+dash.draw('flow-sankey', (el) => {
+  if (!rp.ready(el, ['author_flows', 'topics', 'flow_periods'])) return;
+  if (el.closest('[hidden]') || rp.ui.ftopic == null) return;
+  el.replaceChildren();
+  const f = rp.flowOut(); if (!f.total) return;
+  const K = 12, sel = f.T.get(rp.ui.ftopic), nodes = [];
+  if (f.stay) nodes.push({ k: 'stay', t: sel, n: f.stay, label: `Stayed: ${sel.name}` });
+  f.moved.slice(0, K).forEach((r) => nodes.push({ k: 't', t: f.T.get(r.to), n: r.authors, label: f.T.get(r.to).name }));
+  const rest = d3.sum(f.moved.slice(K), (r) => r.authors) + (f.other ? f.other.authors : 0);
+  if (rest) nodes.push({ k: 'rest', n: rest, label: `${f.ntopics - Math.min(K, f.moved.length)} other topics` });
+  if (f.stop) nodes.push({ k: 'stop', n: f.stop, label: 'Stopped (no paper with a topic)' });
+  const W = Math.max(300, el.clientWidth), narrow = W < 640, gap = 5, scale = 300 / f.total;
+  const H = Math.max(320, d3.sum(nodes, (d) => Math.max(d.n * scale, 15)) + gap * (nodes.length - 1) + 20);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const lx = narrow ? 4 : Math.min(240, W * 0.22), rx = narrow ? W * 0.4 : W * 0.5, bw = 12;
+  const col = (d) => (d.t ? rp.color(d.t.area) : 'var(--cds-chart-muted)');
+  let y = 10; nodes.forEach((d) => { d.h = Math.max(1, d.n * scale); d.slot = Math.max(d.h, 15); d.y = y + (d.slot - d.h) / 2; y += d.slot + gap; });
+  const lh = f.total * scale, ly = (H - lh) / 2; let sy = ly;
+  svg.append('rect').attr('x', lx).attr('y', ly).attr('width', bw).attr('height', lh).attr('fill', rp.color(sel.area));
+  if (!narrow) {
+    const words = sel.name.split(' '), lines = []; let cur = '';
+    for (const w of words) { if ((cur + ' ' + w).trim().length > 28 && cur) { lines.push(cur); cur = w; } else cur = (cur + ' ' + w).trim(); }
+    lines.push(cur);
+    const tx = svg.append('text').attr('class', 'lab').attr('text-anchor', 'end');
+    lines.forEach((l, i) => tx.append('tspan').attr('x', lx - 8).attr('y', ly + lh / 2 + (i - (lines.length - 1) / 2) * 15 + 4).text(l));
+  }
+  const tip = rp.tip(el);
+  for (const d of nodes) {
+    const h = d.n * scale, x0 = lx + bw, x1 = rx, mx = (x0 + x1) / 2;
+    svg.append('path').attr('d', `M${x0},${sy}C${mx},${sy} ${mx},${d.y} ${x1},${d.y}L${x1},${d.y + h}C${mx},${d.y + h} ${mx},${sy + h} ${x0},${sy + h}Z`)
+      .attr('fill', col(d)).attr('fill-opacity', 0.3).style('cursor', d.k === 't' ? 'pointer' : 'default')
+      .on('pointermove', (ev) => { const [px, py] = d3.pointer(ev, el); tip.show([d.label, `${rp.int(d.n)} authors (${d3.format('.1f')((100 * d.n) / f.total)}%)`], px, py); })
+      .on('pointerleave', () => tip.hide()).on('click', () => { if (d.k === 't') rp.selectFlowTopic(d.t.topic); });
+    sy += h;
+    svg.append('rect').attr('x', rx).attr('y', d.y).attr('width', bw).attr('height', d.h).attr('fill', col(d));
+    const tx = svg.append('text').attr('class', 'lab').attr('x', rx + bw + 6).attr('y', d.y + d.h / 2 + 4).text(narrow && d.label.length > 30 ? d.label.slice(0, 28) + '…' : d.label);
+    tx.append('tspan').text(`  ${rp.int(d.n)}`).style('fill', 'var(--color-fg-muted)');
+  }
+});
+document.querySelectorAll('.rp #authors .seg button').forEach((b) => b.addEventListener('click', () => {
+  rp.ui.fmode = b.dataset.m; document.querySelectorAll('.rp #authors .seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b))); dash.draw('flow-map');
+}));
+// landmarks: reach across areas (landmarks.json) and disruption (disruption_top.json, disruption_share.json)
+rp.areaOptions = (sel, label, key, redraw) => {
+  const d = dash.data('areas'); if (d.status !== 'ok') return;
+  sel.replaceChildren(new Option(label, ''), ...d.data.map((a) => new Option(a.name.split(':')[0], String(a.area))));
+  sel.value = rp.ui[key] ?? ''; sel.onchange = () => { rp.ui[key] = sel.value; redraw.forEach((k) => dash.draw(k)); };
+};
+dash.draw('lm-area', (sel) => rp.areaOptions(sel, 'All areas', 'lmarea', ['lm-bars']));
+dash.draw('lm-carea', (sel) => rp.areaOptions(sel, 'All areas', 'lmcarea', ['lm-rank', 'lm-scatter']));
+['lm-n', 'lm-sort'].forEach((id) => { document.getElementById(id).onchange = () => dash.draw('lm-bars'); });
+document.getElementById('lm-min').onchange = () => dash.draw('lm-rank');
+document.querySelectorAll('.rp #landmarks .seg button').forEach((b) => b.addEventListener('click', () => {
+  rp.ui.lmw = b.dataset.w; document.querySelectorAll('.rp #landmarks .seg button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+  ['lm-rank', 'lm-scatter', 'lm-share', 'lm-cd-detail'].forEach((k) => dash.draw(k));
+}));
+rp.lmRows = () => dash.data('landmarks').data.map((p) => {
+  const tot = d3.sum(p.by_area) || 1, sh = p.by_area.map((v) => v / tot);
+  return { ...p, tot, sh, reach: Math.exp(-d3.sum(sh, (q) => (q > 0 ? q * Math.log(q) : 0))), outside: 1 - sh[p.area] };
+});
+rp.label = (p) => `${p.first || 'INSPIRE ' + p.recid} ${p.year}`;
+rp.cut = (s, w) => (s.length * 6.4 > w ? s.slice(0, Math.max(4, Math.floor(w / 6.4) - 1)) + '…' : s);
+dash.draw('lm-bars', (el) => {
+  if (!rp.ready(el, ['landmarks', 'areas'])) return;
+  if (el.closest('[hidden]')) return;
+  const k = document.getElementById('lm-sort').value, n = +document.getElementById('lm-n').value;
+  let rows = rp.lmRows().filter((p) => !rp.ui.lmarea || p.area === +rp.ui.lmarea);
+  rows.sort(k === 'year' ? (a, b) => a.year - b.year : (a, b) => b[k] - a[k]); rows = rows.slice(0, n);
+  el.replaceChildren();
+  const W = Math.max(560, el.clientWidth), lw = Math.min(260, W * 0.3), rw = 120, rh = 22, mt = 22, H = mt + rows.length * rh + 4;
+  const x = d3.scaleLinear([0, 1], [lw, W - rw - 16]);
+  const svg = d3.select(el).append('svg').attr('width', W).attr('height', H).attr('viewBox', `0 0 ${W} ${H}`);
+  svg.append('g').attr('transform', `translate(0,${mt - 4})`).call(d3.axisTop(x).ticks(5).tickFormat(d3.format('.0%')).tickSizeOuter(0)).attr('font-size', null).attr('font-family', null);
+  svg.append('text').attr('x', W - rw + 8).attr('y', mt - 10).text('citations · reach');
+  const tip = rp.tip(el);
+  const g = svg.append('g').selectAll('g').data(rows).join('g').attr('transform', (p, i) => `translate(0,${mt + i * rh})`).style('cursor', 'pointer')
+    .on('click', (ev, p) => { rp.ui.lm = p.recid; dash.draw('lm-bars'); dash.draw('lm-detail'); });
+  g.append('rect').attr('width', W).attr('height', rh).attr('fill', (p) => (p.recid === rp.ui.lm ? 'var(--cds-chart-grid)' : 'transparent'));
+  g.append('rect').attr('x', 2).attr('y', rh / 2 - 4).attr('width', 8).attr('height', 8).attr('rx', 2).attr('fill', (p) => rp.color(p.area));
+  g.append('text').attr('x', 16).attr('y', rh / 2 + 4).text((p) => rp.cut(rp.label(p), lw - 22)).append('title').text((p) => p.title);
+  g.each(function (p) {
+    let x0 = 0;
+    p.sh.forEach((w, i) => {
+      if (w <= 0) return;
+      d3.select(this).append('rect').attr('x', x(x0)).attr('y', 4).attr('height', rh - 8).attr('width', Math.max(0.5, x(x0 + w) - x(x0) - (w > 0.004 ? 1.5 : 0))).attr('fill', rp.color(i))
+        .on('pointermove', (ev) => { const [px, py] = d3.pointer(ev, el); const a = dash.data('areas').data.find((q) => q.area === i);
+          tip.show([rp.label(p), `${a ? a.name.split(':')[0] : i}: ${rp.int(p.by_area[i])} citing papers (${d3.format('.0%')(w)})`], px, py); })
+        .on('pointerleave', () => tip.hide());
+      x0 += w;
+    });
+  });
+  g.append('text').attr('x', W - rw + 8).attr('y', rh / 2 + 4).attr('font-variant-numeric', 'tabular-nums').text((p) => `${rp.int(p.citations)} · ${p.reach.toFixed(1)}`);
+});
+rp.paperBox = (el, p, extra) => {
+  el.replaceChildren();
+  const T = dash.data('topics'), A = dash.data('areas');
+  const t = T.status === 'ok' ? T.data.find((q) => q.topic === p.topic) : null, a = A.status === 'ok' ? A.data.find((q) => q.area === p.area) : null;
+  const sub = document.createElement('p'); sub.className = 'note'; const sq = document.createElement('i'); sq.className = 'sq'; sq.style.background = rp.color(p.area);
+  sub.append(sq, `${a ? a.name.split(':')[0] : ''}${t ? ' · topic: ' + t.name : ''}`);
+  const h = document.createElement('h3'); h.textContent = p.title || `INSPIRE record ${p.recid}`;
+  const m = document.createElement('p'); m.className = 'note'; m.textContent = `${p.first} · ${p.year}${p.arxiv ? ' · arXiv:' + p.arxiv : ''}`;
+  const stats = document.createElement('div'); stats.className = 'stats';
+  for (const [k, v] of extra) { const s = document.createElement('div'); const b = document.createElement('b'); b.textContent = v; s.append(b, k); stats.append(s); }
+  const l = document.createElement('p'); l.className = 'note'; const ln = document.createElement('a'); ln.href = `https://inspirehep.net/literature/${p.recid}`; ln.target = '_blank'; ln.rel = 'noopener'; ln.textContent = 'Open in INSPIRE'; l.append(ln);
+  el.append(sub, h, m, stats, l);
+};
+dash.draw('lm-detail', (el) => {
+  if (dash.data('landmarks').status !== 'ok') return;
+  const p = rp.lmRows().find((q) => q.recid === rp.ui.lm); if (!p) return;
+  const A = dash.data('areas').data || [];
+  const top = p.sh.map((w, i) => [w, i]).filter((d) => d[0] > 0.005).sort((a, b) => b[0] - a[0]).slice(0, 3)
+    .map(([w, i]) => `${(A.find((q) => q.area === i) || { name: String(i) }).name.split(':')[0]} ${d3.format('.0%')(w)}`).join(', ');
+  rp.paperBox(el, p, [['Citations', rp.int(p.citations)], ['Reach (effective areas)', p.reach.toFixed(2)], ['From other areas', d3.format('.0%')(p.outside)], ['Largest shares', top]]);
+});
+rp.cdRows = () => dash.data('disruption_top').data.filter((r) => !rp.ui.lmcarea || r.area === +rp.ui.lmcarea);
+dash.draw('lm-rank', (el) => {
+  if (!rp.ready(el, ['disruption_top'])) return;
+  if (el.closest('[hidden]')) return;
+  const w = rp.ui.lmw, up = el.dataset.dir === 'up', mn = +document.getElementById('lm-min').value;
+  const s = rp.cdRows().filter((r) => r.citations >= mn).sort((a, b) => (up ? b[w] - a[w] : a[w] - b[w])).slice(0, 15);
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), rh = 22, lw = Math.min(210, W * 0.45), H = s.length * rh + 24;
+  const x = d3.scaleLinear([0, 1], [lw + 4, W - 46]);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const g = svg.selectAll('g.r').data(s).join('g').attr('class', 'r').attr('transform', (r, i) => `translate(0,${i * rh})`).style('cursor', 'pointer')
+    .on('click', (ev, r) => { rp.ui.lmcd = r.recid; ['lm-rank', 'lm-scatter', 'lm-cd-detail'].forEach((k) => dash.draw(k)); });
+  g.append('rect').attr('width', W).attr('height', rh).attr('fill', (r) => (r.recid === rp.ui.lmcd ? 'var(--cds-chart-grid)' : 'transparent'));
+  g.append('text').attr('x', 0).attr('y', rh / 2 + 4).text((r) => rp.cut(rp.label(r), lw)).append('title').text((r) => r.title);
+  g.append('rect').attr('x', x(0)).attr('y', 5).attr('height', rh - 10).attr('rx', 2).attr('width', (r) => Math.max(1, x(Math.abs(r[w])) - x(0))).attr('fill', (r) => rp.color(r.area));
+  g.append('text').attr('x', (r) => x(Math.abs(r[w])) + 5).attr('y', rh / 2 + 4).attr('font-variant-numeric', 'tabular-nums').text((r) => d3.format('+.2f')(r[w]));
+  svg.append('g').attr('transform', `translate(0,${s.length * rh + 2})`).call(d3.axisBottom(x).ticks(4).tickFormat((v) => (up ? v : -v)).tickSizeOuter(0)).attr('font-size', null).attr('font-family', null);
+});
+dash.draw('lm-cd-detail', (el) => {
+  if (dash.data('disruption_top').status !== 'ok') return;
+  const r = dash.data('disruption_top').data.find((q) => q.recid === rp.ui.lmcd); if (!r) return;
+  const f = d3.format('+.2f');
+  rp.paperBox(el, r, [['CD₅', f(r.cd5)], ['All years', f(r.cd)], ['Citations', rp.int(r.citations)], ['References here', r.refs],
+    ['nᵢ: cite it alone (5 years)', rp.int(r.ni)], ['nⱼ: with its references', rp.int(r.nj)], ['nₖ: only its references', rp.int(r.nk)]]);
+});
+dash.draw('lm-scatter', (el) => {
+  if (!rp.ready(el, ['disruption_top'])) return;
+  if (el.closest('[hidden]')) return;
+  const w = rp.ui.lmw, rows = rp.cdRows().slice().sort((a, b) => a.citations - b.citations);
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = 360, ml = 36, mb = 24;
+  const x = d3.scaleLinear([1950, 2021], [ml + 4, W - 8]), y = d3.scaleLinear([-1, 1], [H - mb, 8]);
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  rp.axes(svg, x, y, W, H, ml, mb, d3.format('d'), d3.format('.1f'));
+  svg.append('line').attr('x1', ml).attr('x2', W - 8).attr('y1', y(0)).attr('y2', y(0)).attr('stroke', 'var(--cds-chart-axis)');
+  const rnd = d3.randomLcg(3), r = (p) => 1.5 + Math.log10(p.citations / 500 + 1) * 3;
+  rows.forEach((p) => { p.jx = p.year + rnd() * 0.9 - 0.45; });
+  const tip = rp.tip(el);
+  svg.append('g').selectAll('circle').data(rows).join('circle').attr('cx', (p) => x(p.jx)).attr('cy', (p) => y(p[w])).attr('r', r)
+    .attr('fill', (p) => rp.color(p.area)).attr('fill-opacity', 0.55).attr('stroke', (p) => (p.recid === rp.ui.lmcd ? 'var(--color-fg)' : 'none')).attr('stroke-width', 2).style('cursor', 'pointer')
+    .on('pointermove', (ev, p) => { const [px, py] = d3.pointer(ev, el); tip.show([rp.label(p), rp.cut(p.title || '', 300), `${rp.int(p.citations)} citations · D ${d3.format('+.2f')(p[w])}`], px, py); })
+    .on('pointerleave', () => tip.hide())
+    .on('click', (ev, p) => { rp.ui.lmcd = p.recid; ['lm-rank', 'lm-scatter', 'lm-cd-detail'].forEach((k) => dash.draw(k)); });
+  svg.append('text').attr('x', ml + 8).attr('y', 18).text('disruptive ↑');
+  svg.append('text').attr('x', ml + 8).attr('y', H - mb - 6).text('consolidating ↓');
+});
+dash.draw('lm-share', (el) => {
+  if (!rp.ready(el, ['disruption_share', 'areas'])) return;
+  if (el.closest('[hidden]')) return;
+  const k = rp.ui.lmw === 'cd5' ? 'cd5_pos' : 'cd_pos', A = dash.data('areas').data;
+  const rows = dash.data('disruption_share').data.filter((r) => r.papers >= 30).map((r) => ({ ...r, v: r[k] / r.papers }));
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = 330, ml = 40, mb = 24, mr = 100;
+  const x = d3.scaleLinear([1950, 2020], [ml + 4, W - mr]), y = d3.scaleLinear([0, d3.max(rows, (r) => r.v) || 1], [H - mb, 8]).nice();
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  rp.axes(svg, x, y, W - mr + 8, H, ml, mb, d3.format('d'), d3.format('.0%'));
+  const tip = rp.tip(el), ends = [];
+  for (const [a, rs] of d3.groups(rows, (r) => r.area).sort((p, q) => q[0] - p[0])) {
+    const col = a < 0 ? 'var(--color-fg)' : rp.color(a), name = a < 0 ? 'All areas' : (A.find((q) => q.area === a) || { name: '' }).name.split(':')[0];
+    rs.sort((p, q) => p.bin - q.bin);
+    svg.append('path').attr('d', d3.line().x((r) => x(r.bin + 2)).y((r) => y(r.v))(rs)).attr('fill', 'none').attr('stroke', col).attr('stroke-width', a < 0 ? 3 : 2);
+    svg.append('g').selectAll('circle').data(rs).join('circle').attr('cx', (r) => x(r.bin + 2)).attr('cy', (r) => y(r.v)).attr('r', 3.5).attr('fill', col)
+      .on('pointermove', (ev, r) => { const [px, py] = d3.pointer(ev, el); tip.show([name, `${r.bin}–${r.bin + 4}: ${d3.format('.1%')(r.v)} of ${rp.int(r.papers)} papers`], px, py); })
+      .on('pointerleave', () => tip.hide());
+    const last = rs[rs.length - 1]; ends.push({ y: y(last.v), t: a < 0 ? 'All areas' : name.split(' ')[0], col });
+  }
+  ends.sort((p, q) => p.y - q.y); for (let i = 1; i < ends.length; i++) ends[i].y = Math.max(ends[i].y, ends[i - 1].y + 13);
+  const over = ends.length ? ends[ends.length - 1].y - (H - mb - 12) : 0;
+  if (over > 0) { ends.forEach((e) => { e.y -= over; }); for (let i = ends.length - 2; i >= 0; i--) ends[i].y = Math.min(ends[i].y, ends[i + 1].y - 13); }
+  svg.append('g').selectAll('text').data(ends).join('text').attr('x', W - mr + 8).attr('y', (e) => e.y + 4).text((e) => e.t);
+});
+dash.draw('flow-map', (el) => {
+  if (!rp.ready(el, ['author_flows', 'topics'])) return;
+  if (el.closest('[hidden]') || rp.ui.ftopic == null) return;
+  const T = dash.data('topics').data, byId = new Map(T.map((t) => [t.topic, t]));
+  el.replaceChildren();
+  const W = Math.max(300, el.clientWidth), H = Math.round(Math.max(380, Math.min(720, W * 0.6))), pad = 30;
+  const svg = d3.select(el).append('svg').attr('width', '100%').attr('viewBox', `0 0 ${W} ${H}`);
+  const x = d3.scaleLinear(d3.extent(T, (t) => t.x), [pad, W - pad]), y = d3.scaleLinear(d3.extent(T, (t) => t.y), [H - pad, pad]);
+  const r = d3.scaleSqrt([0, d3.max(T, (t) => t.papers)], [0, Math.max(10, W / 45)]), rr = (t) => Math.max(2, r(t.papers));
+  const F = rp.ui.fmode === 'sel'
+    ? rp.flowRows().filter((q) => q.from === rp.ui.ftopic && q.to >= 0 && q.to !== q.from).sort((a, b) => b.authors - a.authors).slice(0, 12)
+    : rp.flowRows().filter((q) => q.to >= 0 && q.to !== q.from).sort((a, b) => b.authors - a.authors).slice(0, 60);
+  const on = new Set(F.flatMap((q) => [q.from, q.to])); if (rp.ui.fmode === 'sel') on.add(rp.ui.ftopic);
+  svg.append('defs').append('marker').attr('id', 'fl-arrow').attr('viewBox', '0 0 10 10').attr('refX', 8).attr('refY', 5).attr('markerUnits', 'userSpaceOnUse')
+    .attr('markerWidth', 9).attr('markerHeight', 9).attr('orient', 'auto').append('path').attr('d', 'M0,0L10,5L0,10z').attr('fill', 'var(--color-fg)');
+  const tip = rp.tip(el);
+  svg.append('g').selectAll('circle').data(T.slice().sort((a, b) => b.papers - a.papers)).join('circle')
+    .attr('cx', (t) => x(t.x)).attr('cy', (t) => y(t.y)).attr('r', rr).attr('fill', (t) => rp.color(t.area))
+    .attr('fill-opacity', (t) => (on.has(t.topic) ? 0.85 : 0.15)).attr('stroke', (t) => (t.topic === rp.ui.ftopic ? 'var(--color-fg)' : 'none')).attr('stroke-width', 2)
+    .style('cursor', 'pointer').on('click', (ev, t) => rp.selectFlowTopic(t.topic))
+    .on('pointerenter', (ev, t) => tip.show([t.name, `${t.area_name.split(':')[0]} · ${rp.int(t.papers)} papers`], x(t.x), y(t.y))).on('pointerleave', () => tip.hide());
+  const wmax = d3.max(F, (q) => q.authors) || 1, sw = d3.scaleSqrt([0, wmax], [0.8, W < 640 ? 6 : 10]);
+  svg.append('g').selectAll('path').data(F).join('path').attr('fill', 'none').attr('stroke', 'var(--color-fg)').attr('stroke-opacity', 0.5)
+    .attr('stroke-width', (q) => sw(q.authors)).attr('stroke-linecap', 'round').attr('marker-end', 'url(#fl-arrow)')
+    .attr('d', (q) => { const a = byId.get(q.from), b = byId.get(q.to), x0 = x(a.x), y0 = y(a.y), x1 = x(b.x), y1 = y(b.y), dx = x1 - x0, dy = y1 - y0, L = Math.hypot(dx, dy) || 1;
+      const sx = x0 + (dx / L) * (rr(a) + 2), sy = y0 + (dy / L) * (rr(a) + 2), ex = x1 - (dx / L) * (rr(b) + 4), ey = y1 - (dy / L) * (rr(b) + 4);
+      return `M${sx},${sy}Q${(sx + ex) / 2 - dy * 0.15},${(sy + ey) / 2 + dx * 0.15} ${ex},${ey}`; })
+    .on('pointerenter', (ev, q) => { const [px, py] = d3.pointer(ev, el); tip.show([`${rp.int(q.authors)} authors`, `${byId.get(q.from).name} → ${byId.get(q.to).name}`], px, py); })
+    .on('pointerleave', () => tip.hide());
+  const boxes = [], lab = svg.append('g');
+  for (const t of [...on].map((k) => byId.get(k)).sort((a, b) => (b.topic === rp.ui.ftopic) - (a.topic === rp.ui.ftopic) || b.papers - a.papers)) {
+    const tx = lab.append('text').text(t.name.length > 40 ? t.name.slice(0, 38) + '…' : t.name).attr('text-anchor', 'middle').style('font-size', '11px').style('font-weight', t.topic === rp.ui.ftopic ? 600 : 400);
+    const w = tx.node().getComputedTextLength(), cx = Math.min(W - w / 2, Math.max(w / 2, x(t.x)));
+    let placed = false;
+    for (const cy of [y(t.y) - rr(t) - 4, y(t.y) + rr(t) + 12, y(t.y) - rr(t) - 17, y(t.y) + rr(t) + 25, y(t.y) - rr(t) - 30]) {
+      const b = { x0: cx - w / 2, x1: cx + w / 2, y0: cy - 11, y1: cy + 2 };
+      if (b.y0 < 0 || b.y1 > H || boxes.some((o) => b.x0 < o.x1 && o.x0 < b.x1 && b.y0 < o.y1 && o.y0 < b.y1)) continue;
+      boxes.push(b); tx.attr('x', cx).attr('y', cy); placed = true; break;
+    }
+    if (!placed) tx.remove();
+  }
 });
 
 dash.draw('country-select', (sel) => {

@@ -1,7 +1,7 @@
 """Datasets of the topics board from a kept clustering (cluster.py), its description (describe.py)
 and its names (names.py).
 
-Writes into OUT/: scalars, areas, topics (with a map position), topic_links, topic_year,
+Writes into OUT/: scalars, areas, topics (with a map position and trend), topic_links, topic_year,
 area_year, country_area and country_topic (JSON lists, as reproduce/indicators.py).
 
 Usage: python reproduce/topics/indicators.py data/ out/clusters/topics_final.npz \\
@@ -21,6 +21,7 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from names import AREAS, TOPICS  # noqa: E402
+from trends import add_trends  # noqa: E402
 
 ap = argparse.ArgumentParser()
 ap.add_argument('data')
@@ -110,7 +111,7 @@ for t in range(nt):
         'year_p10': d['year_p10'], 'year_p90': d['year_p90'], 'papers_2011_2015': e, 'papers_2021_2025': r,
         'arxiv': d['arxiv'], 'journals': d['journals'], 'countries': d['countries'],
         'top_papers': d['top_papers'][:6], 'x': round(float(xy[t, 0]), 4), 'y': round(float(xy[t, 1]), 4)})
-dump('topics', topics)
+dump('topics', add_trends(topics))
 dump('topic_year', [{'topic': t, 'year': y, 'papers': v} for (t, y), v in sorted(year_t.items())])
 area_year = Counter()
 for (t, y), v in year_t.items():
