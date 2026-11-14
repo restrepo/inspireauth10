@@ -1,0 +1,177 @@
+<meta charset="utf-8">
+<title>Topic Timeline</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Spectral:wght@500;600&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: header + controls, chronological network (x = year) beside a detail panel, relevant-paper table below. */
+:root{--bg:#f6f7f9;--surface:#fff;--fg:#14171c;--fg-2:#4a5160;--fg-3:#7a8190;--line:#dde1e8;--edge:#8d95a5;--other:#a9b0bd;
+ --seed:#2a78d6;--direct:#eb6834;--partial:#1baf7a;--g0:#a9b0bd;--g1:#8fcfb4;--g2:#d9b98a;
+ --f-display:"Spectral",Georgia,"Times New Roman",serif;--f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--surface:#181b20;--fg:#eceef2;--fg-2:#b4bac6;--fg-3:#858c9a;--line:#2a2f37;--edge:#6c7484;--other:#5d6472;--seed:#3987e5;--direct:#d95926;--partial:#199e70;--g0:#5d6472;--g1:#3f7f66;--g2:#7d6743;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111317;--surface:#181b20;--fg:#eceef2;--fg-2:#b4bac6;--fg-3:#858c9a;--line:#2a2f37;--edge:#6c7484;--other:#5d6472;--seed:#3987e5;--direct:#d95926;--partial:#199e70;--g0:#5d6472;--g1:#3f7f66;--g2:#7d6743;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:none;margin:0 auto;padding-inline:20px;padding-block:24px 40px;display:grid;gap:18px}
+.wrap>*{min-width:0}
+header{display:grid;gap:6px}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(1.5rem,3.2vw,2.2rem);line-height:1.15;margin:0;text-wrap:balance}
+.dek{color:var(--fg-2);max-width:75ch;margin:0}
+.controls{display:flex;flex-wrap:wrap;gap:10px 18px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--fg-2);padding:6px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+button:focus-visible,input:focus-visible,tr:focus-visible{outline:2px solid var(--seed);outline-offset:2px}
+input[type=search]{font:inherit;font-size:13px;padding:6px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);width:min(260px,100%)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--fg-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.main{display:grid;grid-template-columns:minmax(0,1fr);gap:16px;align-items:start}
+.chart{background:var(--surface);border:1px solid var(--line);border-radius:10px;position:relative;overflow:hidden}
+svg{display:block;width:100%;height:auto}
+.axis text{fill:var(--fg-3);font-family:var(--f-mono);font-size:11px}.axis line,.axis path{stroke:var(--line)}
+.grid line{stroke:var(--line);stroke-dasharray:2 4}
+.edge{fill:none;stroke:var(--edge);stroke-width:.6;stroke-opacity:.16}
+.edge.hot{stroke-opacity:.9;stroke-width:1.3}.edge.hot.in{stroke:var(--seed)}.edge.hot.out{stroke:var(--direct)}
+.dim .edge:not(.hot){stroke-opacity:.04}
+.node{stroke:var(--surface);stroke-width:1.5;cursor:pointer;vector-effect:non-scaling-stroke}.edge{vector-effect:non-scaling-stroke}
+.zb{display:inline-flex;gap:4px}.zb button{font:inherit;font-size:12px;min-width:26px;padding:1px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg-2);cursor:pointer}
+#svg{cursor:grab;touch-action:none}#svg:active{cursor:grabbing}.dim .node:not(.on){opacity:.18}
+.node.match{stroke:var(--fg);stroke-width:2.2}.node.sel{stroke:var(--fg);stroke-width:2.5}
+.nlabel{font-size:11px;font-weight:500;fill:var(--fg);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.dim .nlabel:not(.on){opacity:.25}
+.dir{font-size:12px;color:var(--fg-3);padding:8px 14px;border-top:1px solid var(--line);display:flex;flex-wrap:wrap;gap:4px 18px}
+.dir b{font-weight:500;color:var(--fg-2)}.sw{display:inline-block;width:18px;height:2px;vertical-align:middle;margin-right:6px}
+.tip{position:absolute;pointer-events:none;background:var(--fg);color:var(--bg);font-size:12px;padding:6px 9px;border-radius:6px;max-width:280px;line-height:1.35}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:16px 20px;display:grid;gap:10px;min-width:0}
+.panel h2,.panel p{max-width:110ch}
+.panel .role{font-size:11px;letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.panel h2{font-family:var(--f-display);font-weight:600;font-size:1.12rem;line-height:1.3;margin:0;text-wrap:balance}
+.panel .meta{font-family:var(--f-mono);font-size:12px;color:var(--fg-2)}.panel p{margin:0}
+.panel .stats{display:flex;flex-wrap:wrap;gap:4px 14px;font-size:13px;color:var(--fg-2);font-variant-numeric:tabular-nums}
+.panel a{color:var(--seed)}.links{display:flex;gap:14px;font-size:13px}
+section h3{font-family:var(--f-display);font-weight:600;font-size:1.25rem;margin:0 0 8px}
+.tbl{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:680px}
+th,td{text-align:left;padding:8px 12px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--fg-3);font-weight:600}
+td.y,td.id{font-family:var(--f-mono);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+tbody tr{cursor:pointer}tbody tr:hover{background:var(--bg)}tr:last-child td{border-bottom:0}
+.pick{font-size:13px;color:var(--fg-2);display:flex;gap:8px;align-items:center}.pick select{font:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--fg);max-width:100%}
+.foot{font-size:12px;color:var(--fg-3);max-width:95ch}
+</style>
+<div class="wrap">
+<header><label class="pick">Topic <select id="topic" aria-label="Topic"></select></label><h1 id="h1"></h1><p class="dek" id="dek"></p></header>
+<div class="controls">
+  <div class="seg" role="group" aria-label="Papers shown"><button id="v-all" aria-pressed="true">All papers</button><button id="v-core" aria-pressed="false"></button></div>
+  <input type="search" id="q" placeholder="Search author, title or arXiv ID" aria-label="Search papers">
+  <div class="legend" id="legend"></div>
+</div>
+<div class="main">
+  <div class="chart" id="chart"><svg id="svg" role="img" aria-label="Citation network laid out by publication year"></svg><div class="tip" id="tip" hidden></div>
+    <div class="dir"><span><b>← older · newer →</b></span><span><i class="sw" style="background:var(--direct)"></i>references of the selected paper</span><span><i class="sw" style="background:var(--seed)"></i>papers citing it</span><span class="zb"><button id="z-in" aria-label="Zoom in">+</button><button id="z-out" aria-label="Zoom out">−</button><button id="z-reset">Reset zoom</button></span><span>scroll or pinch to zoom, drag to pan</span></div></div>
+  <aside class="panel" id="panel" aria-live="polite"></aside>
+</div>
+<section><h3>Highlighted papers</h3><div class="tbl"><table><thead><tr><th>Year</th><th>arXiv</th><th>Paper</th><th>Why it is here</th></tr></thead><tbody id="tbody"></tbody></table></div></section>
+<p class="foot" id="foot"></p>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+// Data: timelines/<topic>.json (reproduce/topics/timelines.py), chosen with ?topic=N
+const T=new URLSearchParams(location.search).get('topic')||'0';
+fetch('timelines/index.json').then(r=>r.json()).then(ix=>{const s=document.getElementById('topic');
+  ix.forEach(t=>{const o=document.createElement('option');o.value=t.topic;o.textContent=`${t.name} (${t.area_name.split(':')[0]})`;o.selected=String(t.topic)===T;s.appendChild(o)});
+  s.onchange=()=>{location.search='?topic='+s.value}});
+fetch(`timelines/${T}.json`).then(r=>r.json()).then(RAW=>{
+const M = RAW.meta;
+const N = RAW.n.map((a,i)=>({i,id:a[0],arxiv:a[1],title:a[2],first:a[3],nauth:a[4],year:a[5],cites:a[6],role:a[7],note:a[8],group:a[9]||0,lab:!!a[10],out:[],inn:[]}));
+RAW.e.forEach(([s,t])=>{N[s].out.push(t);N[t].inn.push(s)});
+N.forEach(n=>n.deg=n.out.length+n.inn.length);
+const ROLE={direct:M.labels.direct,partial:M.labels.partial,seed:M.labels.seed,other:'Other highly cited papers'};
+const RANK={direct:0,partial:1,seed:2,other:3};
+const col=n=>`var(--${n.role==='other'?'g'+n.group:n.role})`;
+const GROUPS=M.groups||[];
+const r=n=>2.6+1.5*Math.log10(1+n.cites)+(n.role!=='other'?1.5:0);
+const auth=n=>n.first+(n.nauth>2?' et al.':n.nauth===2?' + 1':'');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const K=M.coreMinLinks;
+document.getElementById('h1').textContent=M.headline;
+document.getElementById('dek').textContent=M.dek;
+document.getElementById('foot').textContent=M.foot;
+document.getElementById('v-core').textContent=`Core (≥ ${K} links)`;
+const present=new Set(N.map(n=>n.role));
+document.getElementById('legend').innerHTML=['direct','partial','seed'].filter(k=>present.has(k)).map(k=>`<span><i class="dot" style="background:var(--${k})"></i>${esc(ROLE[k])}</span>`).join('')+(GROUPS.length?GROUPS:[ROLE.other]).map((g,i)=>`<span><i class="dot" style="background:var(--g${i})"></i>${esc(g)}</span>`).join('')+'<span style="color:var(--fg-3)">Size ∝ log(citations)</span>';
+let ZOOM=null, HOT=null, EB=new Map(), view='all', sel=[...N].filter(n=>n.role==='direct').sort((a,b)=>b.cites-a.cites)[0]||null, hover=null, query='', G, RNG;
+const svg=d3.select('#svg'), tip=document.getElementById('tip');
+const visible=()=>view==='all'?N:N.filter(n=>n.role!=='other'||n.deg>=K);
+function draw(){
+  RNG=d3.randomLcg(7);
+  const W=Math.max(300,document.getElementById('chart').clientWidth), H=W<600?560:Math.round(Math.min(860,Math.max(620,W*.42))), m={l:16,r:16,t:20,b:34};
+  svg.attr('viewBox',`0 0 ${W} ${H}`); svg.selectAll('*').remove();
+  const nodes=visible(), set=new Set(nodes.map(n=>n.i)), yrs=[Math.floor(d3.quantile(nodes.map(n=>n.year).sort(d3.ascending),.01)),d3.max(nodes,n=>n.year)], yr=n=>Math.max(n.year,yrs[0]);
+  const x=d3.scaleLinear().domain([yrs[0]-.5,yrs[1]+.5]).range([m.l+8,W-m.r-8]);
+  const tk=xs=>[...new Set([yrs[0],...xs.ticks(W<600?6:12).filter(Number.isInteger)])].filter(d=>d>=xs.domain()[0]&&d<=xs.domain()[1]&&(d===yrs[0]||Math.abs(xs(d)-xs(yrs[0]))>40));
+  svg.append('defs').append('clipPath').attr('id','plotclip').append('rect').attr('x',0).attr('y',m.t-8).attr('width',W).attr('height',H-m.b-m.t+14);
+  const gridG=svg.append('g').attr('class','grid'), axG=svg.append('g').attr('class','axis').attr('transform',`translate(0,${H-m.b})`);
+  const axes=xs=>{const t=tk(xs);gridG.selectAll('line').data(t).join('line').attr('x1',d=>xs(d)).attr('x2',d=>xs(d)).attr('y1',m.t).attr('y2',H-m.b);
+    axG.call(d3.axisBottom(xs).tickValues(t).tickFormat(d=>d===yrs[0]&&nodes.some(n=>n.year<yrs[0])?'≤ '+d:String(d)).tickSizeOuter(0))};
+  axes(x);
+  const cy=(m.t+H-m.b)/2;
+  const sim=nodes.map(n=>({n,x:x(yr(n))+(RNG()-.5)*4,y:cy+(RNG()-.5)*H*.5}));
+  const byI=new Map(sim.map(s=>[s.n.i,s]));
+  const links=RAW.e.filter(([a,b])=>set.has(a)&&set.has(b)).map(([a,b])=>({source:byI.get(a),target:byI.get(b),s:a,t:b}));
+  const big=nodes.length>150, huge=nodes.length>600;
+  d3.forceSimulation(sim).force('x',d3.forceX(s=>x(yr(s.n))).strength(1)).force('y',d3.forceY(cy).strength(huge?.06:big?.025:.03))
+    .force('link',d3.forceLink(links).strength(.015)).force('charge',d3.forceManyBody().strength(huge?-7:big?-16:-34))
+    .force('col',d3.forceCollide(s=>r(s.n)+(huge?.8:1.6)))
+    .force('year',()=>sim.forEach(s=>{const y0=yr(s.n),lo=x(y0-.45),hi=x(y0+.45);if(s.x<lo)s.x=lo;else if(s.x>hi)s.x=hi})).stop().tick(320);
+  sim.forEach(s=>{const y0=yr(s.n);s.y=Math.max(m.t+8,Math.min(H-m.b-8,s.y));s.x=Math.max(x(y0-.45),Math.min(x(y0+.45),s.x))});
+  const Z=svg.append('g').attr('clip-path','url(#plotclip)').append('g');G=Z.append('g');
+  G.append('g').selectAll('path').data(links).join('path').attr('class','edge')
+    .attr('d',l=>{const a=l.source,b=l.target;return `M${a.x},${a.y}Q${(a.x+b.x)/2},${(a.y+b.y)/2-Math.abs(a.x-b.x)*.12} ${b.x},${b.y}`});
+  HOT=null;EB=new Map();G.selectAll('path.edge').each(function(l){for(const i of [l.s,l.t]){if(!EB.has(i))EB.set(i,[]);EB.get(i).push(this)}});
+  G.append('g').selectAll('circle').data(sim.sort((a,b)=>RANK[b.n.role]-RANK[a.n.role])).join('circle')
+    .attr('class','node').attr('cx',s=>s.x).attr('cy',s=>s.y).attr('r',s=>r(s.n)).attr('fill',s=>col(s.n))
+    .on('pointerenter',(ev,s)=>{hover=s.n;showTip(ev,s.n);paint()}).on('pointermove',(ev,s)=>showTip(ev,s.n))
+    .on('pointerleave',()=>{hover=null;tip.hidden=true;paint()}).on('click',(ev,s)=>{sel=s.n;panel();paint()});
+  const lab=sim.filter(s=>s.n.lab);
+  const L=lab.map(s=>{const right=s.x>W*.82,w=`${s.n.first} ${s.n.year}`.length*6.2;return{s,right,x0:right?s.x-r(s.n)-4-w:s.x+r(s.n)+4,w,y:s.y+4}}).sort((a,b)=>a.y-b.y);
+  const placed=[];L.forEach(l=>{let k=0;while(k<40&&placed.some(p=>l.x0<p.x0+p.w&&p.x0<l.x0+l.w&&Math.abs(l.y-p.y)<13)){l.y+=13*(k%2?-1:1)*(1+Math.floor(k/2));k++;l.y=Math.max(m.t+10,Math.min(H-m.b-4,l.y))}placed.push(l)});
+  G.append('g').selectAll('text').data(L).join('text').attr('class','nlabel').attr('x',l=>l.right?l.s.x-r(l.s.n)-4:l.s.x+r(l.s.n)+4).attr('y',l=>l.y)
+    .attr('text-anchor',l=>l.right?'end':'start').text(l=>`${l.s.n.first} ${l.s.n.year}`);
+  const zoom=d3.zoom().scaleExtent([1,30]).extent([[0,0],[W,H]]).translateExtent([[0,0],[W,H]]).on('zoom',ev=>{const t=ev.transform,k=t.k;
+    Z.attr('transform',t);axes(t.rescaleX(x));G.selectAll('circle').attr('r',s=>r(s.n)/k);
+    G.selectAll('text.nlabel').style('font-size',(11/k)+'px').style('stroke-width',(3/k)+'px')
+      .attr('x',l=>l.right?l.s.x-(r(l.s.n)+4)/k:l.s.x+(r(l.s.n)+4)/k).attr('y',l=>l.s.y+(l.y-l.s.y)/k)});
+  svg.call(zoom).on('dblclick.zoom',null);ZOOM={svg,zoom};
+  paint();
+}
+function showTip(ev,n){const b=document.getElementById('chart').getBoundingClientRect();tip.hidden=false;tip.textContent=`${auth(n)} (${n.year}) — ${n.title}`;
+  let L=ev.clientX-b.left+12;if(L>b.width-290)L=ev.clientX-b.left-290;tip.style.left=L+'px';tip.style.top=(ev.clientY-b.top+12)+'px'}
+function paint(){const f=hover||sel,on=new Set();if(f){on.add(f.i);f.out.forEach(i=>on.add(i));f.inn.forEach(i=>on.add(i))}
+  svg.classed('dim',!!f);
+  if(HOT)HOT.forEach(el=>el.setAttribute('class','edge'));HOT=f?(EB.get(f.i)||[]):null;
+  if(HOT)HOT.forEach(el=>{el.setAttribute('class',el.__data__.s===f.i?'edge hot out':'edge hot in');el.parentNode.appendChild(el)});
+  G.selectAll('circle').classed('on',s=>on.has(s.n.i)).classed('sel',s=>sel&&s.n.i===sel.i).classed('match',s=>query&&`${s.n.first} ${s.n.title} ${s.n.arxiv}`.toLowerCase().includes(query));
+  G.selectAll('text.nlabel').classed('on',l=>on.has(l.s.n.i))}
+function panel(){const p=document.getElementById('panel'),n=sel;
+  if(!n){p.innerHTML='<p>Select a paper in the network or the table.</p>';return}
+  p.innerHTML=`<div class="role" style="color:${col(n)}">${esc(ROLE[n.role])}</div><h2>${esc(n.title)}</h2>
+  ${GROUPS.length>1?`<div class="meta"><i class="dot" style="background:var(--g${n.group});margin-right:6px"></i>Topic: ${esc(GROUPS[n.group])}</div>`:''}<div class="meta">${esc(auth(n))} · ${n.year}${n.arxiv?' · arXiv:'+esc(n.arxiv):''}</div>${n.note?`<p>${esc(n.note)}</p>`:''}
+  <div class="stats"><span>${n.cites.toLocaleString()} citations</span><span>cites ${n.out.length} here</span><span>cited by ${n.inn.length} here</span></div>
+  <div class="links"><a href="https://inspirehep.net/literature/${n.id}" target="_blank" rel="noopener">INSPIRE</a>${n.arxiv?`<a href="https://arxiv.org/abs/${esc(n.arxiv)}" target="_blank" rel="noopener">arXiv</a>`:''}</div>`}
+function table(){const tb=document.getElementById('tbody');
+  N.filter(n=>n.role!=='other').sort((a,b)=>RANK[a.role]-RANK[b.role]||a.year-b.year).forEach(n=>{const tr=document.createElement('tr');tr.tabIndex=0;
+    tr.innerHTML=`<td class="y">${n.year}</td><td class="id">${esc(n.arxiv||'')}</td><td><span class="dot" style="background:${col(n)};margin-right:6px"></span>${esc(auth(n))}<br><span style="color:var(--fg-2)">${esc(n.title)}</span></td><td>${esc(n.note)}</td>`;
+    const pick=()=>{sel=n;panel();paint();document.getElementById('chart').scrollIntoView({behavior:'smooth',block:'nearest'})};
+    tr.addEventListener('click',pick);tr.addEventListener('keydown',e=>{if(e.key==='Enter')pick()});tb.appendChild(tr)})}
+function setView(v){view=v;document.getElementById('v-core').setAttribute('aria-pressed',v==='core');document.getElementById('v-all').setAttribute('aria-pressed',v==='all');draw()}
+document.getElementById('v-core').onclick=()=>setView('core');document.getElementById('v-all').onclick=()=>setView('all');
+document.getElementById('q').addEventListener('input',e=>{query=e.target.value.trim().toLowerCase();paint()});
+svg.on('click',ev=>{if(ev.target.tagName!=='circle'){sel=null;panel();paint()}});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,200)});
+document.getElementById('z-in').onclick=()=>ZOOM&&ZOOM.svg.call(ZOOM.zoom.scaleBy,1.8);
+document.getElementById('z-out').onclick=()=>ZOOM&&ZOOM.svg.call(ZOOM.zoom.scaleBy,1/1.8);
+document.getElementById('z-reset').onclick=()=>ZOOM&&ZOOM.svg.call(ZOOM.zoom.transform,d3.zoomIdentity);
+setView(view);table();panel();
+
+});
+</script>
