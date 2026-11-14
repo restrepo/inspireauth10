@@ -169,10 +169,9 @@ curl -L -o topics_vosviewer.json 'https://drive.usercontent.google.com/download?
   **File type: VOSviewer JSON file**, choose `topics_vosviewer.json` and click **OK**.
 
 The map shows 304 topics coloured by area (the 6 clusters), sized by papers, with 39,502 links. In the
-**Visualization** panel, *Color → Score colors* colours the topics by median year, and *Minimum strength*
-or *Maximum links* thins out the links. In VOSviewer for the desktop (1.6.16+) the same file opens with
-**File → Open → VOSviewer JSON file**; the map and network text files open with **Create → Create a map
-based on network data**.
+**Visualization** panel, **Color** switches from the clusters to the median year (the score), and
+**Minimum strength** or **Maximum links** thins out the links. VOSviewer for the desktop (1.6.16+) opens
+the same JSON file, and also the map and network text files.
 
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
