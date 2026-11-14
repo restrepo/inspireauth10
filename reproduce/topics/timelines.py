@@ -5,7 +5,9 @@ For each topic: its TOTAL most cited papers (INSPIRE citation counts), with its 
 American authors first (at most LA_SHARE of them); the citations between them (network.npz); titles and arXiv
 numbers from data/papers_text.jsonl.gz. Orange = Latin American authors, blue = the LANDMARKS most cited.
 
-Writes OUT/<topic>.json ({n, e, meta}, the format of the hep-citation-graph pages) and OUT/index.json.
+Writes OUT/<topic>.json ({n, e, meta}, the format of the hep-citation-graph pages) and OUT/index.json. Each paper also
+carries its countries (indices into meta.countries) and whether it is a landmark; meta.country_region gives the region
+(index into meta.regions, reproduce/regions.py) of each country, so the page can ring the papers of any region.
 
 Usage: python reproduce/topics/timelines.py data/ out/clusters/ out/topics_dash/timelines/ [TREND topics.json]
 
@@ -19,6 +21,9 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+from regions import REGIONS  # noqa: E402  (reproduce/regions.py: the six regions of the regional boards)
 
 TOTAL, LA_SHARE, LANDMARKS, LA_LABELS = 500, 0.2, 15, 20
 LA = {'Argentina', 'Bolivia', 'Brazil', 'Chile', 'Colombia', 'Costa Rica', 'Cuba', 'Ecuador', 'El Salvador',
@@ -67,7 +72,10 @@ for line in gzip.open(data / 'papers.jsonl.gz', 'rt'):
     r = int(line[9:line.index(',')])
     if r in wanted:
         p = json.loads(line)
-        P[r] = [(p['authors'] or [{'full_name': '?'}])[0]['full_name'].split(',')[0], p['n_authors'], int(p['year'] or 0)]
+        # above 10 authors the table has no authors: name the collaboration(s) instead, '?' when there is none
+        coll = [c['collaboration'] for c in p.get('collaborations', []) if c['collaboration'] != 'Not Collaboration']
+        first = p['authors'][0]['full_name'].split(',')[0] if p['authors'] else ' and '.join(coll[:2]) or '?'
+        P[r] = [first, p['n_authors'], int(p['year'] or 0), p.get('countries') or []]
 text = {}
 if (data / 'papers_text.jsonl.gz').exists():
     for line in gzip.open(data / 'papers_text.jsonl.gz', 'rt'):
@@ -92,17 +100,19 @@ order = np.argsort(et, kind='stable')
 es, ed, et = es[order], ed[order], et[order]
 bounds = np.searchsorted(et, np.arange(max(keep) + 2))
 
+REGION_OF = {k: i for i, cs in enumerate(REGIONS.values()) for k in cs}
 index = []
 for t in sorted(keep):
     rs, d = keep[t], TOP[t]
-    n = []
+    n, cidx = [], {}
     for r in rs:
-        first, nauth, year = P[r]
+        first, nauth, year, ctry = P[r]
         title, arxiv = text.get(r, ('', ''))
         role = 'direct' if r in la else 'seed' if r in land else 'other'
         note = (f"Latin American authors from {', '.join(la[r])}." if r in la else '') + \
                (f' Among the {LANDMARKS} most cited papers of its topic.' if r in land else '')
-        n.append([str(r), arxiv, title or f'INSPIRE record {r}', first, nauth, year, cites[r], role, note.strip(), 0, int(r in lab)])
+        n.append([str(r), arxiv, title or f'INSPIRE record {r}', first, nauth, year, cites[r], role, note.strip(), 0, int(r in lab),
+                  [cidx.setdefault(k, len(cidx)) for k in ctry], int(r in land)])
     E = sorted(set(zip(es[bounds[t]:bounds[t + 1]].tolist(), ed[bounds[t]:bounds[t + 1]].tolist())))
     cnt = Counter(x[7] for x in n)
     nla = sum(1 for r in by_topic[t] if r in la)
@@ -116,7 +126,8 @@ for t in sorted(keep):
                 f"(of {nla:,} in the topic). Labels: the {LANDMARKS} most cited and the {LA_LABELS} most cited with Latin American "
                 "authors. Citations are INSPIRE's totals.",
         'labels': {'direct': 'With Latin American authors', 'partial': 'Partial', 'seed': f'Top {LANDMARKS} most cited'},
-        'groups': [d['name']], 'coreMinLinks': 4}
+        'groups': [d['name']], 'coreMinLinks': 4,
+        'countries': list(cidx), 'regions': list(REGIONS), 'country_region': [REGION_OF.get(k, -1) for k in cidx]}
     (out / f'{t}.json').write_text(json.dumps({'n': n, 'e': [list(e) for e in E], 'meta': meta}, ensure_ascii=False, separators=(',', ':')))
     index.append({'topic': t, 'name': d['name'], 'area': d['area'], 'area_name': AREA[d['area']]})
 (out / 'index.json').write_text(json.dumps(index, ensure_ascii=False, separators=(',', ':')))

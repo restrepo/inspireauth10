@@ -7,10 +7,10 @@
 <style>
 /* Layout: header + controls, chronological network (x = year) beside a detail panel, relevant-paper table below. */
 :root{--bg:#f6f7f9;--surface:#fff;--fg:#14171c;--fg-2:#4a5160;--fg-3:#7a8190;--line:#dde1e8;--edge:#8d95a5;--other:#a9b0bd;
- --seed:#2a78d6;--direct:#eb6834;--partial:#1baf7a;--g0:#a9b0bd;--g1:#8fcfb4;--g2:#d9b98a;
+ --seed:#2a78d6;--direct:#eb6834;--partial:#1baf7a;--g0:#a9b0bd;--g1:#8fcfb4;--g2:#d9b98a;--c0:#c3c8d1;--c1:#cbb8ee;--c2:#9b7ddb;--c3:#6c47b8;--c4:#3f1f80;
  --f-display:"Spectral",Georgia,"Times New Roman",serif;--f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--surface:#181b20;--fg:#eceef2;--fg-2:#b4bac6;--fg-3:#858c9a;--line:#2a2f37;--edge:#6c7484;--other:#5d6472;--seed:#3987e5;--direct:#d95926;--partial:#199e70;--g0:#5d6472;--g1:#3f7f66;--g2:#7d6743;color-scheme:dark}}
-:root[data-theme="dark"]{--bg:#111317;--surface:#181b20;--fg:#eceef2;--fg-2:#b4bac6;--fg-3:#858c9a;--line:#2a2f37;--edge:#6c7484;--other:#5d6472;--seed:#3987e5;--direct:#d95926;--partial:#199e70;--g0:#5d6472;--g1:#3f7f66;--g2:#7d6743;color-scheme:dark}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#111317;--surface:#181b20;--fg:#eceef2;--fg-2:#b4bac6;--fg-3:#858c9a;--line:#2a2f37;--edge:#6c7484;--other:#5d6472;--seed:#3987e5;--direct:#d95926;--partial:#199e70;--g0:#5d6472;--g1:#3f7f66;--g2:#7d6743;--c0:#454b56;--c1:#4a3478;--c2:#6e50b0;--c3:#9c80e0;--c4:#cdbbf5;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#111317;--surface:#181b20;--fg:#eceef2;--fg-2:#b4bac6;--fg-3:#858c9a;--line:#2a2f37;--edge:#6c7484;--other:#5d6472;--seed:#3987e5;--direct:#d95926;--partial:#199e70;--g0:#5d6472;--g1:#3f7f66;--g2:#7d6743;--c0:#454b56;--c1:#4a3478;--c2:#6e50b0;--c3:#9c80e0;--c4:#cdbbf5;color-scheme:dark}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
 .wrap{max-width:none;margin:0 auto;padding-inline:20px;padding-block:24px 40px;display:grid;gap:18px}
@@ -38,6 +38,7 @@ svg{display:block;width:100%;height:auto}
 .node{stroke:var(--surface);stroke-width:1.5;cursor:pointer;vector-effect:non-scaling-stroke}.edge{vector-effect:non-scaling-stroke}
 .zb{display:inline-flex;gap:4px}.zb button{font:inherit;font-size:12px;min-width:26px;padding:1px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg-2);cursor:pointer}
 #svg{cursor:grab;touch-action:none}#svg:active{cursor:grabbing}.dim .node:not(.on){opacity:.18}
+.node.la{stroke:var(--direct);stroke-width:2.2}.dot.la{background:none!important;border:2.5px solid var(--direct)}
 .node.match{stroke:var(--fg);stroke-width:2.2}.node.sel{stroke:var(--fg);stroke-width:2.5}
 .nlabel{font-size:11px;font-weight:500;fill:var(--fg);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
 .dim .nlabel:not(.on){opacity:.25}
@@ -65,6 +66,7 @@ tbody tr{cursor:pointer}tbody tr:hover{background:var(--bg)}tr:last-child td{bor
 <header><label class="pick">Topic <select id="topic" aria-label="Topic"></select></label><h1 id="h1"></h1><p class="dek" id="dek"></p></header>
 <div class="controls">
   <div class="seg" role="group" aria-label="Papers shown"><button id="v-all" aria-pressed="true">All papers</button><button id="v-core" aria-pressed="false"></button></div>
+  <label class="pick">Ring papers with authors in <select id="region" aria-label="Region of the ringed papers"></select></label>
   <input type="search" id="q" placeholder="Search author, title or arXiv ID" aria-label="Search papers">
   <div class="legend" id="legend"></div>
 </div>
@@ -82,18 +84,23 @@ tbody tr{cursor:pointer}tbody tr:hover{background:var(--bg)}tr:last-child td{bor
 const T=new URLSearchParams(location.search).get('topic')||'0';
 fetch('timelines/index.json').then(r=>r.json()).then(ix=>{const s=document.getElementById('topic');
   ix.forEach(t=>{const o=document.createElement('option');o.value=t.topic;o.textContent=`${t.name} (${t.area_name.split(':')[0]})`;o.selected=String(t.topic)===T;s.appendChild(o)});
-  s.onchange=()=>{location.search='?topic='+s.value}});
+  s.onchange=()=>{const u=new URL(location);u.searchParams.set('topic',s.value);location.href=u}});
 fetch(`timelines/${T}.json`).then(r=>r.json()).then(RAW=>{
 const M = RAW.meta;
-const N = RAW.n.map((a,i)=>({i,id:a[0],arxiv:a[1],title:a[2],first:a[3],nauth:a[4],year:a[5],cites:a[6],role:a[7],note:a[8],group:a[9]||0,lab:!!a[10],out:[],inn:[]}));
+const N = RAW.n.map((a,i)=>({i,id:a[0],arxiv:a[1],title:a[2],first:a[3],nauth:a[4],year:a[5],cites:a[6],role:a[7],note:a[8],group:a[9]||0,lab:!!a[10],cty:a[11]||[],land:!!a[12],out:[],inn:[]}));
 RAW.e.forEach(([s,t])=>{N[s].out.push(t);N[t].inn.push(s)});
 N.forEach(n=>n.deg=n.out.length+n.inn.length);
 const ROLE={direct:M.labels.direct,partial:M.labels.partial,seed:M.labels.seed,other:'Other highly cited papers'};
 const RANK={direct:0,partial:1,seed:2,other:3};
-const col=n=>`var(--${n.role==='other'?'g'+n.group:n.role})`;
+const BINS=[[500,'500+'],[250,'250–499'],[100,'100–249'],[50,'50–99'],[0,'Under 50']];
+const bin=n=>4-BINS.findIndex(([lo])=>n.cites>=lo);
+const col=n=>`var(--c${bin(n)})`;
 const GROUPS=M.groups||[];
 const r=n=>2.6+1.5*Math.log10(1+n.cites)+(n.role!=='other'?1.5:0);
-const auth=n=>n.first+(n.nauth>2?' et al.':n.nauth===2?' + 1':'');
+// above 10 authors `first` is the collaboration (or '?' when INSPIRE names none)
+const coll=n=>n.nauth>10;
+const who=n=>coll(n)&&n.first==='?'?`${n.nauth} authors`:n.first;
+const auth=n=>coll(n)?(n.first==='?'?`${n.nauth} authors`:/collab|group|consortium|team|project/i.test(n.first)?n.first:`${n.first} Collaboration`):n.first+(n.nauth>2?' et al.':n.nauth===2?' + 1':'');
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const K=M.coreMinLinks;
 document.getElementById('h1').textContent=M.headline;
@@ -101,8 +108,21 @@ document.getElementById('dek').textContent=M.dek;
 document.getElementById('foot').textContent=M.foot;
 document.getElementById('v-core').textContent=`Core (≥ ${K} links)`;
 const present=new Set(N.map(n=>n.role));
-document.getElementById('legend').innerHTML=['direct','partial','seed'].filter(k=>present.has(k)).map(k=>`<span><i class="dot" style="background:var(--${k})"></i>${esc(ROLE[k])}</span>`).join('')+(GROUPS.length?GROUPS:[ROLE.other]).map((g,i)=>`<span><i class="dot" style="background:var(--g${i})"></i>${esc(g)}</span>`).join('')+'<span style="color:var(--fg-3)">Size ∝ log(citations)</span>';
-let ZOOM=null, HOT=null, EB=new Map(), view='all', sel=[...N].filter(n=>n.role==='direct').sort((a,b)=>b.cites-a.cites)[0]||null, hover=null, query='', G, RNG;
+const bins=new Set(N.map(bin));
+function legend(){const k=N.filter(n=>n.role==='direct').length;
+  document.getElementById('legend').innerHTML='<span style="color:var(--fg-2)">Citations:</span>'+BINS.map(([,l],k)=>[4-k,l]).filter(([b])=>bins.has(b)).reverse().map(([b,l])=>`<span><i class="dot" style="background:var(--c${b})"></i>${l}</span>`).join('')
+    +(REG?`<span><i class="dot la"></i>${esc(ROLE.direct)} (${k})</span>`:'')+'<span style="color:var(--fg-3)">Size ∝ log(citations)</span>'}
+// the ring: papers with an author in the chosen region (reproduce/regions.py); their 20 most cited and the landmarks get labels
+const REGIONS=M.regions||[], CREG=M.country_region||[], CNAME=M.countries||[];
+let REG=new URLSearchParams(location.search).get('region')??'Latin America';
+function setRegion(R){REG=REGIONS.includes(R)?R:'';const ri=REGIONS.indexOf(REG);ROLE.direct=`With authors in ${REG}`;
+  N.forEach(n=>{const cs=ri<0?[]:n.cty.filter(c=>CREG[c]===ri).map(c=>CNAME[c]);n.role=cs.length?'direct':n.land?'seed':'other';
+    n.note=(cs.length?`Authors in ${REG}: ${cs.join(', ')}.`:'')+(n.land?' Among the 15 most cited papers of its topic.':'')});
+  const top=new Set(N.filter(n=>n.role==='direct').sort((a,b)=>b.cites-a.cites).slice(0,20));
+  N.forEach(n=>{n.lab=n.land||top.has(n)});
+  if(!sel||sel.role!=='direct')sel=[...N].filter(n=>n.role==='direct').sort((a,b)=>b.cites-a.cites)[0]||sel;
+  legend()}
+let ZOOM=null, HOT=null, EB=new Map(), view='all', sel=null, hover=null, query='', G, RNG;
 const svg=d3.select('#svg'), tip=document.getElementById('tip');
 const visible=()=>view==='all'?N:N.filter(n=>n.role!=='other'||n.deg>=K);
 function draw(){
@@ -132,14 +152,14 @@ function draw(){
     .attr('d',l=>{const a=l.source,b=l.target;return `M${a.x},${a.y}Q${(a.x+b.x)/2},${(a.y+b.y)/2-Math.abs(a.x-b.x)*.12} ${b.x},${b.y}`});
   HOT=null;EB=new Map();G.selectAll('path.edge').each(function(l){for(const i of [l.s,l.t]){if(!EB.has(i))EB.set(i,[]);EB.get(i).push(this)}});
   G.append('g').selectAll('circle').data(sim.sort((a,b)=>RANK[b.n.role]-RANK[a.n.role])).join('circle')
-    .attr('class','node').attr('cx',s=>s.x).attr('cy',s=>s.y).attr('r',s=>r(s.n)).attr('fill',s=>col(s.n))
+    .attr('class',s=>s.n.role==='direct'?'node la':'node').attr('cx',s=>s.x).attr('cy',s=>s.y).attr('r',s=>r(s.n)).attr('fill',s=>col(s.n))
     .on('pointerenter',(ev,s)=>{hover=s.n;showTip(ev,s.n);paint()}).on('pointermove',(ev,s)=>showTip(ev,s.n))
     .on('pointerleave',()=>{hover=null;tip.hidden=true;paint()}).on('click',(ev,s)=>{sel=s.n;panel();paint()});
   const lab=sim.filter(s=>s.n.lab);
-  const L=lab.map(s=>{const right=s.x>W*.82,w=`${s.n.first} ${s.n.year}`.length*6.2;return{s,right,x0:right?s.x-r(s.n)-4-w:s.x+r(s.n)+4,w,y:s.y+4}}).sort((a,b)=>a.y-b.y);
+  const L=lab.map(s=>{const right=s.x>W*.82,w=`${who(s.n)} ${s.n.year}`.length*6.2;return{s,right,x0:right?s.x-r(s.n)-4-w:s.x+r(s.n)+4,w,y:s.y+4}}).sort((a,b)=>a.y-b.y);
   const placed=[];L.forEach(l=>{let k=0;while(k<40&&placed.some(p=>l.x0<p.x0+p.w&&p.x0<l.x0+l.w&&Math.abs(l.y-p.y)<13)){l.y+=13*(k%2?-1:1)*(1+Math.floor(k/2));k++;l.y=Math.max(m.t+10,Math.min(H-m.b-4,l.y))}placed.push(l)});
   G.append('g').selectAll('text').data(L).join('text').attr('class','nlabel').attr('x',l=>l.right?l.s.x-r(l.s.n)-4:l.s.x+r(l.s.n)+4).attr('y',l=>l.y)
-    .attr('text-anchor',l=>l.right?'end':'start').text(l=>`${l.s.n.first} ${l.s.n.year}`);
+    .attr('text-anchor',l=>l.right?'end':'start').text(l=>`${who(l.s.n)} ${l.s.n.year}`);
   const zoom=d3.zoom().scaleExtent([1,30]).extent([[0,0],[W,H]]).translateExtent([[0,0],[W,H]]).on('zoom',ev=>{const t=ev.transform,k=t.k;
     Z.attr('transform',t);axes(t.rescaleX(x));G.selectAll('circle').attr('r',s=>r(s.n)/k);
     G.selectAll('text.nlabel').style('font-size',(11/k)+'px').style('stroke-width',(3/k)+'px')
@@ -153,15 +173,15 @@ function paint(){const f=hover||sel,on=new Set();if(f){on.add(f.i);f.out.forEach
   svg.classed('dim',!!f);
   if(HOT)HOT.forEach(el=>el.setAttribute('class','edge'));HOT=f?(EB.get(f.i)||[]):null;
   if(HOT)HOT.forEach(el=>{el.setAttribute('class',el.__data__.s===f.i?'edge hot out':'edge hot in');el.parentNode.appendChild(el)});
-  G.selectAll('circle').classed('on',s=>on.has(s.n.i)).classed('sel',s=>sel&&s.n.i===sel.i).classed('match',s=>query&&`${s.n.first} ${s.n.title} ${s.n.arxiv}`.toLowerCase().includes(query));
+  G.selectAll('circle').classed('on',s=>on.has(s.n.i)).classed('sel',s=>sel&&s.n.i===sel.i).classed('match',s=>query&&`${auth(s.n)} ${s.n.title} ${s.n.arxiv}`.toLowerCase().includes(query));
   G.selectAll('text.nlabel').classed('on',l=>on.has(l.s.n.i))}
 function panel(){const p=document.getElementById('panel'),n=sel;
   if(!n){p.innerHTML='<p>Select a paper in the network or the table.</p>';return}
-  p.innerHTML=`<div class="role" style="color:${col(n)}">${esc(ROLE[n.role])}</div><h2>${esc(n.title)}</h2>
+  p.innerHTML=`<div class="role" style="color:${n.role==='direct'?'var(--direct)':'var(--fg-2)'}">${esc(ROLE[n.role])} · ${n.cites.toLocaleString('en')} citations</div><h2>${esc(n.title)}</h2>
   ${GROUPS.length>1?`<div class="meta"><i class="dot" style="background:var(--g${n.group});margin-right:6px"></i>Topic: ${esc(GROUPS[n.group])}</div>`:''}<div class="meta">${esc(auth(n))} · ${n.year}${n.arxiv?' · arXiv:'+esc(n.arxiv):''}</div>${n.note?`<p>${esc(n.note)}</p>`:''}
   <div class="stats"><span>${n.cites.toLocaleString()} citations</span><span>cites ${n.out.length} here</span><span>cited by ${n.inn.length} here</span></div>
   <div class="links"><a href="https://inspirehep.net/literature/${n.id}" target="_blank" rel="noopener">INSPIRE</a>${n.arxiv?`<a href="https://arxiv.org/abs/${esc(n.arxiv)}" target="_blank" rel="noopener">arXiv</a>`:''}</div>`}
-function table(){const tb=document.getElementById('tbody');
+function table(){const tb=document.getElementById('tbody');tb.innerHTML='';
   N.filter(n=>n.role!=='other').sort((a,b)=>RANK[a.role]-RANK[b.role]||a.year-b.year).forEach(n=>{const tr=document.createElement('tr');tr.tabIndex=0;
     tr.innerHTML=`<td class="y">${n.year}</td><td class="id">${esc(n.arxiv||'')}</td><td><span class="dot" style="background:${col(n)};margin-right:6px"></span>${esc(auth(n))}<br><span style="color:var(--fg-2)">${esc(n.title)}</span></td><td>${esc(n.note)}</td>`;
     const pick=()=>{sel=n;panel();paint();document.getElementById('chart').scrollIntoView({behavior:'smooth',block:'nearest'})};
@@ -174,6 +194,10 @@ let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw
 document.getElementById('z-in').onclick=()=>ZOOM&&ZOOM.svg.call(ZOOM.zoom.scaleBy,1.8);
 document.getElementById('z-out').onclick=()=>ZOOM&&ZOOM.svg.call(ZOOM.zoom.scaleBy,1/1.8);
 document.getElementById('z-reset').onclick=()=>ZOOM&&ZOOM.svg.call(ZOOM.zoom.transform,d3.zoomIdentity);
+const rs=document.getElementById('region');
+rs.innerHTML=[...REGIONS.map(R=>`<option>${esc(R)}</option>`),'<option value="">No ring</option>'].join('');
+if(CNAME.length&&REGIONS.length){setRegion(REG);rs.value=REG}else{rs.closest('label').hidden=true;legend()}
+rs.onchange=()=>{setRegion(rs.value);const u=new URL(location);u.searchParams.set('region',rs.value);history.replaceState(null,'',u);draw();table();panel()};
 setView(view);table();panel();
 
 });
