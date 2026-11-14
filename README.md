@@ -160,6 +160,20 @@ citation links between their papers. `reproduce/topics/vosviewer.py` writes thes
 curl -L -o topics_vosviewer.json 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1k15nF6PStcnobW4nW53f97H44riRwQxU'
 ```
 
+**Open it in VOSviewer Online** (in the browser, nothing to install):
+
+- One click: [open the topics graph in VOSviewer Online](https://app.vosviewer.com/?json=https://restrepo.github.io/inspireauth10/vosviewer/topics_vosviewer.json).
+  The `json=` parameter loads the copy of `topics_vosviewer.json` on the GitHub Pages site
+  (https://restrepo.github.io/inspireauth10/vosviewer/topics_vosviewer.json, the same file as on Drive).
+- From a downloaded file: go to https://app.vosviewer.com/, click **Open** (top left), keep
+  **File type: VOSviewer JSON file**, choose `topics_vosviewer.json` and click **OK**.
+
+The map shows 304 topics coloured by area (the 6 clusters), sized by papers, with 39,502 links. In the
+**Visualization** panel, *Color → Score colors* colours the topics by median year, and *Minimum strength*
+or *Maximum links* thins out the links. In VOSviewer for the desktop (1.6.16+) the same file opens with
+**File → Open → VOSviewer JSON file**; the map and network text files open with **Create → Create a map
+based on network data**.
+
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
 
