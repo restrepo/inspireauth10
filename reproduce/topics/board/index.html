@@ -143,7 +143,7 @@
     </div>
     <div class="card">
       <h2>Growing, stable and shrinking topics</h2>
-      <p class="note">A topic's trend compares its share of all papers with a topic in 2021–2025 with its share in 2011–2015, so the growth of the whole literature (×1.32 between the two periods) is taken out: <b>Growing</b> when the share rose by more than half (×1.5), <b>Shrinking</b> when it fell by more than a third (below ×0.67), <b>Stable</b> otherwise. The trend is also in the Topics table and in the data (<code>topics.jsonl.gz</code>).</p>
+      <p class="note">A topic's trend compares its share of all papers with a topic in 2021–2025 with its share in 2011–2015, so the growth of the whole literature (×1.32 between the two periods) is taken out: <b>Growing</b> when the share rose by more than half (×1.5), <b>Shrinking</b> when it fell by more than a third (below ×0.67), <b>Stable</b> otherwise. The trend is also in the Topics table and in the data (<code>topics.jsonl.gz</code>). The details of every shrinking topic (Topics tab) show its citation network over the years.</p>
       <div class="tiles" data-draw="trend-tiles" data-source="topics"></div>
       <div class="scroll clickable" style="max-height: 22rem"><table><thead><tr><th>Area</th><th class="n">Growing</th><th class="n">Stable</th><th class="n">Shrinking</th></tr></thead><tbody data-draw="trend-areas" data-source="topics areas"></tbody></table></div>
     </div>
@@ -368,6 +368,8 @@ dash.draw('topic-table', (tb) => {
     tr.onclick = () => { rp.ui.topic = t.topic; dash.draw('topic-table'); dash.draw('topic-detail'); };
   }
 });
+// topics with a citation timeline: those listed in timelines/index.json next to the board (none when it is missing)
+rp.timelines = fetch('timelines/index.json').then((r) => (r.ok ? r.json() : [])).then((ix) => new Set(ix.map((x) => x.topic))).catch(() => new Set());
 dash.draw('topic-detail', (el) => {
   if (!rp.ready(el, ['topics', 'topic_year'])) return;
   if (el.closest('[hidden]')) return;
@@ -409,7 +411,8 @@ dash.draw('topic-detail', (el) => {
   tn.append('Its 500 most cited papers placed by year, with the citations between them. ', ta, '.');
   const fr = document.createElement('iframe'); fr.className = 'timeline'; fr.loading = 'lazy'; fr.title = `Citation timeline of ${t.name}`; fr.src = `timeline.html?topic=${t.topic}`;
   tl.append(th, tn, fr);
-  el.append(kv, pbox, tl);
+  el.append(kv, pbox);
+  rp.timelines.then((ix) => { if (ix.has(t.topic) && pbox.isConnected) el.append(tl); });
 });
 
 dash.draw('trend-mode', (sel) => { sel.value = rp.ui.trend; sel.onchange = () => { rp.ui.trend = sel.value; dash.draw('area-trend'); }; });
