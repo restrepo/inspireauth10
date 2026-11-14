@@ -1,5 +1,9 @@
 # inspireauth10
 
+> **Boards:** [**restrepo.github.io/inspireauth10**](https://restrepo.github.io/inspireauth10/): indicators for every country and region, and the
+> [topics board](https://restrepo.github.io/inspireauth10/boards/2026-11-09/topics/) (304 citation-based topics, landmark papers,
+> citation timelines), in the browser, with nothing to install.
+
 Every INSPIRE-HEP paper with **1 to 10 authors**, worldwide, with its authors, their affiliations and
 the INSPIRE ids of its **references**, and a board of indicators for every country. This is the
 worldwide counterpart of [restrepo/inspireauth](https://github.com/restrepo/inspireauth) (Latin
