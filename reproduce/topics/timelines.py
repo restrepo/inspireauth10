@@ -7,7 +7,10 @@ numbers from data/papers_text.jsonl.gz. Orange = Latin American authors, blue = 
 
 Writes OUT/<topic>.json ({n, e, meta}, the format of the hep-citation-graph pages) and OUT/index.json.
 
-Usage: python reproduce/topics/timelines.py data/ out/clusters/ out/topics_dash/timelines/
+Usage: python reproduce/topics/timelines.py data/ out/clusters/ out/topics_dash/timelines/ [TREND topics.json]
+
+With TREND (Growing, Stable or Shrinking) and the board's topics.json (reproduce/topics/trends.py), only the topics of
+that trend get a timeline; the board shows the timeline of the topics listed in OUT/index.json.
 """
 import gzip
 import json
@@ -29,6 +32,9 @@ z = np.load(clusters / 'network.npz')
 TOP = {t['topic']: t for t in json.load(open(clusters / 'topics_final.json'))}
 AREA = {a['area']: a['name'] for a in json.load(open(clusters / 'areas_final.json'))}
 topic_of = dict(zip(c['recid'].tolist(), c['topic'].tolist()))
+if len(sys.argv) > 5:
+    only = {t['topic'] for t in json.load(open(sys.argv[5])) if t['trend'] == sys.argv[4]}
+    topic_of = {r: t if t in only else -1 for r, t in topic_of.items()}
 
 # pass 1: citations and Latin American countries of every paper with a topic
 cites, la = {}, {}
