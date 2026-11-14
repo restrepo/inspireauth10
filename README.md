@@ -1,5 +1,9 @@
 # inspireauth10
 
+> **Boards:** [**restrepo.github.io/inspireauth10**](https://restrepo.github.io/inspireauth10/): indicators for every country and region, and the
+> [topics board](https://restrepo.github.io/inspireauth10/boards/2026-11-09/topics/) (304 citation-based topics, landmark papers,
+> citation timelines), in the browser, with nothing to install.
+
 Every INSPIRE-HEP paper with **1 to 10 authors**, worldwide, with its authors, their affiliations and
 the INSPIRE ids of its **references**, and a board of indicators for every country. This is the
 worldwide counterpart of [restrepo/inspireauth](https://github.com/restrepo/inspireauth) (Latin
@@ -155,6 +159,19 @@ citation links between their papers. `reproduce/topics/vosviewer.py` writes thes
 ```bash
 curl -L -o topics_vosviewer.json 'https://drive.usercontent.google.com/download?export=download&confirm=t&id=1k15nF6PStcnobW4nW53f97H44riRwQxU'
 ```
+
+**Open it in VOSviewer Online** (in the browser, nothing to install):
+
+- One click: [open the topics graph in VOSviewer Online](https://app.vosviewer.com/?json=https://restrepo.github.io/inspireauth10/vosviewer/topics_vosviewer.json).
+  The `json=` parameter loads the copy of `topics_vosviewer.json` on the GitHub Pages site
+  (https://restrepo.github.io/inspireauth10/vosviewer/topics_vosviewer.json, the same file as on Drive).
+- From a downloaded file: go to https://app.vosviewer.com/, click **Open** (top left), keep
+  **File type: VOSviewer JSON file**, choose `topics_vosviewer.json` and click **OK**.
+
+The map shows 304 topics coloured by area (the 6 clusters), sized by papers, with 39,502 links. In the
+**Visualization** panel, **Color** switches from the clusters to the median year (the score), and
+**Minimum strength** or **Maximum links** thins out the links. VOSviewer for the desktop (1.6.16+) opens
+the same JSON file, and also the map and network text files.
 
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
