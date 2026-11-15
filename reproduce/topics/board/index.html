@@ -71,6 +71,15 @@
 .rp .papers li { line-height: 1.4; }
 .rp .papers a { color: inherit; }
 .rp iframe.timeline { width: 100%; height: 1150px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; }
+.rp iframe.papermap { width: 100%; height: 1360px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; }
+.rp .pm-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--cds-gap-sm); }
+.rp .pm-pick button { appearance: none; font: inherit; text-align: left; cursor: pointer; display: grid; gap: 2px; padding: var(--cds-pad-sm) var(--cds-pad-md); border: 1px solid var(--color-border-line); border-left: 4px solid var(--pm-color); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg); }
+.rp .pm-pick button[aria-pressed="true"] { background: var(--color-bg); border-color: var(--color-fg); border-left-color: var(--pm-color); }
+.rp .pm-pick button:focus-visible { outline: 2px solid var(--color-fg); outline-offset: 2px; }
+.rp .pm-pick .a { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
+.rp .pm-pick .p { font-weight: 600; }
+.rp .pm-pick .t { font-size: var(--cds-font-size-caption); overflow: hidden; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.rp .pm-pick .n { font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); font-variant-numeric: tabular-nums; }
 .rp .stats { display: flex; flex-wrap: wrap; gap: var(--cds-gap-lg); font-size: var(--cds-font-size-caption); color: var(--color-fg-muted); }
 .rp .stats b { display: block; font-size: var(--cds-font-size-heading); color: var(--color-fg); font-weight: 500; font-variant-numeric: tabular-nums; }
 .rp .up { color: var(--color-ok); } .rp .down { color: var(--color-bad); }
@@ -96,6 +105,7 @@
     <button class="tab" role="tab" data-tab="trends" aria-selected="false">Trends</button>
     <button class="tab" role="tab" data-tab="authors" aria-selected="false">Authors</button>
     <button class="tab" role="tab" data-tab="landmarks" aria-selected="false">Landmarks</button>
+    <button class="tab" role="tab" data-tab="papermaps" aria-selected="false">Paper maps</button>
     <button class="tab" role="tab" data-tab="countries" aria-selected="false">Countries</button>
     <button class="tab" role="tab" data-tab="method" aria-selected="false">Method</button>
   </nav>
@@ -200,6 +210,16 @@
       <div class="card"><h2>Share of disruptive papers by year</h2><p class="note">Papers with D &gt; 0 among the 76,811 papers with 100 or more citations, in five-year bins (bins with fewer than 30 papers left out).</p>
         <div class="legend" data-draw="area-legend" data-source="areas"></div>
         <div class="chart tall" data-draw="lm-share" data-source="disruption_share areas"></div></div>
+    </div>
+  </section>
+
+  <section id="papermaps" role="tabpanel" hidden>
+    <div class="card">
+      <h2>The most cited paper of each area on the topic map</h2>
+      <p class="note">For one paper, every citation link (a paper it cites or a paper citing it, each pair once) is placed in the main topic of the paper at the other end. <b>Papers</b> draws the linked papers themselves around the paper, one coloured cluster for its own topic and for each of the five topics with most links (the most cited papers of each; hollow circles are its references); <b>Topics</b> places every topic its links reach, closer and larger with more links. Shown here: the paper with most citations inside the network in each of the six areas. Hover a cluster name or a paper for details; click a paper to open it in INSPIRE, or a topic to open its citation timeline. <code>reproduce/topics/paper_maps.py</code> makes the map of any other paper.</p>
+      <div class="pm-pick" id="pm-pick" role="group" aria-label="Paper"></div>
+      <p class="note" id="pm-open"></p>
+      <div id="pm-frame"></div>
     </div>
   </section>
 
@@ -812,6 +832,26 @@ dash.draw('country-topics', (tb) => {
     if (r.spec >= 2) tr.cells[4].classList.add('up');
     tr.onclick = () => rp.openTopic(r.t.topic);
   }
+});
+
+// paper maps: paper.html next to the board, with paper_maps/<recid>.json (reproduce/topics/paper_maps.py)
+fetch('paper_maps/index.json').then((r) => (r.ok ? r.json() : [])).catch(() => []).then((ix) => {
+  const pick = document.getElementById('pm-pick'), open = document.getElementById('pm-open'), box = document.getElementById('pm-frame');
+  if (!ix.length) { open.textContent = 'The paper maps are on the board published on GitHub Pages (paper.html and paper_maps/ next to this page).'; return; }
+  const fr = document.createElement('iframe'); fr.className = 'papermap'; fr.loading = 'lazy';
+  const show = (p) => {
+    fr.src = `paper.html?recid=${p.recid}`; fr.title = `Topic map of ${p.lead} ${p.year}`;
+    pick.querySelectorAll('button').forEach((b) => b.setAttribute('aria-pressed', String(+b.dataset.recid === p.recid)));
+    const a = document.createElement('a'); a.href = `paper.html?recid=${p.recid}`; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open it on its own page';
+    open.replaceChildren(`${p.lead} ${p.year}: ${rp.int(p.links)} links in ${p.topics} topics, ${Math.round(100 * p.own_share)}% in its own topic (${p.own} ${p.own_name}). `, a);
+  };
+  ix.forEach((p) => {
+    const b = document.createElement('button'); b.type = 'button'; b.dataset.recid = p.recid; b.style.setProperty('--pm-color', rp.color(p.area));
+    const s = (c, t) => { const e = document.createElement('span'); e.className = c; e.textContent = t; return e; };
+    b.append(s('a', p.area_name.split(':')[0]), s('p', `${p.lead} ${p.year}`), s('t', p.title), s('n', `${rp.int(p.cites)} citations · ${rp.int(p.links)} links`));
+    b.onclick = () => show(p); pick.append(b);
+  });
+  box.append(fr); show(ix[0]);
 });
 
 const startTab = location.hash.slice(1);

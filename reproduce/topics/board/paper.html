@@ -1,0 +1,257 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Paper topic map</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,500;6..72,600&family=Instrument+Sans:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Topic map of one paper: data from paper_maps/<recid>.json (reproduce/topics/paper_maps.py), chosen with ?recid=N.
+   Layout: header, then a radial link map (paper at the centre, topics around it, closer = more links) beside a ranked list of all topics. */
+:root{
+  --bg:#f7f8f6;--surface:#fff;--fg:#151a17;--fg-2:#4b544f;--fg-3:#7c857f;--line:#dfe3df;--spoke:#9aa39d;
+  --a0:#2a78d6;--a1:#eb6834;--a2:#1baf7a;--a3:#6250d6;--a4:#eda100;--a5:#e87ba4;
+  --c0:#2a78d6;--c1:#eb6834;--c2:#1baf7a;--c3:#eda100;--c4:#e87ba4;--c5:#008300;--c6:#8f9893;
+  --f-display:"Newsreader",Georgia,serif;--f-body:"Instrument Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"JetBrains Mono",ui-monospace,Menlo,monospace}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121513;--surface:#1a1e1c;--fg:#edf0ee;--fg-2:#b6beb9;--fg-3:#89928c;--line:#2c322f;--spoke:#5f6863;
+  --a0:#3987e5;--a1:#d95926;--a2:#199e70;--a3:#9085e9;--a4:#c98500;--a5:#d55181;
+  --c0:#3987e5;--c1:#d95926;--c2:#199e70;--c3:#c98500;--c4:#d55181;--c5:#008300;--c6:#6f7873;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#121513;--surface:#1a1e1c;--fg:#edf0ee;--fg-2:#b6beb9;--fg-3:#89928c;--line:#2c322f;--spoke:#5f6863;
+  --a0:#3987e5;--a1:#d95926;--a2:#199e70;--a3:#9085e9;--a4:#c98500;--a5:#d55181;
+  --c0:#3987e5;--c1:#d95926;--c2:#199e70;--c3:#c98500;--c4:#d55181;--c5:#008300;--c6:#6f7873;color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.5}
+.wrap{max-width:1240px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:24px 40px;display:grid;grid-template-columns:minmax(0,1fr);gap:18px}
+.wrap>*{min-width:0}
+header{display:grid;grid-template-columns:minmax(0,1fr);gap:6px}
+.eyebrow{font-family:var(--f-mono);font-size:12px;color:var(--fg-3);letter-spacing:.02em}
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(1.5rem,3.2vw,2.15rem);line-height:1.15;margin:0;text-wrap:balance;max-width:34ch}
+.dek{color:var(--fg-2);max-width:72ch;margin:0}
+.stats{display:flex;flex-wrap:wrap;gap:6px 22px;font-size:13px;color:var(--fg-2);font-variant-numeric:tabular-nums}
+.stats b{font-family:var(--f-mono);font-weight:500;color:var(--fg)}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--fg-2)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.main{display:grid;grid-template-columns:minmax(0,1fr) 360px;gap:16px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:10px;position:relative;min-width:0}
+svg{display:block;width:100%;height:auto}
+.spoke{stroke:var(--spoke);stroke-linecap:round;fill:none}
+.node{stroke:var(--surface);stroke-width:2;cursor:pointer}
+.node.hot{stroke:var(--fg);stroke-width:2.2}
+.hub{fill:var(--fg)}
+.hubt{fill:var(--surface);font-family:var(--f-mono);font-size:11px;font-weight:500;text-anchor:middle;pointer-events:none}
+.lab{font-size:11.5px;fill:var(--fg);paint-order:stroke;stroke:var(--surface);stroke-width:3.5px;stroke-linejoin:round;cursor:help}
+.lab .n{font-family:var(--f-mono);fill:var(--fg-2)}
+.dim .spoke:not(.hot){stroke-opacity:.12}.dim .node:not(.hot){opacity:.35}.dim .lab:not(.hot){opacity:.3}
+.bar-top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:center;padding:10px 14px;border-bottom:1px solid var(--line)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface)}
+.seg button{font:inherit;font-size:13px;border:0;background:none;color:var(--fg-2);padding:5px 12px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.seg button:focus-visible{outline:2px solid var(--a0);outline-offset:2px}
+#plegend{font-size:12px}
+.pedge{stroke:var(--spoke);stroke-width:.7;stroke-opacity:.35;fill:none}
+.hedge{stroke-width:.8;stroke-opacity:.28;fill:none}
+.pn{cursor:pointer;stroke-width:2}
+.plab{font-size:11px;fill:var(--fg);paint-order:stroke;stroke:var(--surface);stroke-width:3px;stroke-linejoin:round;pointer-events:none}
+.clab{font-family:var(--f-display);font-weight:600;font-size:13.5px;paint-order:stroke;stroke:var(--surface);stroke-width:4px;stroke-linejoin:round;cursor:help}
+.pdim .pn:not(.on),.pdim .plab:not(.on){opacity:.15}.pdim .pedge:not(.on),.pdim .hedge:not(.on){stroke-opacity:.04}
+.pdim .pedge.on{stroke:var(--fg);stroke-opacity:.8;stroke-width:1.1}.pdim .hedge.on{stroke-opacity:.9;stroke-width:1.4}
+.note{font-size:12px;color:var(--fg-3);padding:8px 14px;border-top:1px solid var(--line)}
+.tip{position:absolute;pointer-events:none;background:color-mix(in srgb,var(--fg) 68%,transparent);text-shadow:0 0 3px var(--fg);color:var(--bg);font-size:12px;padding:7px 10px;border-radius:6px;max-width:260px;line-height:1.4;z-index:2}
+.tip b{font-weight:600}
+.list{padding:12px 14px;display:grid;gap:2px;max-height:760px;overflow-y:auto}
+.list h2{font-family:var(--f-display);font-weight:600;font-size:1.1rem;margin:0 0 6px}
+.row{display:grid;grid-template-columns:2.4em minmax(0,1fr) 3.2em;gap:8px;align-items:center;padding:3px 4px;border-radius:5px;text-decoration:none;color:inherit;font-size:12.5px}
+.row:hover,.row.hot{background:var(--bg)}
+.row:focus-visible{outline:2px solid var(--a0);outline-offset:1px}
+.row .t{font-family:var(--f-mono);font-size:11px;color:var(--fg-3);text-align:right}
+.row .nm{min-width:0;display:grid;gap:2px}
+.row .nm span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:6px;border-radius:0 3px 3px 0;min-width:2px}
+.row .v{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.foot{font-size:12px;color:var(--fg-3);max-width:100ch;margin:0}
+.foot a,.dek a{color:var(--a0)}
+.pick[hidden]{display:none}
+.pick{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:center;font-size:13px;color:var(--fg-2)}
+.pick select{font:inherit;font-size:13px;padding:4px 8px;border:1px solid var(--line);border-radius:6px;background:var(--surface);color:var(--fg);max-width:100%}
+</style>
+<div class="wrap">
+<header>
+  <div class="pick"><label for="pick">Paper</label><select id="pick"></select></div>
+  <div class="eyebrow" id="eyebrow"></div>
+  <h1 id="h1"></h1>
+  <p class="dek"><span id="ptitle"></span> A link is one citation between this paper and another INSPIRE paper, in either direction. <b>Papers</b> shows <span id="dekpapers">the most cited linked papers in its six leading topics, each topic a coloured cluster</span>; <b>Topics</b> shows all <span id="ntop"></span> topics its links reach.</p>
+  <div class="stats" id="stats"></div>
+</header>
+<div class="legend" id="legend"></div>
+<div class="main">
+  <div class="card" id="chart">
+    <div class="bar-top"><div class="seg" role="group" aria-label="View"><button id="v-papers" aria-pressed="true">Papers</button><button id="v-topics" aria-pressed="false">Topics</button></div>
+      <div class="legend" id="plegend"></div></div>
+    <svg id="svg" role="img" aria-label="Citation map of the paper"></svg><div class="tip" id="tip" hidden></div>
+    <div class="note" id="note-papers">The most cited papers linked to <span class="me"></span> <span id="selnote">in its own topic (up to 24) and in the five other topics with most links (up to 16 each).</span> Grey lines are citations between these papers; coloured lines join each paper to <span class="me"></span>. Hollow circles are papers it cites; filled circles cite it. Size grows with citations. Hover a paper to see its links; click to open it in INSPIRE.</div>
+    <div class="note" id="note-topics" hidden>The largest circle is its own topic, <span id="ownname"></span>. Closer and larger = more links. Spoke width also grows with links. Labels show topics with 15 or more links; hover any circle for the rest.</div></div>
+  <aside class="card list" id="list" aria-label="All topics ranked by links"><h2>All <span id="ntop2"></span> topics</h2></aside>
+</div>
+<p class="foot">Source: INSPIRE-HEP references, topic clustering of 2026-11-09 (304 topics in 6 areas; Leiden clustering of the citation network). A link is one citing pair, counted once; links are assigned to the main topic of the paper at the other end. Board: <a id="board" href="./" target="_blank" rel="noopener">INSPIRE topics</a>.</p>
+</div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/d3/7.8.5/d3.min.js"></script>
+<script>
+// a self-contained copy (paper_maps.py --html) carries its map in PAPER_MAP and links to the board at PAPER_BASE
+const RECID=new URLSearchParams(location.search).get('recid'), BASE=window.PAPER_BASE||'';
+document.getElementById('board').href=BASE||'./';
+if(window.PAPER_MAP){document.querySelector('.pick').hidden=true;main(window.PAPER_MAP)}
+else fetch('paper_maps/index.json').then(r=>r.json()).then(ix=>{const s=document.getElementById('pick');
+  s.innerHTML=ix.map(p=>`<option value="${p.recid}">${p.area_name.split(':')[0]}: ${p.lead} ${p.year}</option>`).join('');
+  s.value=RECID||ix[0].recid;s.onchange=()=>{const u=new URL(location);u.searchParams.set('recid',s.value);location.href=u};
+  return fetch(`paper_maps/${RECID||ix[0].recid}.json`)}).then(r=>r.json()).then(main)
+  .catch(()=>{document.getElementById('h1').textContent='No map for this paper'});
+function main(J){
+const D=J.data, P=J.papers, M0=J.meta;
+const OWN=M0.own, ME=`${M0.hub} ${M0.year}`, TL=BASE+'timeline.html?topic=';
+document.title=`${M0.lead} ${M0.year} Topics`;
+const R=D.rows.map(([t,name,a,refs,cites,papers])=>({t,name,a,refs,cites,papers,n:refs+cites}));
+const total=d3.sum(R,r=>r.n);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const col=r=>`var(--a${r.a})`;
+const pct=x=>(100*x/total).toFixed(1)+'%';
+document.getElementById('stats').innerHTML=
+ `<span><b>${total.toLocaleString('en')}</b> citation links</span><span><b>${D.n_refs}</b> references</span><span><b>${D.n_cit.toLocaleString('en')}</b> citing papers</span><span><b>${R.length}</b> topics</span><span><b>${pct(R.find(r=>r.t===OWN).n)}</b> in its own topic</span>`;
+const areaN=d3.rollup(R,v=>d3.sum(v,r=>r.n),r=>r.a);
+document.getElementById('legend').innerHTML=[...areaN].sort((a,b)=>b[1]-a[1]).map(([a,n])=>`<span><i class="dot" style="background:var(--a${a})"></i>${esc(D.areas[a])} · ${n.toLocaleString('en')}</span>`).join('');
+const tip=document.getElementById('tip'), chart=document.getElementById('chart');
+const tipHtml=r=>`<b>${r.t} ${esc(r.name)}</b>${r.t===OWN?' (own topic)':''}<br>${r.n} links (${pct(r.n)}): ${r.cites} citing papers, ${r.refs} references<br><span style="opacity:.75">${esc(D.areas[r.a])} · ${r.papers.toLocaleString('en')} papers in the topic</span>`;
+const topicTip=t=>tipHtml(R.find(r=>r.t===t)).replace(/ links \(/,` links with ${esc(ME)} (`);
+let hot=null;
+function setHot(t){hot=t;
+  const svg=document.getElementById('svg');
+  if(view==='papers'){const on=t!=null&&PT.has(t);svg.classList.toggle('pdim',on);
+    svg.querySelectorAll('[data-c]').forEach(e=>e.classList.toggle('on',on&&+e.dataset.c===t));}
+  else{svg.classList.toggle('dim',t!=null);
+  svg.querySelectorAll('[data-t]').forEach(e=>e.classList.toggle('hot',+e.dataset.t===t));}
+  document.querySelectorAll('.row').forEach(e=>e.classList.toggle('hot',+e.dataset.t===t));}
+// ranked list
+const list=document.getElementById('list'), max=d3.max(R,r=>r.n);
+R.forEach(r=>{const a=document.createElement('a');a.className='row';a.dataset.t=r.t;a.href=TL+r.t;a.target='_blank';a.rel='noopener';
+  a.innerHTML=`<span class="t">${r.t}</span><span class="nm"><span title="${esc(r.name)}">${esc(r.name)}</span><i class="bar" style="width:${(100*r.n/max).toFixed(1)}%;background:${col(r)}"></i></span><span class="v">${r.n}</span>`;
+  a.onmouseenter=()=>setHot(r.t);a.onmouseleave=()=>setHot(null);a.onfocus=()=>setHot(r.t);a.onblur=()=>setHot(null);list.appendChild(a);});
+document.getElementById('eyebrow').textContent=M0.eyebrow;
+document.getElementById('h1').textContent=`Where ${M0.lead} ${M0.year} connects across the topic map`;
+document.getElementById('ptitle').textContent=`“${M0.title}”.`;
+document.getElementById('ntop').textContent=D.rows.length;document.getElementById("ntop2").textContent=D.rows.length;
+if(M0.all){document.getElementById("dekpapers").textContent="every linked paper, in a coloured cluster for each of its six leading topics and a grey one for the rest";document.getElementById('selnote').textContent='';document.getElementById('note-papers').firstChild.textContent='Every paper linked to ';document.getElementById('selnote').textContent=`by topic: its own topic, the five other topics with most links, and a grey cluster for the rest.`}
+document.querySelectorAll('.me').forEach(e=>e.textContent=ME);
+document.getElementById('ownname').textContent=`${OWN} ${R.find(r=>r.t===OWN).name}`;
+// ---- Papers view: real papers linked to the paper, clustered by their topic
+const PT=new Map(P.topics.map(([t,name],k)=>[t,{k,name}]));
+const PN=P.n.map(([recid,arxiv,title,first,na,year,cites,t,ref,tt],i)=>({i,recid,arxiv,title,first,na,year,cites,t,ref,tt:tt??t,nb:new Set()}));
+const TNAME=new Map(D.rows.map(r=>[r[0],r[1]]));
+P.e.forEach(([a,b])=>{PN[a].nb.add(b);PN[b].nb.add(a)});
+const ccol=t=>t===-2?'var(--c6)':`var(--c${PT.get(t).k})`;
+const who=n=>n.first==='?'||n.first===''?(n.na>10?`${n.na} authors`:'?'):n.first+(n.na>2?' et al.':n.na===2?' + 1':'');
+const ptip=n=>`<b>${esc(n.title)}</b><br>${esc(who(n))} · ${n.year} · ${n.cites.toLocaleString('en')} citations<br>${n.ref?'Cited by '+esc(ME):'Cites '+esc(ME)} · links here: ${n.nb.size}<br><span style="opacity:.75">${n.tt===OWN?'Own topic: ':''}${n.tt} ${esc(TNAME.get(n.tt)||'')}</span>`;
+document.getElementById('plegend').innerHTML=P.topics.map(([t,name],k)=>`<span><i class="dot" style="background:var(--c${k})"></i>${t<0?"":t+" "}${esc(name)}${k===0?' (own)':''}</span>`).join('');
+function drawPapers(){
+  const W=Math.max(320,chart.clientWidth), H=W<560?W+160:Math.min(780,W*.9), cx=W/2, cy=H/2;
+  const svg=d3.select('#svg').attr('viewBox',`0 0 ${W} ${H}`); svg.selectAll('*').remove();
+  const S=Math.min(W,H)/2, rC=S*.6, rad=d3.scaleSqrt().domain([0,d3.max(PN,n=>n.cites)]).range([2.5,S*.07]);
+  // own topic sits close to the paper (above), the other five around it
+  const cen=new Map(P.topics.map(([t],k)=>{const K=Math.max(6,P.topics.length),a=k===0?-Math.PI/2:-Math.PI/2+2*Math.PI*k/K;const r=k===0?rC*.82:rC;return [t,{x:cx+r*Math.cos(a),y:cy+r*Math.sin(a)*.92}]}));
+  const rnd=d3.randomLcg(11);
+  const sim=PN.map(n=>{const c=cen.get(n.t);return {n,x:c.x+(rnd()-.5)*40,y:c.y+(rnd()-.5)*40,r:rad(n.cites)}});
+  const hub={fx:cx,fy:cy,r:S*.075,hub:true};
+  const links=P.e.map(([a,b])=>({source:sim[a],target:sim[b],same:PN[a].t===PN[b].t}));
+  d3.forceSimulation([...sim,hub]).force('x',d3.forceX(d=>d.hub?cx:cen.get(d.n.t).x).strength(.22)).force('y',d3.forceY(d=>d.hub?cy:cen.get(d.n.t).y).strength(.22))
+    .force('link',d3.forceLink(links).strength(l=>l.same?.05:.004)).force('charge',d3.forceManyBody().strength(-22))
+    .force('col',d3.forceCollide(d=>d.r+2)).stop().tick(320);
+  sim.forEach(s=>{s.x=Math.max(s.r+4,Math.min(W-s.r-4,s.x));s.y=Math.max(s.r+4,Math.min(H-s.r-4,s.y))});
+  const ge=svg.append('g');
+  ge.selectAll('line.h').data(sim).join('line').attr('class','hedge').attr('data-c',d=>d.n.t).attr('stroke',d=>ccol(d.n.t))
+    .attr('x1',cx).attr('y1',cy).attr('x2',d=>d.x).attr('y2',d=>d.y);
+  ge.selectAll('line.p').data(links).join('line').attr('class','pedge').attr('data-a',l=>l.source.n.i).attr('data-b',l=>l.target.n.i)
+    .attr('x1',l=>l.source.x).attr('y1',l=>l.source.y).attr('x2',l=>l.target.x).attr('y2',l=>l.target.y);
+  svg.append('circle').attr('class','hub').attr('cx',cx).attr('cy',cy).attr('r',hub.r);
+  svg.append('text').attr('class','hubt').attr('x',cx).attr('y',cy-2).text(M0.hub.length>9?M0.hub.slice(0,8)+'…':M0.hub);
+  svg.append('text').attr('class','hubt').attr('x',cx).attr('y',cy+12).text(M0.year);
+  const nodes=svg.append('g').selectAll('a').data(sim).join('a').attr('href',d=>'https://inspirehep.net/literature/'+d.n.recid).attr('target','_blank').attr('aria-label',d=>`${d.n.title}, ${who(d.n)} ${d.n.year}`)
+    .append('circle').attr('class','pn').attr('data-c',d=>d.n.t).attr('data-i',d=>d.n.i).attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',d=>d.r)
+    .attr('fill',d=>d.n.ref?'var(--surface)':ccol(d.n.t)).attr('stroke',d=>d.n.ref?ccol(d.n.t):'var(--surface)');
+  // labels: the two most cited papers of each cluster
+  const lab=P.topics.flatMap(([t])=>sim.filter(s=>s.n.t===t).sort((a,b)=>b.n.cites-a.n.cites).slice(0,W<600?1:2));
+  svg.append('g').selectAll('text').data(lab).join('text').attr('class','plab').attr('data-c',d=>d.n.t).attr('data-i',d=>d.n.i)
+    .attr('x',d=>d.x+(d.x>=cx?d.r+4:-d.r-4)).attr('y',d=>d.y+4).attr('text-anchor',d=>d.x>=cx?'start':'end').text(d=>`${who(d.n)} ${d.n.year}`);
+  // cluster names, pushed outward beyond each cluster
+  svg.append('g').selectAll('text').data(P.topics).join('text').attr('class','clab').attr('fill',([t])=>ccol(t))
+    .each(function([t,name]){const m=sim.filter(s=>s.n.t===t), c=cen.get(t), a=Math.atan2(c.y-cy,c.x-cx);
+      const top=Math.abs(Math.sin(a))>.5&&Math.sin(a)<0, bot=Math.sin(a)>.5;
+      const y=top?d3.min(m,s=>s.y-s.r)-10:bot?d3.max(m,s=>s.y+s.r)+18:d3.min(m,s=>s.y-s.r)-10;
+      const x=Math.max(70,Math.min(W-70,d3.mean(m,s=>s.x)));
+      const lim=W<600?22:38;
+      d3.select(this).attr('x',x).attr('y',y).attr('text-anchor','middle').text(name.length>lim?name.slice(0,lim-1)+'…':name);})
+    .on('mouseenter',(e,[t])=>{setHot(t);const nn=PN.filter(n=>n.t===t).length;tip.innerHTML=(t===-2?`<b>${esc(P.topics.find(x=>x[0]===-2)[1])}</b><br>${nn} links with ${esc(ME)}: papers in all the topics not drawn as their own cluster`:topicTip(t)+`<br>Shown here: ${M0.all?'all '+nn:'the '+nn+' most cited'} of them`);tip.hidden=false;place(e)})
+    .on('mousemove',place).on('mouseleave',()=>{setHot(null);tip.hidden=true});
+  const svgEl=document.getElementById('svg');
+  nodes.on('mouseenter',(e,d)=>{const keep=new Set([d.n.i,...d.n.nb]);svgEl.classList.add('pdim');
+      svgEl.querySelectorAll('.pn,.plab').forEach(el=>el.classList.toggle('on',keep.has(+el.dataset.i)));
+      svgEl.querySelectorAll('.pedge').forEach(el=>el.classList.toggle('on',+el.dataset.a===d.n.i||+el.dataset.b===d.n.i));
+      svgEl.querySelectorAll('.hedge').forEach(el=>el.classList.remove('on'));
+      tip.innerHTML=ptip(d.n);tip.hidden=false;place(e)})
+    .on('mousemove',place).on('mouseleave',()=>{svgEl.classList.remove('pdim');svgEl.querySelectorAll('.on').forEach(el=>el.classList.remove('on'));tip.hidden=true});
+}
+let view='papers';
+function render(){document.getElementById('svg').classList.remove('dim','pdim');view==='papers'?drawPapers():draw();
+  document.getElementById('plegend').hidden=view!=='papers';document.getElementById('legend').hidden=view==='papers';
+  document.getElementById('note-papers').hidden=view!=='papers';document.getElementById('note-topics').hidden=view==='papers';
+  document.getElementById('v-papers').setAttribute('aria-pressed',view==='papers');document.getElementById('v-topics').setAttribute('aria-pressed',view==='topics');}
+document.getElementById('v-papers').onclick=()=>{view='papers';render()};
+document.getElementById('v-topics').onclick=()=>{view='topics';render()};
+function draw(){
+  const W=Math.max(320,chart.clientWidth), H=W<560?W+40:Math.min(720,W*.86), cx=W/2, cy=H/2;
+  const svg=d3.select('#svg').attr('viewBox',`0 0 ${W} ${H}`); svg.selectAll('*').remove();
+  const S=Math.min(W*(W<560?.4:.31),H/2);
+  const size=d3.scaleSqrt().domain([0,max]).range([0,S*.13]);
+  const hubR=S*.085;
+  const lg=d3.scaleLog().domain([1,max]).range([S*.86,hubR+size(max)+S*.05]);
+  // angle: topics ranked by links and spread by the golden angle, so the large circles sit apart
+  const seq=[...R].sort((x,y)=>y.n-x.n), GA=Math.PI*(3-Math.sqrt(5));
+  const nodes=seq.map((r,i)=>{const ang=-Math.PI/2+i*GA, rad=lg(Math.max(1,r.n));
+    return {r,ang,rad,x:cx+rad*Math.cos(ang),y:cy+rad*Math.sin(ang),s:Math.max(3,size(r.n))};});
+  const hub={fx:cx,fy:cy,x:cx,y:cy,s:hubR,rad:0};
+  const sim=d3.forceSimulation([...nodes,hub]).force('r',d3.forceRadial(d=>d.rad,cx,cy).strength(.8))
+    .force('c',d3.forceCollide(d=>d.s+3).strength(1)).stop();
+  for(let i=0;i<300;i++)sim.tick();
+  const wd=d3.scaleLinear().domain([1,max]).range([.6,S*.06]);
+  svg.append('g').selectAll('path').data(nodes).join('path').attr('class','spoke').attr('data-t',d=>d.r.t)
+    .attr('d',d=>`M${cx},${cy}L${d.x},${d.y}`).attr('stroke-width',d=>wd(d.r.n)).attr('stroke-opacity',.45);
+  svg.append('circle').attr('class','hub').attr('cx',cx).attr('cy',cy).attr('r',hubR);
+  svg.append('text').attr('class','hubt').attr('x',cx).attr('y',cy-2).text(M0.hub.length>9?M0.hub.slice(0,8)+'…':M0.hub);
+  svg.append('text').attr('class','hubt').attr('x',cx).attr('y',cy+12).text(M0.year);
+  const g=svg.append('g').selectAll('a').data(nodes).join('a').attr('href',d=>TL+d.r.t).attr('target','_blank').attr('aria-label',d=>`${d.r.name}: ${d.r.n} links`);
+  g.append('circle').attr('class','node').attr('data-t',d=>d.r.t).attr('cx',d=>d.x).attr('cy',d=>d.y).attr('r',d=>d.s).attr('fill',d=>col(d.r))
+    .on('mouseenter',(e,d)=>{setHot(d.r.t);tip.innerHTML=tipHtml(d.r);tip.hidden=false;place(e)})
+    .on('mousemove',place).on('mouseleave',()=>{setHot(null);tip.hidden=true});
+  // labels: outward from each circle; on each side of the hub, push overlapping labels apart vertically
+  const own=nodes.find(d=>d.r.t===OWN);
+  svg.append('text').attr('class','hubt').attr('x',own.x).attr('y',own.y-1).text('own topic');
+  svg.append('text').attr('class','hubt').attr('x',own.x).attr('y',own.y+12).text(own.r.n);
+  const lab=nodes.filter(d=>d.r.n>=15&&d.r.t!==OWN).map(d=>{const a=Math.atan2(d.y-cy,d.x-cx), big=d.r.t===OWN;
+    return {d,big,right:Math.cos(a)>=0,x:big?d.x:d.x+(d.s+5)*Math.cos(a),y:big?d.y-d.s-8:d.y+(d.s+5)*Math.sin(a)+4};});
+  for(const side of [true,false]){const L=lab.filter(l=>!l.big&&l.right===side).sort((p,q)=>p.y-q.y);
+    for(let k=0;k<40;k++){let moved=false;for(let i=1;i<L.length;i++){const gap=L[i].y-L[i-1].y;
+      if(gap<14&&Math.abs(L[i].x-L[i-1].x)<220){const m=(14-gap)/2;L[i].y+=m;L[i-1].y-=m;moved=true}}if(!moved)break;}}
+  const maxCh=Math.max(14,Math.floor(((W-2*S)/2-14)/6.3));
+  svg.append('g').selectAll('text').data(lab).join('text').attr('class','lab').attr('data-t',l=>l.d.r.t)
+    .each(function(l){const d=l.d;
+      const el=d3.select(this).attr('x',l.x).attr('y',l.y).attr('text-anchor',l.big?'middle':l.right?'start':'end');
+      const room=l.big?60:Math.floor((l.right?W-l.x-8:l.x-8)/6.3)-4;
+      const lim=Math.max(10,Math.min(room,l.big?60:maxCh+12));
+      const nm=d.r.name.length>lim?d.r.name.slice(0,lim-1)+'…':d.r.name;
+      el.append('tspan').text(nm+' ');el.append('tspan').attr('class','n').text(d.r.n);})
+    .on('mouseenter',(e,l)=>{setHot(l.d.r.t);tip.innerHTML=topicTip(l.d.r.t);tip.hidden=false;place(e)})
+    .on('mousemove',place).on('mouseleave',()=>{setHot(null);tip.hidden=true});
+}
+function place(e){const b=chart.getBoundingClientRect();let x=e.clientX-b.left+12,y=e.clientY-b.top+12;
+  if(x+270>b.width)x=e.clientX-b.left-272;tip.style.left=Math.max(4,x)+'px';tip.style.top=y+'px';}
+render();let rt;addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(()=>{render();if(hot!=null)setHot(hot)},150)});
+}
+</script>
