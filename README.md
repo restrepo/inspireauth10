@@ -37,7 +37,8 @@ set up the repository: [`CLAUDE.md`](CLAUDE.md) and the skill [`fork-setup`](.cl
 it through the same steps, and the other skills in [`.claude/skills/`](.claude/skills) cover the boards
 (`inspire10-boards`), the topics (`inspire-topics`) and paper maps (`paper-topic-map`). The skill also says how to
 serve your own boards on GitHub Pages and how to share new files on your own Drive
-(`reproduce/drive_manifest.py`).
+(`reproduce/drive_manifest.py`). Other assistants get the same instructions: Gemini reads [`GEMINI.md`](GEMINI.md) and
+most other coding agents [`AGENTS.md`](AGENTS.md); both point to `CLAUDE.md` and the skills.
 
 ## The data
 
