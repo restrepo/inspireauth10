@@ -40,6 +40,8 @@ tr.win td { font-weight: 600; }
 .sw { width: 14px; height: 10px; border-radius: 2px; display: inline-block; }
 ol.steps { padding-left: 1.3rem; }
 .refs { font-size: 14px; color: var(--muted); }
+.refs li { scroll-margin-top: 16px; border-radius: 4px; }
+.refs li:target { background: var(--panel); outline: 2px solid var(--accent); outline-offset: 4px; color: var(--fg); }
 </style>
 </head>
 <body>
@@ -84,18 +86,19 @@ two coloured groups.</figcaption>
 </figure>
 <p>With twelve dots the groups can be seen by eye. With 1.87 million they cannot, so the computer needs a score
 that says how good a split into groups is, and a fast way to find a split with a high score. The Leiden algorithm
-(Traag, Waltman &amp; van Eck 2019) does both.</p>
+(<a href="#ref-traag">Traag, Waltman &amp; van Eck 2019</a>) does both.</p>
 
 <h2>2. The score: more links inside than chance would give</h2>
 <p>Counting the links inside the groups is not enough: putting every paper in one single group would keep every
 link inside. The score therefore compares the links inside each group with the number of links the group would
 have <b>by chance</b>, if the same papers, each with the same number of citations, were wired at random. A good
-topic has many more links inside than chance gives.</p>
+topic has many more links inside than chance gives. This score is the <b>modularity</b> of
+<a href="#ref-newman">Newman (2006)</a>.</p>
 <p>Chance gives more links between papers that have many links. A paper with <i>k</i> links meets a group whose
 papers have <i>K</i> links in all about <i>k</i>&nbsp;×&nbsp;<i>K</i>&nbsp;/&nbsp;(2<i>m</i>) times at random,
 where <i>m</i> is the number of links in the whole network. So, for one paper, the gain of joining a topic is:</p>
 <p class="formula">gain = (its links to the topic) − γ × <i>k</i> × <i>K</i> / (2<i>m</i>)</p>
-<p>The number γ is the <b>resolution</b>. It decides how large the topics are: with a large γ the "chance" term
+<p>The number γ is the <b>resolution</b> (<a href="#ref-rb">Reichardt &amp; Bornholdt 2006</a>). It decides how large the topics are: with a large γ the "chance" term
 weighs more, big groups stop paying off, and the network splits into more, smaller topics. The topics board uses
 γ&nbsp;=&nbsp;16, which gives 304 topics of typically a few thousand papers. With γ&nbsp;=&nbsp;4 there are only
 69 topics; with γ&nbsp;=&nbsp;32, 623.</p>
@@ -135,7 +138,7 @@ narrow subjects at high γ.</figcaption>
   where its gain is largest (or leave it where it is). Repeat until no move helps.</li>
   <li><b>Refine.</b> Check that every group is really held together by its own links; a group that is two separate
   pieces is split. This step is what Leiden adds to the older Louvain algorithm, which could leave such broken
-  groups.</li>
+  groups (<a href="#ref-traag">Traag, Waltman &amp; van Eck 2019</a>).</li>
   <li><b>Merge.</b> Replace each group by one big dot (its inside links become a loop on the dot, its outside links
   become thick lines) and go back to step 1 with these dots, so that whole groups can move together.</li>
 </ol>
@@ -233,18 +236,18 @@ for it is about zero.</p>
   cited papers, arXiv categories and journals.</li>
   <li><b>Code:</b> <a href="https://github.com/restrepo/inspireauth10/tree/main/reproduce/topics"><code>reproduce/topics/</code></a>
   (<code>cluster.py</code> runs Leiden with igraph). The same direct-citation method is the one CWTS uses for the
-  OpenAlex topics, but nothing here is taken from OpenAlex or any other classification.</li>
+  OpenAlex topics (<a href="#ref-waltman">Waltman &amp; van Eck 2012</a>), but nothing here is taken from OpenAlex or any other classification.</li>
 </ul>
 
 <h2>References</h2>
 <ul class="refs">
-  <li>V. A. Traag, L. Waltman, N. J. van Eck, "From Louvain to Leiden: guaranteeing well-connected communities",
+  <li id="ref-traag">V. A. Traag, L. Waltman, N. J. van Eck, "From Louvain to Leiden: guaranteeing well-connected communities",
   <i>Scientific Reports</i> 9, 5233 (2019). <a href="https://doi.org/10.1038/s41598-019-41695-z">doi:10.1038/s41598-019-41695-z</a></li>
-  <li>L. Waltman, N. J. van Eck, "A new methodology for constructing a publication-level classification system of
+  <li id="ref-waltman">L. Waltman, N. J. van Eck, "A new methodology for constructing a publication-level classification system of
   science", <i>JASIST</i> 63, 2378 (2012). <a href="https://doi.org/10.1002/asi.22748">doi:10.1002/asi.22748</a></li>
-  <li>J. Reichardt, S. Bornholdt, "Statistical mechanics of community detection", <i>Phys. Rev. E</i> 74, 016110
+  <li id="ref-rb">J. Reichardt, S. Bornholdt, "Statistical mechanics of community detection", <i>Phys. Rev. E</i> 74, 016110
   (2006). <a href="https://doi.org/10.1103/PhysRevE.74.016110">doi:10.1103/PhysRevE.74.016110</a></li>
-  <li>M. E. J. Newman, "Modularity and community structure in networks", <i>PNAS</i> 103, 8577 (2006).
+  <li id="ref-newman">M. E. J. Newman, "Modularity and community structure in networks", <i>PNAS</i> 103, 8577 (2006).
   <a href="https://doi.org/10.1073/pnas.0601602103">doi:10.1073/pnas.0601602103</a></li>
 </ul>
 </main>
