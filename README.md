@@ -27,6 +27,9 @@ python3 -m venv .venv && .venv/bin/pip install -r reproduce/requirements.txt
 .venv/bin/python reproduce/topics/build_network.py data/papers.jsonl.gz out/clusters/network.npz
 ```
 
+(Without `python3-venv`: `python3 -m venv --without-pip .venv && pip3 --python .venv/bin/python install -r
+reproduce/requirements.txt`.) The download takes a few minutes; the network about 2.5 minutes.
+
 `reproduce/get_data.py` downloads the files listed in [`reproduce/drive_files.json`](reproduce/drive_files.json)
 from the public folder, checks their MD5 and skips those already present (`--list`, `--check`, `--groups tables
 text topics exports`). With **Claude** (the Code tab of Claude Desktop, or Claude Code), open the folder and ask it to

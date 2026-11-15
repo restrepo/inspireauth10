@@ -31,8 +31,16 @@ python3 -m venv .venv
 .venv/bin/pip install -r reproduce/requirements.txt
 ```
 
-Use `.venv/bin/python` for every command below (on Windows `.venv\Scripts\python`). If `venv` is missing (Debian:
-`apt install python3-venv`), tell the user rather than installing system packages yourself.
+Use `.venv/bin/python` for every command below (on Windows `.venv\Scripts\python`). If `python3 -m venv` fails
+with "ensurepip is not available" (Debian or Ubuntu without `python3-venv`), make the environment without pip and
+install into it with the system's pip (22.3 or newer), which needs no system package:
+
+```bash
+rm -rf .venv && python3 -m venv --without-pip .venv
+pip3 --python .venv/bin/python install -r reproduce/requirements.txt
+```
+
+Never install system packages yourself; if neither works, tell the user what is missing.
 
 ## 3. Data from Google Drive
 
