@@ -6,7 +6,7 @@ description: Build research topics for the INSPIRE-HEP corpus of this repository
 # Topics of the HEP corpus by citation clustering
 
 Run from the repository root with the tables in `data/` (README, "Download"). Needs
-`pip install igraph leidenalg numpy` (the shared environment `/home/restrepo/prog/claude/.venv` has
+`pip install igraph leidenalg numpy` (the `.venv` of the skill `fork-setup` has
 igraph 1.0.0 and leidenalg 0.12.0). Outputs go to `out/clusters/` (not in git).
 
 ## Method

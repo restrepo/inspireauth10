@@ -16,6 +16,26 @@ the tables too, outside the corpus: instead of their authors they have their col
 the INSPIRE id of each experiment (CMS: [1108642](https://inspirehep.net/api/experiments/1108642)),
 and they keep the countries of their authors' institutions.
 
+## Work on your own fork
+
+Everything needed to continue this work independently is public: the code here, and the data on Google Drive.
+
+```bash
+gh repo fork restrepo/inspireauth10 --clone && cd inspireauth10
+python3 -m venv .venv && .venv/bin/pip install -r reproduce/requirements.txt
+.venv/bin/python reproduce/get_data.py        # tables, titles and abstracts, topic clustering: 1.2 GB, MD5 checked
+.venv/bin/python reproduce/topics/build_network.py data/papers.jsonl.gz out/clusters/network.npz
+```
+
+`reproduce/get_data.py` downloads the files listed in [`reproduce/drive_files.json`](reproduce/drive_files.json)
+from the public folder, checks their MD5 and skips those already present (`--list`, `--check`, `--groups tables
+text topics exports`). With **Claude** (the Code tab of Claude Desktop, or Claude Code), open the folder and ask it to
+set up the repository: [`CLAUDE.md`](CLAUDE.md) and the skill [`fork-setup`](.claude/skills/fork-setup/SKILL.md) take
+it through the same steps, and the other skills in [`.claude/skills/`](.claude/skills) cover the boards
+(`inspire10-boards`), the topics (`inspire-topics`) and paper maps (`paper-topic-map`). The skill also says how to
+serve your own boards on GitHub Pages and how to share new files on your own Drive
+(`reproduce/drive_manifest.py`).
+
 ## The data
 
 Four gzipped JSON Lines tables, described in [`docs/data-schema.md`](docs/data-schema.md):

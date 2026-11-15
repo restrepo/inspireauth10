@@ -1,2 +1,7 @@
-genderize-offline==0.1.0
-jsonschema>=4.18
+# Python >= 3.10. pip install -r reproduce/requirements.txt (in a virtual environment: python3 -m venv .venv)
+genderize-offline==0.1.0   # gender of author first names (build and indicators)
+jsonschema>=4.18           # docs/validate_schema.py
+numpy>=2.0                 # topics and paper maps
+igraph==1.0.0              # Leiden clustering of the topics (reproduce/topics/cluster.py)
+leidenalg==0.12.0          # Leiden on the graph of topics (areas)
+numba>=0.61                # disruption index (reproduce/topics/landmarks.py)
