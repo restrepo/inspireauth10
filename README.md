@@ -105,7 +105,12 @@ Publishing a GitHub release whose tag starts with `v` runs
 3. it attaches the tables and the board to the release;
 4. it adds the board to GitHub Pages (branch `gh-pages`, `reproduce/pages_index.py`).
 
-A pull request that touches the code runs a small test, with nothing published. No release has
+A pull request that touches the code runs a small test, with nothing published.
+
+Every merge or push to `main` runs [`pages.yml`](.github/workflows/pages.yml), which copies the pages kept in git
+to `gh-pages`: [`docs/leiden.html`](docs/leiden.html), the topics board pages of
+[`reproduce/topics/board/`](reproduce/topics/board/) and the index of the site. It downloads nothing and commits
+only when one of them changed; the boards and their data are built from files outside git and are still added by hand. No release has
 been made yet: the boards of a local build of 2026-11-09 were added to the
 [GitHub Pages site](https://restrepo.github.io/inspireauth10/) by hand, with `pages_index.py add`.
 

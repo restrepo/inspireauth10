@@ -1,0 +1,60 @@
+# Updates GitHub Pages (branch gh-pages) on every merge or push to main with the pages kept in git:
+#   docs/leiden.html                                    -> leiden.html
+#   reproduce/topics/board/{epoch,paper,timeline}.html  -> boards/<id>/topics/ (every topics board on the site)
+#   reproduce/pages_index.py                            -> index.html, rendered again from boards.json
+# The boards themselves (boards/<id>/index.html, topics/index.html) and their data (timelines/, paper_maps/,
+# epoch/) are built from data that is not in git; they are still added by hand or by update-data.yml.
+# Nothing is downloaded and nothing is released; a merge that changes none of these files commits nothing.
+name: Update GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write   # push gh-pages
+  pages: write      # request a Pages build
+
+concurrency:
+  group: gh-pages
+  cancel-in-progress: false
+
+jobs:
+  pages:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Copy the pages to gh-pages and push
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for try in 1 2 3; do
+            git fetch origin +gh-pages:refs/remotes/origin/gh-pages || { echo "No gh-pages branch: nothing to update"; exit 0; }
+            rm -rf site && git worktree prune
+            git worktree add site origin/gh-pages && git -C site switch -C gh-pages
+            cp docs/leiden.html site/leiden.html
+            for d in site/boards/*/topics/; do
+              if [ -d "$d" ]; then
+                cp reproduce/topics/board/epoch.html reproduce/topics/board/paper.html reproduce/topics/board/timeline.html "$d"
+              fi
+            done
+            python3 reproduce/pages_index.py render site
+            git -C site add -A
+            if git -C site diff --cached --quiet; then
+              echo "gh-pages already matches main"; echo "PUSHED=false" >> "$GITHUB_ENV"; exit 0
+            fi
+            git -C site diff --cached --stat
+            git -C site commit -q -m "Pages from main ${GITHUB_SHA::7}"
+            if git -C site push origin gh-pages; then echo "PUSHED=true" >> "$GITHUB_ENV"; exit 0; fi
+            sleep $((try * 10))   # gh-pages moved meanwhile (a push by hand): start again from it
+          done
+          exit 1
+
+      - name: Request a Pages build
+        if: env.PUSHED == 'true'
+        run: gh api -X POST "repos/$GITHUB_REPOSITORY/pages/builds" || echo "Pages builds on its own from the push"
