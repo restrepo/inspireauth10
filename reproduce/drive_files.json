@@ -1,0 +1,157 @@
+{
+ "title": "inspireauth10 data, INSPIRE-HEP download of 2026-11-09",
+ "date": "2026-11-09",
+ "folder_url": "https://drive.google.com/drive/folders/1AQav5Ho8sruJFZ3qeBSFb7_8RZyk3XNp",
+ "groups": [
+  "tables",
+  "text",
+  "topics",
+  "exports"
+ ],
+ "files": [
+  {
+   "group": "tables",
+   "path": "data/authors.jsonl.gz",
+   "drive_path": "authors.jsonl.gz",
+   "id": "1W-c6_ZQUXAq5HQpd42WlDIUNbpvklMr2",
+   "size": 25501868,
+   "md5": "76e2693f9ca8ea5bbc20ed406fbf1dbb"
+  },
+  {
+   "group": "tables",
+   "path": "data/experiments.jsonl.gz",
+   "drive_path": "experiments.jsonl.gz",
+   "id": "1_RIPAMfXOOe2nXlIrodLEOUKLC6GTEgz",
+   "size": 42660,
+   "md5": "21fff3661aafe0e7355a7e2e3e8516b6"
+  },
+  {
+   "group": "tables",
+   "path": "data/institutions.jsonl.gz",
+   "drive_path": "institutions.jsonl.gz",
+   "id": "1Hz1j9W4eVf5FzEOkyzlS8R0qwnxlcbUH",
+   "size": 207014,
+   "md5": "3ad7c9b85360ed1220d9c108f5a3ede0"
+  },
+  {
+   "group": "tables",
+   "path": "data/papers.jsonl.gz",
+   "drive_path": "papers.jsonl.gz",
+   "id": "1VKd-X-zV4xCrRZJtWXHMko259s0nBPWe",
+   "size": 405942866,
+   "md5": "eb3590c74f8b3a71ed27093b53f20448"
+  },
+  {
+   "group": "text",
+   "path": "data/papers_abstracts.jsonl.gz",
+   "drive_path": "text/papers_abstracts.jsonl.gz",
+   "id": "1kQoxPFjEfFmDfDe_bTzeH_y6qkpV3xpy",
+   "size": 541890208,
+   "md5": "5c98c19cd5921baa6af325e6ca586ffd"
+  },
+  {
+   "group": "text",
+   "path": "data/papers_text.jsonl.gz",
+   "drive_path": "text/papers_text.jsonl.gz",
+   "id": "1COhpRUaPCaDYUV6mJSgIM_hKvzJqwVEU",
+   "size": 160344117,
+   "md5": "47e2841d3e1db11f5aa1a84abc1fb76d"
+  },
+  {
+   "group": "topics",
+   "path": "data/paper_topics.jsonl.gz",
+   "drive_path": "topics/paper_topics.jsonl.gz",
+   "id": "1tkG_euB1_e3MmnCwEKjGZ0iWUWH87t1J",
+   "size": 28053773,
+   "md5": "0f2725dece0c83c54922241afaf28797"
+  },
+  {
+   "group": "topics",
+   "path": "data/topics.jsonl.gz",
+   "drive_path": "topics/topics.jsonl.gz",
+   "id": "1Jgj3-gfJ-zf2APjEN5qgCOu84MCetBnF",
+   "size": 14279,
+   "md5": "b000508e4c319a98fe97e093565c6e52"
+  },
+  {
+   "group": "topics",
+   "path": "out/clusters/areas_final.json",
+   "drive_path": "clusters/areas_final.json",
+   "id": "1ffTwhCSE3NJmvaiqT51eeNla7lr3IAwv",
+   "size": 4408,
+   "md5": "4ad14e77d507cd89075b24bf96af08b8"
+  },
+  {
+   "group": "topics",
+   "path": "out/clusters/topics_2010_s1.npz",
+   "drive_path": "clusters/topics_2010_s1.npz",
+   "id": "1pN-q8-JSj85Vu4pg02gwZWsLg20M7AWh",
+   "size": 3027927,
+   "md5": "b45e23552d718b91af2c9529098c49bd"
+  },
+  {
+   "group": "topics",
+   "path": "out/clusters/topics_final.json",
+   "drive_path": "clusters/topics_final.json",
+   "id": "12svMTmsGk0uWoqZf4J8rT2hSKZ-TWtbD",
+   "size": 596779,
+   "md5": "11e291ce4a779a079f4deaf4d0098990"
+  },
+  {
+   "group": "topics",
+   "path": "out/clusters/topics_final.npz",
+   "drive_path": "clusters/topics_final.npz",
+   "id": "1xlcE-UFpXNOoCHYJDat8hLVxjtdKCBPD",
+   "size": 6081368,
+   "md5": "7b20845dcace305388559f99050176f3"
+  },
+  {
+   "group": "topics",
+   "path": "out/clusters/topics_multi.npz",
+   "drive_path": "clusters/topics_multi.npz",
+   "id": "1qAJVULx5HB1SbRaW0_Y4ctExR0vPzJon",
+   "size": 20767480,
+   "md5": "a8d18d08ae28d841e737f720ff266b25"
+  },
+  {
+   "group": "exports",
+   "path": "out/topics_csv/papers_topics.csv.gz",
+   "drive_path": "topics/papers_topics.csv.gz",
+   "id": "1wwUjXf9DLSyt8dBSvOjzMy9zWiAR63MK",
+   "size": 21226907,
+   "md5": "5afa1a868165184be38af2bd26a697ec"
+  },
+  {
+   "group": "exports",
+   "path": "out/topics_csv/topics.csv",
+   "drive_path": "topics/topics.csv",
+   "id": "1KC7kY2oGBti0P0EkcQiTTV-Ddr5eZN8A",
+   "size": 30740,
+   "md5": "0ed70fffb1b5efd23acef3f9e2a6f77b"
+  },
+  {
+   "group": "exports",
+   "path": "out/vosviewer/topics_map.txt",
+   "drive_path": "vosviewer/topics_map.txt",
+   "id": "1NbhTXkxYiRY9OI3Qg2UEpdvr7spKzyiV",
+   "size": 18093,
+   "md5": "cd1f8690b49513976990e437ad6cc01c"
+  },
+  {
+   "group": "exports",
+   "path": "out/vosviewer/topics_network.txt",
+   "drive_path": "vosviewer/topics_network.txt",
+   "id": "1FoxTPVx_YkbJbKFeCb53pLh_F1BQSyrS",
+   "size": 408152,
+   "md5": "7db10cb76ac38c06b66d887cc63aaf57"
+  },
+  {
+   "group": "exports",
+   "path": "out/vosviewer/topics_vosviewer.json",
+   "drive_path": "vosviewer/topics_vosviewer.json",
+   "id": "1k15nF6PStcnobW4nW53f97H44riRwQxU",
+   "size": 2210990,
+   "md5": "1bac4c0b1d83f1034cd164f6452ad37c"
+  }
+ ]
+}

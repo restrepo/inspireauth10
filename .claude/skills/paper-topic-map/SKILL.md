@@ -7,7 +7,7 @@ description: Draw where one INSPIRE paper's citation links fall on the topic map
 
 Run from the repository root after the topic clustering (skill `inspire-topics`): it needs
 `out/clusters/network.npz`, `out/clusters/topics_final.npz`, `out/clusters/topics_final.json` and the tables
-`data/papers.jsonl.gz` and `data/papers_text.jsonl.gz`. Python with numpy (`/home/restrepo/prog/claude/.venv`).
+`data/papers.jsonl.gz` and `data/papers_text.jsonl.gz`. Python with numpy (`.venv`, skill `fork-setup`).
 
 ## What a link is
 
