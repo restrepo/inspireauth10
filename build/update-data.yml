@@ -1,3 +1,7 @@
+# INACTIVE: GitHub runs only the files in .github/workflows/, and this workflow is also disabled in the
+# repository's Actions settings. The only active workflow is .github/workflows/pages.yml, which updates gh-pages.
+# To use it again: git mv build/update-data.yml .github/workflows/ and enable "Update data and boards" in Actions.
+#
 # Builds the worldwide tables (data/*.jsonl.gz) from INSPIRE-HEP when a release is published, makes
 # the board of the new data (self-contained HTML), and publishes it on GitHub Pages (branch gh-pages,
 # boards/<date>/ plus an index of every board).
@@ -25,7 +29,7 @@ on:
       - "build/**"
       - "reproduce/**"
       - "docs/**"
-      - ".github/workflows/update-data.yml"
+      - "build/update-data.yml"
 
 permissions:
   contents: read

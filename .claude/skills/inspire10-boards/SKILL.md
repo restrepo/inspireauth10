@@ -53,6 +53,7 @@ A one-off question needs no board: read the data with a short script and state t
 
 ## Publish
 
-Work on a branch and open a pull request, never on `main`. Releases tagged `v*` run the full
-download, attach the tables and the board to the release, and add the board to GitHub Pages.
+Work on a branch and open a pull request, never on `main`. Boards are built locally and added to `gh-pages` with
+`reproduce/pages_index.py`, with the user's go-ahead; a merge to `main` only refreshes the pages kept in git
+(`.github/workflows/pages.yml`). No workflow downloads INSPIRE or makes a release.
 Never commit the tables: they are larger than git allows.

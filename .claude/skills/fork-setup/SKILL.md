@@ -93,8 +93,17 @@ The site is then `https://OWNER.github.io/inspireauth10/`. New boards are added 
 base URL (for example `paper_maps.py --base https://OWNER.github.io/inspireauth10/boards/DATE/topics/`).
 Pushing to `gh-pages` publishes: ask before each push.
 
-GitHub Actions are off in a new fork. The workflow `update-data.yml` downloads INSPIRE again and runs only on a
-release or by hand; leave it off unless the user wants their own data updates.
+GitHub Actions are off in a new fork. The only workflow is `pages.yml`, and it only updates `gh-pages`:
+
+- it runs on every push or merge to `main` and copies the pages kept in git to `gh-pages`: `docs/leiden.html`,
+  the topics board pages of `reproduce/topics/board/` (`epoch.html`, `paper.html`, `timeline.html`) and the site index.
+  It downloads nothing and commits only when something changed. The boards and their data are not in git, so it does
+  not rebuild them.
+- the former data workflow is parked, inactive, in `build/update-data.yml`; a fork does not need it.
+
+A fork that only follows the original keeps Actions off and syncs both branches (section 7). A fork developed on its
+own turns Actions on, so its own merges update its own site; it then stops syncing `gh-pages` from upstream, since
+both would write there.
 
 ## 6. Share your own derived data (optional)
 
@@ -118,4 +127,15 @@ git merge upstream/main            # or open a pull request on the fork
 ```
 
 When `reproduce/drive_files.json` changes upstream, run `get_data.py` again: it fetches only what is new or
-changed. To propose changes back, push a branch to the fork and open a pull request to `restrepo/inspireauth10`.
+changed.
+
+To take the original site as published, without building anything, sync `gh-pages` too (the "Sync fork" button syncs
+only the branch shown, so press it on each branch):
+
+```bash
+gh repo sync OWNER/inspireauth10 --source restrepo/inspireauth10 --branch main
+gh repo sync OWNER/inspireauth10 --source restrepo/inspireauth10 --branch gh-pages
+```
+
+A fork made on github.com copies only `main` unless "Copy the `main` branch only" is unticked; `gh repo fork` copies
+every branch. To propose changes back, push a branch to the fork and open a pull request to `restrepo/inspireauth10`.

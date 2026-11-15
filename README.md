@@ -54,8 +54,8 @@ Each reference is an INSPIRE record id flagged `in_corpus`: `true` when the cite
 corpus (1 to 10 authors), `false` when it is outside it. With the references you can count citations
 from the corpus only, citations up to any year, and citation flows between countries.
 
-The tables are too large for git (hundreds of MB), so they are not in the repository. A release
-attaches them, and they can be built locally (below).
+The tables are too large for git (hundreds of MB), so they are not in the repository. They are on
+Google Drive (below), and they can be built locally.
 
 ### Download
 
@@ -95,27 +95,26 @@ To rebuild the tables of a past download with a newer version of the build scrip
 asking INSPIRE for anything, add `--cached`: it writes them from `build/cache/` up to its last
 window.
 
-## Releases
+## GitHub Actions
 
-Publishing a GitHub release whose tag starts with `v` runs
-[`update-data.yml`](.github/workflows/update-data.yml):
+The only workflow is [`pages.yml`](.github/workflows/pages.yml), and it only updates GitHub Pages. Every merge or
+push to `main` copies the pages kept in git to the branch `gh-pages`: [`docs/leiden.html`](docs/leiden.html), the
+topics board pages of [`reproduce/topics/board/`](reproduce/topics/board/) and the index of the site. It downloads
+nothing, makes no release, and commits only when one of them changed. The boards and their data are built locally
+from files outside git and added to `gh-pages` by hand, with `pages_index.py`.
 
-1. four jobs share the download (`--shard I/4`), since the whole download is longer than a job may run;
-2. a last job merges their caches, writes and validates the tables, and builds the board;
-3. it attaches the tables and the board to the release;
-4. it adds the board to GitHub Pages (branch `gh-pages`, `reproduce/pages_index.py`).
-
-A pull request that touches the code runs a small test, with nothing published. No release has
-been made yet: the boards of a local build of 2026-11-09 were added to the
-[GitHub Pages site](https://restrepo.github.io/inspireauth10/) by hand, with `pages_index.py add`.
+Releases, pull requests and manual runs start nothing. The former data workflow, which downloaded INSPIRE again on a
+release and attached the tables to it, is kept inactive in [`build/update-data.yml`](build/update-data.yml) and is
+also disabled in the repository's Actions settings. No release has been made: the boards of a local build of
+2026-11-09 were added to the [GitHub Pages site](https://restrepo.github.io/inspireauth10/) by hand.
 
 ## Regional boards
 
 `python reproduce/regional_boards.py data/ out/ --date YYYY-MM-DD` makes a board for each region of
 [`reproduce/regions.py`](reproduce/regions.py): Latin America (the 18 countries of restrepo/inspireauth),
 Africa, Asia, Europe, North America and Oceania. Each counts the countries of its region, and its
-total row counts the papers with an author in the region. A release builds them too and adds them
-to GitHub Pages next to the worldwide board.
+total row counts the papers with an author in the region. They are added to GitHub Pages next to the
+worldwide board (`pages_index.py add --regions`).
 
 Besides the tabs of the worldwide board, the regional boards recover three tabs of restrepo/inspireauth's
 Latin American board: **Regional trends** (the region's share of the papers and citations of the

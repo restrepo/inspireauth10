@@ -34,9 +34,12 @@ get data that Drive already has.
 
 - Large files never go into git: `data/` and `out/` are ignored. Share them through Drive (`reproduce/get_data.py`
   reads `reproduce/drive_files.json`; `reproduce/drive_manifest.py` rewrites it for whoever owns the folder).
-- Publishing a GitHub release runs `.github/workflows/update-data.yml` (a full INSPIRE download and a new board on
-  Pages). Make a release only when the owner of the repository asks for it.
+- GitHub Actions only update `gh-pages`: `.github/workflows/pages.yml` is the only workflow. Do not add or re-enable
+  workflows that do anything else (the old data workflow is parked, inactive, in `build/update-data.yml`). Make a
+  release only when the owner of the repository asks for it.
 - Pushing to `gh-pages`, uploading to Drive and merging pull requests publish; confirm with the user first.
+  A merge to `main` also runs `.github/workflows/pages.yml`, which copies `docs/leiden.html`, the pages of
+  `reproduce/topics/board/` and the site index to `gh-pages`; boards and their data are still pushed by hand.
 - Read the tables line by line (or with DuckDB), never with one `json.load`: `papers.jsonl.gz` is 1.9 million lines.
 - The topics are seed-dependent: work with the shared `out/clusters/topics_final.npz` unless the task is to recluster.
 - Log every topic step in the step log of `.claude/skills/inspire-topics/SKILL.md`.
