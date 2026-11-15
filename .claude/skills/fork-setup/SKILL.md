@@ -93,14 +93,13 @@ The site is then `https://OWNER.github.io/inspireauth10/`. New boards are added 
 base URL (for example `paper_maps.py --base https://OWNER.github.io/inspireauth10/boards/DATE/topics/`).
 Pushing to `gh-pages` publishes: ask before each push.
 
-GitHub Actions are off in a new fork. Two workflows exist:
+GitHub Actions are off in a new fork. The only workflow is `pages.yml`, and it only updates `gh-pages`:
 
-- `pages.yml` runs on every push or merge to `main` and copies the pages kept in git to `gh-pages`: `docs/leiden.html`,
+- it runs on every push or merge to `main` and copies the pages kept in git to `gh-pages`: `docs/leiden.html`,
   the topics board pages of `reproduce/topics/board/` (`epoch.html`, `paper.html`, `timeline.html`) and the site index.
   It downloads nothing and commits only when something changed. The boards and their data are not in git, so it does
   not rebuild them.
-- `update-data.yml` downloads INSPIRE again (hours) and runs only on a release or by hand; leave it off unless the user
-  wants their own data updates.
+- the former data workflow is parked, inactive, in `build/update-data.yml`; a fork does not need it.
 
 A fork that only follows the original keeps Actions off and syncs both branches (section 7). A fork developed on its
 own turns Actions on, so its own merges update its own site; it then stops syncing `gh-pages` from upstream, since

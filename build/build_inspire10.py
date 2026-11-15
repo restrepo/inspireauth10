@@ -37,7 +37,7 @@ Usage: python build/build_inspire10.py [--cache build/cache] [--out data/] [--re
           are then fetched only for what those papers cite).
 --shard I/N: only download the windows I, I+N, I+2N, ... into the cache and stop; N jobs with
           I = 0..N-1 share the download, and a last run without --shard on the merged caches
-          writes the tables (the release workflow does this, to stay under the 6 h job limit).
+          writes the tables (build/update-data.yml, inactive, did this to stay under the 6 h job limit).
 --cached: write the tables from the cache only, up to its last window, with no request to INSPIRE
           (to rebuild the tables of a past download with a new version of this script).
 --last N: the last literature record number of the tables (default: INSPIRE's newest record, or

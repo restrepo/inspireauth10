@@ -3,8 +3,8 @@
 #   reproduce/topics/board/{epoch,paper,timeline}.html  -> boards/<id>/topics/ (every topics board on the site)
 #   reproduce/pages_index.py                            -> index.html, rendered again from boards.json
 # The boards themselves (boards/<id>/index.html, topics/index.html) and their data (timelines/, paper_maps/,
-# epoch/) are built from data that is not in git; they are still added by hand or by update-data.yml.
-# Nothing is downloaded and nothing is released; a merge that changes none of these files commits nothing.
+# epoch/) are built from data that is not in git; they are still added by hand (pages_index.py).
+# This is the repository's only workflow. Nothing is downloaded and nothing is released; a merge that changes none of these files commits nothing.
 name: Update GitHub Pages
 
 on:
