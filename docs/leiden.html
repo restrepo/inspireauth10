@@ -235,8 +235,10 @@ for it is about zero.</p>
   most topics, and the board uses the most typical one. The names were written by hand from each topic's most
   cited papers, arXiv categories and journals.</li>
   <li><b>Code:</b> <a href="https://github.com/restrepo/inspireauth10/tree/main/reproduce/topics"><code>reproduce/topics/</code></a>
-  (<code>cluster.py</code> runs Leiden with igraph). The same direct-citation method is the one CWTS uses for the
-  OpenAlex topics (<a href="#ref-waltman">Waltman &amp; van Eck 2012</a>), but nothing here is taken from OpenAlex or any other classification.</li>
+  (<code>cluster.py</code> runs Leiden with igraph). The same approach, direct citations clustered with Leiden
+  (<a href="#ref-waltman">Waltman &amp; van Eck 2012</a>), is the one CWTS at Leiden University used to build the
+  clusters behind the OpenAlex topics (<a href="#ref-openalex">OpenAlex, “Topics”</a>;
+  <a href="#ref-cwts">van Eck &amp; Waltman 2024</a>), but nothing here is taken from OpenAlex or any other classification.</li>
 </ul>
 
 <h2>References</h2>
@@ -245,6 +247,14 @@ for it is about zero.</p>
   <i>Scientific Reports</i> 9, 5233 (2019). <a href="https://doi.org/10.1038/s41598-019-41695-z">doi:10.1038/s41598-019-41695-z</a></li>
   <li id="ref-waltman">L. Waltman, N. J. van Eck, "A new methodology for constructing a publication-level classification system of
   science", <i>JASIST</i> 63, 2378 (2012). <a href="https://doi.org/10.1002/asi.22748">doi:10.1002/asi.22748</a></li>
+  <li id="ref-openalex">OpenAlex, “Topics”, OpenAlex help center (official documentation of the OpenAlex topic
+  classification, developed with CWTS at Leiden University).
+  <a href="https://help.openalex.org/hc/en-us/articles/24736129405719-Topics">help.openalex.org/hc/en-us/articles/24736129405719-Topics</a></li>
+  <li id="ref-cwts">N. J. van Eck, L. Waltman, “An open approach for classifying research publications”, Leiden
+  Madtrics, CWTS, 24 January 2024.
+  <a href="https://www.leidenmadtrics.nl/articles/an-open-approach-for-classifying-research-publications">leidenmadtrics.nl</a>;
+  data: N. J. van Eck, “Classification of research publications based on data from OpenAlex”, Zenodo (2024),
+  <a href="https://doi.org/10.5281/zenodo.10560276">doi:10.5281/zenodo.10560276</a></li>
   <li id="ref-rb">J. Reichardt, S. Bornholdt, "Statistical mechanics of community detection", <i>Phys. Rev. E</i> 74, 016110
   (2006). <a href="https://doi.org/10.1103/PhysRevE.74.016110">doi:10.1103/PhysRevE.74.016110</a></li>
   <li id="ref-newman">M. E. J. Newman, "Modularity and community structure in networks", <i>PNAS</i> 103, 8577 (2006).
