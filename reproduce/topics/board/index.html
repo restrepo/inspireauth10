@@ -72,6 +72,7 @@
 .rp .papers a { color: inherit; }
 .rp iframe.timeline { width: 100%; height: 1150px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; }
 .rp iframe.papermap { width: 100%; height: 1360px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; }
+.rp iframe.epoch { width: 100%; height: 2100px; border: 1px solid var(--color-border-line); border-radius: var(--cds-radius); background: transparent; }
 .rp .pm-pick { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: var(--cds-gap-sm); }
 .rp .pm-pick button { appearance: none; font: inherit; text-align: left; cursor: pointer; display: grid; gap: 2px; padding: var(--cds-pad-sm) var(--cds-pad-md); border: 1px solid var(--color-border-line); border-left: 4px solid var(--pm-color); border-radius: var(--cds-radius); background: var(--color-panel); color: var(--color-fg); }
 .rp .pm-pick button[aria-pressed="true"] { background: var(--color-bg); border-color: var(--color-fg); border-left-color: var(--pm-color); }
@@ -106,6 +107,7 @@
     <button class="tab" role="tab" data-tab="authors" aria-selected="false">Authors</button>
     <button class="tab" role="tab" data-tab="landmarks" aria-selected="false">Landmarks</button>
     <button class="tab" role="tab" data-tab="papermaps" aria-selected="false">Paper maps</button>
+    <button class="tab" role="tab" data-tab="epoch" aria-selected="false">Topics in 2010</button>
     <button class="tab" role="tab" data-tab="countries" aria-selected="false">Countries</button>
     <button class="tab" role="tab" data-tab="method" aria-selected="false">Method</button>
   </nav>
@@ -220,6 +222,15 @@
       <div class="pm-pick" id="pm-pick" role="group" aria-label="Paper"></div>
       <p class="note" id="pm-open"></p>
       <div id="pm-frame"></div>
+    </div>
+  </section>
+
+  <section id="epoch" role="tabpanel" hidden>
+    <div class="card">
+      <h2>How the topics of 2010 became today's topics</h2>
+      <p class="note">The same clustering (Leiden, resolution 16, topics of 100 or more papers) was run on the papers published up to 2010 with only the citations among them, as if the topics had been made in 2010. It gives 300 topics: <b>92</b> are the same group of papers as a topic of today (they share 60% of their papers both ways, the rule used to keep names), <b>98</b> were absorbed into a larger topic of today, <b>90</b> split into two or more, and <b>20</b> scattered. Topics such as LHC experiments and the Higgs discovery, quantum computing or machine learning in particle physics did not exist yet. The 2010 topics are named from their own most cited papers; the same ones keep today's name. Pick a 2010 topic to see where its papers are today, or a topic of today to see where its papers came from. <code>reproduce/topics/window_network.py</code> and <code>epoch_flows.py</code> make the data.</p>
+      <p class="note" id="ep-open"></p>
+      <div id="ep-frame"></div>
     </div>
   </section>
 
@@ -852,6 +863,16 @@ fetch('paper_maps/index.json').then((r) => (r.ok ? r.json() : [])).catch(() => [
     b.onclick = () => show(p); pick.append(b);
   });
   box.append(fr); show(ix[0]);
+});
+
+// topics in 2010: epoch.html next to the board, with epoch/flows2010.json (reproduce/topics/epoch_flows.py)
+fetch('epoch/flows2010.json', { method: 'HEAD' }).then((r) => r.ok).catch(() => false).then((ok) => {
+  const open = document.getElementById('ep-open');
+  if (!ok) { open.textContent = 'The flows of the 2010 topics are on the board published on GitHub Pages (epoch.html and epoch/ next to this page).'; return; }
+  const a = document.createElement('a'); a.href = 'epoch.html'; a.target = '_blank'; a.rel = 'noopener'; a.textContent = 'Open it on its own page';
+  open.replaceChildren(a);
+  const fr = document.createElement('iframe'); fr.className = 'epoch'; fr.loading = 'lazy'; fr.title = 'Where the topics of 2010 went'; fr.src = 'epoch.html';
+  document.getElementById('ep-frame').append(fr);
 });
 
 const startTab = location.hash.slice(1);
