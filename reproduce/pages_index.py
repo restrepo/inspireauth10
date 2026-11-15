@@ -95,7 +95,8 @@ def topics_link(b):
         return ''
     t, e = b['topics'], html.escape
     return (f'<div class="meta" style="margin-top:6px">Topics board: <a href="boards/{e(b["id"])}/topics/">{t["topics"]} '
-            f'research topics in {t["areas"]} areas</a>, from the citation network ({t["assigned"]:,} papers)</div>\n')
+            f'research topics in {t["areas"]} areas</a>, from the citation network ({t["assigned"]:,} papers) · '
+            f'<a href="leiden.html">how the topics are made</a></div>\n')
 
 
 def regions_list(b):
@@ -143,7 +144,8 @@ one download of all INSPIRE-HEP papers with up to 10 authors and their reference
 Latin America (the 18 countries of the study), Africa, Asia, Europe, North America and Oceania. It extends the study of Latin America
 by Morales-Alvarado, Quevedo, Ramos-Hamud and Restrepo (<a href="https://restrepo.github.io/inspireauth/">its
 boards</a>). A new board is built each time a release of the repository is published. Every board is a
-self-contained page that also works offline.</p>
+self-contained page that also works offline. The topics boards group the papers by their citations with the
+Leiden algorithm: <a href="leiden.html">how the topics are made</a>.</p>
 <div class="list">
 {chr(10).join(cards)}
 </div>

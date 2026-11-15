@@ -2,7 +2,8 @@
 
 > **Boards:** [**restrepo.github.io/inspireauth10**](https://restrepo.github.io/inspireauth10/): indicators for every country and region, and the
 > [topics board](https://restrepo.github.io/inspireauth10/boards/2026-11-09/topics/) (304 citation-based topics, landmark papers,
-> citation timelines), in the browser, with nothing to install.
+> citation timelines), in the browser, with nothing to install. [How the topics are made](https://restrepo.github.io/inspireauth10/leiden.html):
+> the Leiden algorithm explained simply.
 
 Every INSPIRE-HEP paper with **1 to 10 authors**, worldwide, with its authors, their affiliations and
 the INSPIRE ids of its **references**, and a board of indicators for every country. This is the
@@ -116,7 +117,10 @@ topics, with no reference to any outside taxonomy): for the tables of 2026-11-09
 in 6 areas, the most typical of four seeds. A separate board,
 [HECAP topics](https://restrepo.github.io/inspireauth10/boards/2026-11-09/topics/), shows them: a map
 of the topics, each topic's papers per year, journals, countries and most cited papers, the growing
-and shrinking topics, and the topics of each country. The skill `.claude/skills/inspire-topics` has
+and shrinking topics, and the topics of each country.
+[How the topics are made](https://restrepo.github.io/inspireauth10/leiden.html)
+([`docs/leiden.html`](docs/leiden.html)) explains the Leiden algorithm and how each paper gets its topic,
+with the example of Geant4. The skill `.claude/skills/inspire-topics` has
 the commands and the log of every run.
 
 Each paper has up to three topics. The main topic is the paper's own topic and has score 1. The
