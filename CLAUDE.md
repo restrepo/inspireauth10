@@ -16,6 +16,7 @@ get data that Drive already has.
 | What | Where | In git |
 |---|---|---|
 | Tables (papers, authors, institutions, experiments, titles, abstracts, topics) | `data/*.jsonl.gz` | no (Drive) |
+| Author lists of the papers with more than 10 authors (optional) | `data/collab_authors.jsonl.gz`, `data/collab_profiles.jsonl.gz` | no |
 | Citation network, topic clustering | `out/clusters/` | no (Drive, or rebuilt) |
 | Board datasets and pages | `out/dash*/`, `out/topics_dash/`, `out/*.html` | no (rebuilt) |
 | Code | `build/` (download), `reproduce/` (indicators, boards), `reproduce/topics/` (topics) | yes |
