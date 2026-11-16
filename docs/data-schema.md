@@ -12,6 +12,8 @@ checks the files against it (it needs `pip install jsonschema`).
 | `authors.jsonl.gz` | author profile that appears in a paper | `positions[].institution_id` → institutions |
 | `institutions.jsonl.gz` | INSPIRE-HEP institution | |
 | `experiments.jsonl.gz` | INSPIRE-HEP experiment | |
+| `collab_authors.jsonl.gz` | paper with more than 10 authors (optional table) | `recid` → papers, `authors[][0]` → authors or collab_profiles, `authors[][1][]` → institutions |
+| `collab_profiles.jsonl.gz` | author profile of those papers that `authors.jsonl.gz` lacks (optional table) | as `authors.jsonl.gz` |
 
 ```python
 import gzip, json
@@ -109,6 +111,36 @@ E-mail addresses are not included.
 | `name` | string, null | INSPIRE legacy name, e.g. `CERN-LHC-CMS`. |
 | `collaboration` | string, null | Name of its collaboration, e.g. `CMS`. |
 | `accelerator` | string, null | e.g. `LHC`. |
+
+## `collab_authors.jsonl.gz` and `collab_profiles.jsonl.gz` (optional)
+
+The author lists of the papers with more than 10 authors, written by `build/build_collab_authors.py`
+for the papers of a given `papers.jsonl.gz` (about 141,000 papers and 17 million author entries in the
+download of 2026-11-09). They are optional: nothing else in the repository needs them.
+
+`collab_authors.jsonl.gz` is kept compact, one line per paper:
+
+```json
+{"recid": 2750164, "authors": [["1066085", ["902989"], null], [null, [], "Doe, J."], ...]}
+```
+
+| Field | Type | Description |
+|---|---|---|
+| `recid` | integer | INSPIRE literature record number: a line of `papers.jsonl.gz` with `collaborations`. |
+| `authors` | list | The authors in INSPIRE order, each `[profile_id, institution_ids, name]`. |
+| `authors[][0]` | string, null | INSPIRE author record number: a line of `authors.jsonl.gz` or `collab_profiles.jsonl.gz`; null when INSPIRE did not link the author to a profile. |
+| `authors[][1]` | list of strings | INSPIRE institution record numbers of the author's affiliations on this paper (lines of `institutions.jsonl.gz`); empty when none is linked. |
+| `authors[][2]` | string, null | Full name, only when the profile is null. |
+
+`collab_profiles.jsonl.gz` has the fields of `authors.jsonl.gz`, for the profiles of those papers that
+`authors.jsonl.gz` does not have (members of collaborations who never signed a paper of 1 to 10 authors).
+Its `country` is the country of the first affiliation with a known country in these papers.
+
+```python
+profiles = {r['profile_id']: r for f in ('authors', 'collab_profiles') for r in rows(f'data/{f}.jsonl.gz')}
+for p in rows('data/collab_authors.jsonl.gz'):
+    members = [pid for pid, insts, name in p['authors'] if pid]
+```
 
 ## Rules and pitfalls
 

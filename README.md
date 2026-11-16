@@ -51,6 +51,11 @@ Four gzipped JSON Lines tables, described in [`docs/data-schema.md`](docs/data-s
 | `institutions.jsonl.gz` | INSPIRE institution: name and country |
 | `experiments.jsonl.gz` | INSPIRE experiment: name, collaboration, accelerator |
 
+Optional, for studies of the large collaborations (careers, division of labour, counting rules):
+`collab_authors.jsonl.gz` (the author list of every paper with more than 10 authors: profile and
+institutions of each author, in a compact form) and `collab_profiles.jsonl.gz` (the profiles of
+collaboration members that `authors.jsonl.gz` lacks), made by `build/build_collab_authors.py`.
+
 Each reference is an INSPIRE record id flagged `in_corpus`: `true` when the cited paper is in the
 corpus (1 to 10 authors), `false` when it is outside it. With the references you can count citations
 from the corpus only, citations up to any year, and citation flows between countries.
@@ -86,6 +91,7 @@ md5sum data/*.jsonl.gz
 pip install -r reproduce/requirements.txt
 python build/build_inspire10.py --out data/            # several hours; cached in build/cache/, resumes if stopped
 python docs/validate_schema.py data/ --sample 50
+python build/build_collab_authors.py --out data/       # optional: author lists above 10 authors; hours, cached, resumes
 python reproduce/indicators.py data/ out/dash/
 python reproduce/standalone.py out/dash/ out/board.html --set DATE=YYYY-MM-DD
 ```
