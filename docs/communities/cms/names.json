@@ -1,0 +1,131 @@
+{
+ "topics": {
+  "0": {
+   "name": "CMS detector, trigger and upgrades",
+   "reason": "CMS detector paper, particle flow, trigger; hep-ex and physics.ins-det"
+  },
+  "1": {
+   "name": "Collectivity and flow in small and large systems",
+   "reason": "flow, multiplicity, long-range correlations, hydrodynamics, EPOS"
+  },
+  "2": {
+   "name": "Higgs discovery, vacuum stability and inflation",
+   "reason": "the two 2012 discovery papers with vacuum stability, Higgs inflation; hep-th and gr-qc"
+  },
+  "3": {
+   "name": "Supersymmetry at colliders",
+   "reason": "MSSM, neutralino, gluino; SPheno, Snowmass points, simplified models"
+  },
+  "4": {
+   "name": "B-meson decays and flavour anomalies",
+   "reason": "lepton universality, leptoquarks, B to K* mu mu, Belle II"
+  },
+  "5": {
+   "name": "Parton distributions and precision QCD",
+   "reason": "PDF fits (NNPDF, CT, MMHT), NNLO, Z transverse momentum"
+  },
+  "6": {
+   "name": "Quarkonium and heavy flavour in nuclear collisions",
+   "reason": "quarkonium suppression, nuclear PDFs (EPPS16, nCTEQ15)"
+  },
+  "7": {
+   "name": "Top-quark production",
+   "reason": "top pair and single top cross sections, PDF4LHC, Herwig"
+  },
+  "8": {
+   "name": "Dark matter: WIMPs, relic density and detection",
+   "reason": "direct detection, relic density, micrOMEGAs, LHC dark matter forum"
+  },
+  "9": {
+   "name": "Higgs boson couplings and production",
+   "reason": "Higgs cross section handbooks, ATLAS+CMS coupling combinations"
+  },
+  "10": {
+   "name": "Long-lived particles, axions and dark photons",
+   "reason": "displaced signatures, axion-like particles, SHiP"
+  },
+  "11": {
+   "name": "Jet quenching in heavy-ion collisions",
+   "reason": "energy loss, nuclear modification factors in PbPb"
+  },
+  "12": {
+   "name": "Two-Higgs-doublet models and extended scalars",
+   "reason": "2HDM, charged Higgs, HiggsBounds, electroweak fit"
+  },
+  "13": {
+   "name": "Neutrino masses, seesaw and heavy neutral leptons",
+   "reason": "seesaw, Majorana, lepton number; DUNE and Hyper-K"
+  },
+  "14": {
+   "name": "Machine learning and jet substructure",
+   "reason": "neural networks, deep learning; anti-kt, Soft Drop, DELPHES; cs.LG"
+  },
+  "15": {
+   "name": "Effective field theory and future colliders",
+   "reason": "SMEFT operators; FCC, ILC, CEPC physics reports"
+  },
+  "16": {
+   "name": "Exotic hadrons: tetraquarks and pentaquarks",
+   "reason": "XYZ states, X(3872), hadronic molecules"
+  },
+  "17": {
+   "name": "Ultraperipheral, diffractive and exclusive production",
+   "reason": "photoproduction, light-by-light scattering, EIC and LHeC"
+  },
+  "18": {
+   "name": "Heavy resonances, extra dimensions and black holes",
+   "reason": "dijet and dilepton resonance searches, graviton, heavy vector triplets"
+  },
+  "19": {
+   "name": "Composite Higgs and vector-like quarks",
+   "reason": "top partners, composite Nambu-Goldstone Higgs"
+  },
+  "20": {
+   "name": "Higgs pair production and electroweak phase transition",
+   "reason": "di-Higgs, self-coupling, baryogenesis, LISA"
+  },
+  "21": {
+   "name": "Diboson production and anomalous gauge couplings",
+   "reason": "WW, WZ, ZZ, vector boson scattering, triple and quartic couplings"
+  },
+  "22": {
+   "name": "Lepton-flavour-violating Higgs and top decays",
+   "reason": "H to mu tau, flavour-changing neutral currents"
+  },
+  "23": {
+   "name": "Early Higgs searches at the Tevatron and LHC",
+   "reason": "CDF, D0, 2011-2012 combinations, look-elsewhere effect"
+  },
+  "24": {
+   "name": "The 750 GeV diphoton excess",
+   "reason": "2015-2016 diphoton resonance interpretations"
+  },
+  "25": {
+   "name": "Quantum entanglement with top quarks",
+   "reason": "Bell inequalities, spin correlations, quantum information; quant-ph, median year 2026"
+  },
+  "26": {
+   "name": "Mass reconstruction with invisible particles",
+   "reason": "MT2, stransverse mass, kinematic endpoints"
+  }
+ },
+ "areas": {
+  "0": {
+   "name": "Higgs, top, flavour and searches beyond the Standard Model",
+   "reason": "21 topics: Higgs, SUSY, dark matter, top, B physics, PDFs, detector"
+  },
+  "1": {
+   "name": "Heavy ions, quarkonium and hadron structure",
+   "reason": "flow, jet quenching, quarkonium, exotic hadrons, ultraperipheral"
+  },
+  "2": {
+   "name": "Quantum information at colliders",
+   "reason": "only the entanglement-with-top-quarks topic"
+  }
+ },
+ "meta": {
+  "by": "Claude (topic-namer method)",
+  "model": "claude-opus-5-5",
+  "date": "2026-11-16"
+ }
+}

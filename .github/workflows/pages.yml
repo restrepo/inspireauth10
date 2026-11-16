@@ -1,5 +1,6 @@
 # Updates GitHub Pages (branch gh-pages) on every merge or push to main with the pages kept in git:
 #   docs/leiden.html                                    -> leiden.html
+#   docs/communities/                                   -> communities/ (boards of citation communities)
 #   reproduce/topics/board/{epoch,paper,timeline}.html  -> boards/<id>/topics/ (every topics board on the site)
 #   reproduce/pages_index.py                            -> index.html, rendered again from boards.json
 # The boards themselves (boards/<id>/index.html, topics/index.html) and their data (timelines/, paper_maps/,
@@ -38,6 +39,7 @@ jobs:
             rm -rf site && git worktree prune
             git worktree add site origin/gh-pages && git -C site switch -C gh-pages
             cp docs/leiden.html site/leiden.html
+            rm -rf site/communities && cp -r docs/communities site/communities
             for d in site/boards/*/topics/; do
               if [ -d "$d" ]; then
                 cp reproduce/topics/board/epoch.html reproduce/topics/board/paper.html reproduce/topics/board/timeline.html "$d"

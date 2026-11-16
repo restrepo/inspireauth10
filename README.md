@@ -211,6 +211,29 @@ the same JSON file, and also the map and network text files.
 The repository includes a skill for Claude Code (`.claude/skills/inspire10-boards`), so you can
 ask for new indicators in plain language after cloning it.
 
+### The citation community of CMS
+
+The topics of the papers of the CMS collaboration together with every paper citing them: 1,767 CMS papers and
+52,831 citing papers, 1,176,719 citation links, 27 topics in 3 areas. Board:
+https://restrepo.github.io/inspireauth10/communities/cms/ (in git: [`docs/communities/cms/`](docs/communities/cms/),
+with `names.json`, `topics.csv` and `topics_vosviewer.json`). Made with
+[citation-topics](https://github.com/restrepo/citation-topics) 0.3.0 from the tables of 2026-11-09:
+
+```bash
+pip install citation-topics
+python reproduce/topics/community.py data/ out/communities/cms/works.jsonl.gz --experiment 1108642   # ~4 min
+cd out/communities/cms
+citation-topics run works.jsonl.gz r2_s1 --resolution 2 --min-size 50 --seed 1   # seeds 1-4: NMI 0.82-0.84, seed 1 the medoid
+citation-topics describe works.jsonl.gz r2_s1 --abstracts
+citation-topics names r2_s1 ../../../docs/communities/cms/names.json
+citation-topics export r2_s1
+citation-topics board works.jsonl.gz r2_s1 --highlight own --highlight-label "CMS papers" \
+    --title "CMS and the papers citing it: citation topics" --html ../../../docs/communities/cms/index.html
+```
+
+Other experiments with `--experiment`: ATLAS 1108541, ALICE 1110642, LHCb 1110643 (`experiments.jsonl.gz`). With
+`collab_authors.jsonl.gz` in `data/`, the papers with more than 10 authors show their first authors' names.
+
 ## Licence
 
 Data from INSPIRE-HEP (CC0). Genders come from the World Gender Name Dictionary 2.0 (CC0) through
