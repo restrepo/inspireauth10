@@ -31,6 +31,8 @@ PLACES = {
     'vosviewer/topics_vosviewer.json': ('exports', 'out/vosviewer/topics_vosviewer.json'),
     'vosviewer/topics_map.txt': ('exports', 'out/vosviewer/topics_map.txt'),
     'vosviewer/topics_network.txt': ('exports', 'out/vosviewer/topics_network.txt'),
+    'collaborations/collab_authors.jsonl.gz': ('collaborations', 'data/collab_authors.jsonl.gz'),
+    'collaborations/collab_profiles.jsonl.gz': ('collaborations', 'data/collab_profiles.jsonl.gz'),
 }
 
 ap = argparse.ArgumentParser()
@@ -45,7 +47,7 @@ found = {x['Path']: x for x in json.loads(out) if not x['IsDir']}
 missing = sorted(set(PLACES) - set(found))
 if missing:
     raise SystemExit(f'not in the Drive folder: {missing}')
-groups = ['tables', 'text', 'topics', 'exports']
+groups = ['tables', 'text', 'topics', 'exports', 'collaborations']
 files = [{'group': g, 'path': p, 'drive_path': k, 'id': found[k]['ID'], 'size': found[k]['Size'],
           'md5': found[k]['Hashes']['md5']} for k, (g, p) in PLACES.items()]
 files.sort(key=lambda f: (groups.index(f['group']), f['path']))

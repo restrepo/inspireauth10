@@ -54,7 +54,9 @@ Four gzipped JSON Lines tables, described in [`docs/data-schema.md`](docs/data-s
 Optional, for studies of the large collaborations (careers, division of labour, counting rules):
 `collab_authors.jsonl.gz` (the author list of every paper with more than 10 authors: profile and
 institutions of each author, in a compact form) and `collab_profiles.jsonl.gz` (the profiles of
-collaboration members that `authors.jsonl.gz` lacks), made by `build/build_collab_authors.py`.
+collaboration members that `authors.jsonl.gz` lacks), made by `build/build_collab_authors.py`. Those of
+2026-11-09 (141,074 papers, 17.2 million author entries, 97 MB) are on Drive in `collaborations/`:
+`python reproduce/get_data.py --groups collaborations`.
 
 Each reference is an INSPIRE record id flagged `in_corpus`: `true` when the cited paper is in the
 corpus (1 to 10 authors), `false` when it is outside it. With the references you can count citations

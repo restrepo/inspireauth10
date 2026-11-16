@@ -6,7 +6,8 @@
   "tables",
   "text",
   "topics",
-  "exports"
+  "exports",
+  "collaborations"
  ],
  "files": [
   {
@@ -152,6 +153,22 @@
    "id": "1k15nF6PStcnobW4nW53f97H44riRwQxU",
    "size": 2210990,
    "md5": "1bac4c0b1d83f1034cd164f6452ad37c"
+  },
+  {
+   "group": "collaborations",
+   "path": "data/collab_authors.jsonl.gz",
+   "drive_path": "collaborations/collab_authors.jsonl.gz",
+   "id": "1eBwPFwh2SUYZyTYMUJRjVH_M9JQU3_N1",
+   "size": 90927012,
+   "md5": "71bf7f104a2b7ca584f28cca63287fd2"
+  },
+  {
+   "group": "collaborations",
+   "path": "data/collab_profiles.jsonl.gz",
+   "drive_path": "collaborations/collab_profiles.jsonl.gz",
+   "id": "1YXvIHVvrkNw3dumeZ9LyUmapz93iw44W",
+   "size": 6236554,
+   "md5": "8a907eae9f4478db385e450502e0364a"
   }
  ]
 }
