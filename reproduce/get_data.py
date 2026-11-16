@@ -6,6 +6,8 @@ The files and their Drive ids are listed in reproduce/drive_files.json, by group
   topics    the topic clustering of the boards (out/clusters/topics_final.npz, its names, second and third topics,
             the 2010 clustering) and the topic tables (data/topics, paper_topics), 60 MB
   exports   the topic tables as CSV and the VOSviewer files (out/topics_csv/, out/vosviewer/), 25 MB
+  collaborations  the author lists of the papers with more than 10 authors (data/collab_authors,
+            collab_profiles), 97 MB; optional
 Files already present with the right MD5 are skipped, so the script can be run again after a failure.
 Needs only Python's standard library and anonymous access to Google Drive.
 
