@@ -20,6 +20,7 @@ get data that Drive already has.
 | Citation network, topic clustering | `out/clusters/` | no (Drive, or rebuilt) |
 | Board datasets and pages | `out/dash*/`, `out/topics_dash/`, `out/*.html` | no (rebuilt) |
 | Code | `build/` (download), `reproduce/` (indicators, boards), `reproduce/topics/` (topics) | yes |
+| Boards of citation communities (CMS), small enough for git | `docs/communities/` | yes |
 | Board templates | `reproduce/board.html`, `reproduce/topics/board/` | yes |
 | Data schema | `docs/data-schema.md` | yes |
 | List of the Drive files (ids, MD5) | `reproduce/drive_files.json` | yes |
